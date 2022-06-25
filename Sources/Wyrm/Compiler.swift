@@ -20,7 +20,7 @@ enum Opcode: UInt8 {
     case not, negate
 
     // Replace the top two values on the stack with the result of a binary operation.
-    case add, subtract, multiply, divide
+    case add, subtract, multiply, divide, modulus
     case equal, notEqual, less, lessEqual, greater, greaterEqual
 
     // Change the instruction offset.
@@ -31,6 +31,23 @@ enum Opcode: UInt8 {
 
     // Pop the value on top of the stack and store it in a member of the enclosing entity.
     case assignMember
+
+    // Lookup a member of an object.
+    case lookupMember
+
+    // Subscript a list.
+    case `subscript`
+
+    // The next two bytes are the number of values to pop from the stack. Replace them with
+    // a value representing a list of those values.
+    case makeList
+
+    // Create an exit from the three values on the top of the stack.
+    case makeExit
+
+    // Call a function. The top of the stack contains the function and the arguments.
+    // The next byte is the number of arguments.
+    case call
 }
 
 class CodeBlock {
@@ -47,10 +64,10 @@ class CodeBlock {
         bytecode.append(arg)
     }
 
-    func emit(_ op: Opcode, _ offset: UInt16) {
+    func emit(_ op: Opcode, _ arg: UInt16) {
         emit(op)
-        bytecode.append(UInt8(offset & 0xff))
-        bytecode.append(UInt8(offset >> 8))
+        bytecode.append(UInt8(arg & 0xff))
+        bytecode.append(UInt8(arg >> 8))
     }
 
     func addConstant(_ value: Value) -> UInt16 {
@@ -65,13 +82,17 @@ class CodeBlock {
         while let b = iter.next() {
             let op = Opcode(rawValue: b)!
             switch op {
-            case .pushSmallInt:
+            case .pushSmallInt, .call:
                 let i = Int8(bitPattern: iter.next()!)
                 print(op, i)
-            case .pushConstant, .assignMember:
-                var offset: UInt16 = UInt16(iter.next()!)
-                offset |= UInt16(iter.next()!) << 8
-                print(op, offset)
+            case .pushConstant, .assignMember, .lookupMember:
+                var offset = Int(iter.next()!)
+                offset |= Int(iter.next()!) << 8
+                print(op, offset, constants[offset])
+            case .makeList:
+                var count: UInt16 = UInt16(iter.next()!)
+                count |= UInt16(iter.next()!) << 8
+                print(op, count)
             default:
                 print(op)
             }
@@ -116,34 +137,59 @@ class Compiler {
                 break
             }
 
-/*
+        case .binaryExpr(let lhs, let op, let rhs):
+            compile(lhs, &block)
+            compile(rhs, &block)
+            switch op {
+            case .plus:
+                block.emit(.add)
+            case .minus:
+                block.emit(.subtract)
+            case .star:
+                block.emit(.multiply)
+            case .slash:
+                block.emit(.divide)
+            case .percent:
+                block.emit(.modulus)
+            default:
+                break
+            }
 
-        case .binaryExpr(_, _, _):
-            <#code#>
-        case .list(_):
-            <#code#>
-        case .call(_, _):
-            <#code#>
-        case .dot(_, _):
-            <#code#>
-        case .subscript(_, _):
-            <#code#>
+        case .list(let elements):
+            elements.forEach { compile($0, &block) }
+            block.emit(.makeList, UInt16(elements.count))
+
+        case .call(let fn, let args):
+            compile(fn, &block)
+            args.forEach { compile($0, &block ) }
+            block.emit(.call, UInt8(args.count))
+
+        case .dot(let lhs, let member):
+            compile(lhs, &block)
+            block.emit(.lookupMember, block.addConstant(.symbol(member)))
+
+        case .subscript(let lhs, let index):
+            compile(lhs, &block)
+            compile(index, &block)
+            block.emit(.subscript)
+
+/*
         case .var(_, _):
             <#code#>
         case .if(_, _, _):
             <#code#>
         case .for(_, _, _):
             <#code#>
-        case .block(_):
-            <#code#>
-        case .initializer(_, _):
-            <#code#>
-        case .handler(_, _, _):
-            <#code#>
-        case .member(name: let name, value: let value):
-            <#code#>
 
 */
+        case .block(let nodes):
+            nodes.forEach { compile($0, &block) }
+
+        case .exit(let portal, let direction, let destination):
+            compile(portal, &block)
+            block.emit(.pushConstant, block.addConstant(.symbol(direction.rawValue)))
+            compile(destination, &block)
+            block.emit(.makeExit)
 
         case .entity(name: let name, prototype: let prototype, members: let members,
                      initializer: let initializer, handlers: let handlers):
@@ -154,6 +200,8 @@ class Compiler {
                 compile(initializer, &block)
                 block.emit(.assignMember, block.addConstant(.symbol(name)))
             }
+            // TODO: initializer
+            // TODO: handlers
 
         default:
             break

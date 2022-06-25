@@ -485,7 +485,7 @@ class Parser {
     private func parseDot(lhs: ParseNode) -> ParseNode? {
         assert(match(.dot))
 
-        guard case let .identifier(name) = currentToken else {
+        guard case let .identifier(name) = consume() else {
             error("expected identifier after .")
             return nil
         }

@@ -2,6 +2,6 @@
 
 def testy {
     age = -33
-    density = !baseDensity
-    exits = [wooden_door -> north to hell, another_door -> south to heaven]
+    density = farkulate(123)
+    exits = [wooden_door -> north to hell, another_door -> south to lib.heaven]
 }
