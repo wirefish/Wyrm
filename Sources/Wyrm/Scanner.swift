@@ -15,11 +15,11 @@ enum Token: Hashable {
 
     case not, notEqual, equal, equalEqual
     case less, lessEqual, greater, greaterEqual
-    case and, or
+    case and, or, leads
 
     case def, deflocation
-    case allow, before, after
-    case `if`, `else`, `for`, `in`, `var`
+    case initializer, allow, before, after
+    case `if`, `else`, `for`, `in`, `var`, oneway, to
 
     case boolean(Bool)
     case number(Double)
@@ -35,6 +35,10 @@ enum Token: Hashable {
 extension Character {
     var isDecimalDigit: Bool {
         return self >= "0" && self <= "9"
+    }
+
+    var isIdentifierChar: Bool {
+        return self.isLetter || self == "_"
     }
 }
 
@@ -75,7 +79,7 @@ class Scanner {
             case ".": return .dot
             case "'": return scanSymbol()
             case "@": return scanRef()
-            case "-": return match("=") ? .minusEqual : .minus
+            case "-": return match("=") ? .minusEqual : match(">") ? .leads : .minus
             case "+": return match("=") ? .plusEqual : .plus
             case "*": return match("=") ? .starEqual : .star
             case "%": return match("=") ? .percentEqual : .percent
@@ -218,6 +222,7 @@ class Scanner {
         "false": .boolean(false),
         "def": .def,
         "deflocation": .deflocation,
+        "init": .initializer,
         "allow": .allow,
         "before": .before,
         "after": .after,
@@ -226,13 +231,15 @@ class Scanner {
         "for": .for,
         "in": .in,
         "var": .var,
+        "oneway": .oneway,
+        "to": .to,
     ]
 
     private func consumeIdentifier() -> String? {
         let start = index
-        if peek().isLetter {
+        if peek().isIdentifierChar {
             advance()
-            while peek().isLetter || peek().isNumber {
+            while peek().isIdentifierChar || peek().isNumber {
                 advance()
             }
             return String(input[start..<index])
@@ -245,11 +252,7 @@ class Scanner {
         guard let id = consumeIdentifier() else {
             return .error(line, "invalid identifier")
         }
-        if let keyword = keywords[id] {
-            return keyword
-        } else {
-            return .identifier(id)
-        }
+        return keywords[id] ?? .identifier(id)
     }
 
     private func scanSymbol() -> Token {

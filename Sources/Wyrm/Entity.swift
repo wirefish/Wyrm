@@ -5,6 +5,24 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+let notes = """
+
+Compiling an entity creates code blocks for its init() and event handlers as well as a
+code block to set the initial values of its members. Once all the entities are compiled,
+the locations are instantiated. This recursively calls the member initializers for all
+prototypes, if needed. In general an entity's member initializer is not run until the
+entity is referenced.
+
+Not that init() is really an initializer for new entities that use the entity as a prototype,
+allowing them to customize member values. The default init() copies (or if mutable, clones)
+the facets from this entity and declares it the prototype of the new entity. A custom init()
+runs after that.
+
+Only members explicitly present in an entity or its recursive chain of prototypes can be
+accessed within an entity. In particular, init() cannot add new members.
+
+"""
+
 // FIXME: move this stuff around
 
 class Viewable: Facet {
@@ -79,6 +97,8 @@ enum Direction: String {
 
 typealias EntityPath = [String]
 
+typealias EntityRef = (module: String?, name: String)
+
 class Portal: Facet {
     var size = Size.large
 
@@ -97,6 +117,14 @@ class Portal: Facet {
     ]
 }
 
+// Note that an exit is not an entity or facet itself, but refers to a shared portal
+// entity. What is a good syntax for this? Like an infix/ternary operator of some kind?
+// Colon is free to use in this context, add a 'to' keyword and...
+//   wooden_door: 'north [oneway] to other_room
+// There would be an implied () because you'd always want to instantiate a new entity
+// for the portal instead of sharing some global one. The matching exit would need to
+// look for an existing exit opposite its direction and share the portal. We could go so
+// far as creating opposite exits automagically, prevented by the oneway keyword.
 struct Exit {
     let portal: Entity
     let direction: Direction

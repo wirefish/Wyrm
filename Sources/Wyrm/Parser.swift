@@ -5,6 +5,8 @@
 //  Created by Craig Becker on 6/23/22.
 //
 
+import Foundation
+
 struct Parameter {
     let name: String
     let constraint: [String]
@@ -12,7 +14,7 @@ struct Parameter {
 
 indirect enum ParseNode {
     case literal(Token)
-    case identifier(Token)
+    case identifier(String)
     case unaryExpr(Token, ParseNode)
     case binaryExpr(ParseNode, Token, ParseNode)
     case list([ParseNode])
@@ -23,9 +25,12 @@ indirect enum ParseNode {
     case `if`(ParseNode, ParseNode, ParseNode?)
     case `for`(String, ParseNode, ParseNode)
     case block([ParseNode])
+    case initializer([String], ParseNode)
     case handler(String, [Parameter], ParseNode)
     case member(name: String, value: ParseNode)
-    case entity(name: String, prototype: [String], members: [ParseNode], handlers: [ParseNode])
+    case exit(ParseNode, Direction, ParseNode)
+    case entity(name: String, prototype: [String], members: [ParseNode],
+                initializer: ParseNode?, handlers: [ParseNode])
 }
 
 enum Precedence: Int, Comparable {
@@ -56,6 +61,7 @@ class Parser {
     static let parseRules: [Token:ParseRule] = [
         .lparen: (method: parseCall, prec: .call),
         .lsquare: (method: parseSubscript, prec: .call),
+        .leads: (method: parseExit, prec: .assign),
         .dot: (method: parseDot, prec: .call),
         .minus: (method: parseBinary, prec: .term),
         .minusEqual: (method: parseBinary, prec: .assign),
@@ -110,6 +116,8 @@ class Parser {
         }
     }
 
+    // MARK: - parsing entities
+
     private func parseEntity() -> ParseNode? {
         let def = consume()
 
@@ -128,6 +136,7 @@ class Parser {
         }
 
         var members = [ParseNode]()
+        var initializer: ParseNode?
         var handlers = [ParseNode]()
         loop: while true {
             switch currentToken {
@@ -141,6 +150,8 @@ class Parser {
                 if let member = parseMember() {
                     members.append(member)
                 }
+            case .initializer:
+                initializer = parseInitializer()
             case .allow, .before, .after:
                 if let handler = parseHandler() {
                     handlers.append(handler)
@@ -152,7 +163,8 @@ class Parser {
             }
         }
 
-        return .entity(name: name, prototype: prototype, members: members, handlers: handlers)
+        return .entity(name: name, prototype: prototype, members: members,
+                       initializer: initializer, handlers: handlers)
     }
 
     private func parsePrototype() -> [String]? {
@@ -190,6 +202,34 @@ class Parser {
 
         if let value = parseExpr() {
             return .member(name: name, value: value)
+        } else {
+            return nil
+        }
+    }
+
+    private func parseInitializer() -> ParseNode? {
+        advance()  // past init
+
+        guard case .lparen = consume() else {
+            error("expected ( after init")
+            return nil
+        }
+
+        var params = [String]()
+        while !match(.rparen) {
+            guard case let .identifier(name) = consume() else {
+                error("parameter name must be an identifier")
+                return nil
+            }
+            params.append(name)
+
+            if currentToken != .rparen && !match(.comma) {
+                error("expected , between initializer parameters")
+            }
+        }
+
+        if let block = parseBlock() {
+            return .initializer(params, block)
         } else {
             return nil
         }
@@ -336,12 +376,15 @@ class Parser {
         switch currentToken {
         case .boolean, .number, .string, .symbol:
             node = .literal(consume())
-        case .identifier:
-            node = .identifier(consume())
+        case .identifier(let s):
+            node = .identifier(s)
+            advance()
         case .minus, .not:
             node = parseUnary()
         case .lparen:
             node = parseGroup()
+        case .lsquare:
+            node = parseList()
         default:
             error("expected expression at \(currentToken)")
             advance()
@@ -378,6 +421,22 @@ class Parser {
             }
         }
         return nil
+    }
+
+    private func parseList() -> ParseNode? {
+        assert(match(.lsquare))
+
+        var elements = [ParseNode]()
+        while !match(.rsquare) {
+            if let expr = parseExpr() {
+                elements.append(expr)
+            }
+            if currentToken != .rsquare && !match(.comma) {
+                error("expected , between list elements")
+            }
+        }
+
+        return .list(elements)
     }
 
     private func parseBinary(lhs: ParseNode) -> ParseNode? {
@@ -432,6 +491,33 @@ class Parser {
         }
 
         return .dot(lhs, name)
+    }
+
+    private func parseExit(lhs: ParseNode) -> ParseNode? {
+        assert(match(.leads))
+
+        guard case let .identifier(name) = consume() else {
+            error("expected identifier after :")
+            return nil
+        }
+
+        guard let dir = Direction(rawValue: name) else {
+            error("invalid direction \(name) after :")
+            return nil
+        }
+
+        let _ = match(.oneway)  // FIXME:
+
+        if !match(.to) {
+            error("expected to after exit direction")
+            return nil
+        }
+
+        guard let rhs = parseExpr(.or) else {
+            return nil
+        }
+
+        return .exit(lhs, dir, rhs)
     }
 
     // MARK: - consuming tokens

@@ -13,6 +13,7 @@ enum Value {
     case symbol(String)
     case entity(Entity)
     case list([Value])
+    case function(ScriptFunction)
 }
 
 protocol ValueRepresentable {
@@ -22,21 +23,71 @@ protocol ValueRepresentable {
 
 extension ValueRepresentable {
     static func enumCase<T>(fromValue value: Value, names: [String:T]) -> T? {
-        if case let .symbol(name) = value {
-            return names[name]
-        } else {
+        guard case let .symbol(name) = value else {
             return nil
         }
+        return names[name]
+    }
+}
+
+extension Bool: ValueRepresentable {
+    init?(fromValue value: Value) {
+        guard case let .boolean(b) = value else {
+            return nil
+        }
+        self.init(b)
+    }
+
+    func toValue() -> Value {
+        return .boolean(self)
+    }
+}
+
+extension Int: ValueRepresentable {
+    init?(fromValue value: Value) {
+        guard case let .number(n) = value else {
+            return nil
+        }
+        self.init(exactly: n)
+    }
+
+    func toValue() -> Value {
+        return .number(Double(self))
+    }
+}
+
+extension Double: ValueRepresentable {
+    init?(fromValue value: Value) {
+        guard case let .number(n) = value else {
+            return nil
+        }
+        self.init(n)
+    }
+
+    func toValue() -> Value {
+        return .number(self)
+    }
+}
+
+extension String: ValueRepresentable {
+    init?(fromValue value: Value) {
+        guard case let .string(s) = value else {
+            return nil
+        }
+        self.init(s)
+    }
+
+    func toValue() -> Value {
+        return .string(self)
     }
 }
 
 extension NounPhrase: ValueRepresentable {
     init?(fromValue value: Value) {
-        if case let .string(s) = value {
-            self.init(s)
-        } else {
+        guard case let .string(s) = value else {
             return nil
         }
+        self.init(s)
     }
 
     func toValue() -> Value {

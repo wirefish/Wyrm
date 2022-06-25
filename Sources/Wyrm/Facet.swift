@@ -37,46 +37,6 @@ extension Facet {
     // Generic accessor functions to help classes implement the accessors property
     // required by this protocol.
 
-    static func accessor<T: Facet>(_ keyPath: ReferenceWritableKeyPath<T, Bool>) -> Accessor {
-        return Accessor(
-            get: { .boolean(($0 as! T)[keyPath: keyPath]) },
-            set: {
-                if case let .boolean(b) = $1 {
-                    ($0 as! T)[keyPath: keyPath] = b
-                }
-            })
-    }
-
-    static func accessor<T: Facet>(_ keyPath: ReferenceWritableKeyPath<T, Int>) -> Accessor {
-        return Accessor(
-            get: { .number(Double(($0 as! T)[keyPath: keyPath])) },
-            set: {
-                if case let .number(n) = $1 {
-                    ($0 as! T)[keyPath: keyPath] = Int(n)
-                }
-            })
-    }
-
-    static func accessor<T: Facet>(_ keyPath: ReferenceWritableKeyPath<T, Double>) -> Accessor {
-        return Accessor(
-            get: { .number(($0 as! T)[keyPath: keyPath]) },
-            set: {
-                if case let .number(n) = $1 {
-                    ($0 as! T)[keyPath: keyPath] = n
-                }
-            })
-    }
-
-    static func accessor<T: Facet>(_ keyPath: ReferenceWritableKeyPath<T, String>) -> Accessor {
-        return Accessor(
-            get: { .string(($0 as! T)[keyPath: keyPath]) },
-            set: {
-                if case let .string(s) = $1 {
-                    ($0 as! T)[keyPath: keyPath] = s
-                }
-            })
-    }
-
     static func accessor<T: Facet, V: ValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
         return Accessor(
             get: {
