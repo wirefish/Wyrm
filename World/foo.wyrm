@@ -1,0 +1,15 @@
+// This is a test.
+
+def foo: lib.thingy {
+    name = "Bob"
+    description = |
+        This is a long description of Bob.
+        Honestly he does not deserve it.
+    age = 22 + 10 * 3
+    thing = f(1, 2)
+
+    before doSomething(a, b: lib.goblin) {
+        var x = b[12]
+        x = 'north
+    }
+}
