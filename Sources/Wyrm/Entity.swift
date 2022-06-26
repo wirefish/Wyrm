@@ -49,7 +49,7 @@ class Entity: Observer {
     init(withPrototype prototype: Entity? = nil) {
         self.prototype = prototype
         if let p = self.prototype {
-            facets = p.facets.map { type(of: $0).isMutable ? $0.clone() : $0 }
+            facets = p.facets.compactMap { type(of: $0).isMutable ? $0.clone() : nil }
         }
     }
 
