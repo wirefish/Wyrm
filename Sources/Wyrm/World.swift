@@ -75,6 +75,10 @@ class Module {
     }
 }
 
+enum ModuleError: Error {
+    case invalidModuleSpec(String)
+}
+
 class World {
     let rootPath: String
     var modules = [String:Module]()
@@ -101,9 +105,13 @@ class World {
     }
 
     func load() {
+        let files = try! readModulesFile()
+
         let compiler = Compiler()
 
-        for relativePath in findFiles() {
+        for relativePath in files {
+            let moduleName = moduleName(for: relativePath)
+            print("loading \(relativePath) into module \(moduleName)")
             let nodes = parse(contentsOfFile: relativePath)
             print(nodes)
 
@@ -119,34 +127,41 @@ class World {
         }
     }
 
-    private func findFiles(_ relativeDir: String = "") -> [String] {
-        guard let dir = opendir(rootPath + relativeDir) else {
-            print("warning: cannot open directory \(rootPath + relativeDir)")
-            return []
-        }
-
+    private func readModulesFile() throws -> [String] {
         var files = [String]()
-        while let entry = readdir(dir) {
-            let name = withUnsafeBytes(of: entry.pointee.d_name) { (rawPtr) -> String in
-                let ptr = rawPtr.baseAddress!.assumingMemoryBound(to: CChar.self)
-                return String(cString: ptr)
-            }
-            if name.hasPrefix(".") {
-                // Skip this entry.
-            } else if Int32(entry.pointee.d_type) & DT_DIR != 0 {
-                files += findFiles(relativeDir + name + "/")
-            } else if name.hasSuffix(".wyrm") {
-                files.append(relativeDir + name)
+
+        let text = try String(contentsOfFile: rootPath + "MODULES", encoding: .utf8)
+
+        let lines = text.components(separatedBy: .newlines)
+            .map({ $0.prefix(while: { $0 != "#" }) })  // remove comments
+            .filter({ !$0.allSatisfy(\.isWhitespace) })  // ignore blank lines
+
+        var currentDir: String?
+        for line in lines {
+            let indented = line.first!.isWhitespace
+            let item = line.trimmingCharacters(in: .whitespaces)
+            if item.hasSuffix("/") {
+                guard !indented else {
+                    throw ModuleError.invalidModuleSpec("directory name cannot be indented")
+                }
+                currentDir = item
+            } else if indented {
+                guard let dir = currentDir else {
+                    throw ModuleError.invalidModuleSpec("indented filename has no directory")
+                }
+                files.append(dir + item + ".wyrm")
+            } else {
+                currentDir = nil
+                files.append(item + ".wyrm")
             }
         }
-        closedir(dir)
 
         return files
     }
 
     private func moduleName(for relativePath: String) -> String {
         if let sep = relativePath.lastIndex(of: "/") {
-            return relativePath[..<sep].replacingOccurrences(of: "/", with: ".")
+            return relativePath[..<sep].replacingOccurrences(of: "/", with: "_")
         } else {
             return String(relativePath.prefix(while: { $0 != "." }))
         }
@@ -157,5 +172,4 @@ class World {
         let parser = Parser(scanner: Scanner(source))
         return parser.parse()
     }
-
 }

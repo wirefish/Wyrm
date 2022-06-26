@@ -1,0 +1,6 @@
+# This file defines the order in which to load script files.
+
+lib/
+    things  # FIXME:
+
+foo
