@@ -59,8 +59,8 @@ class Portal: Facet {
     }
 
     static let accessors = [
-        "isCloseable": accessor(\Portal.isCloseable),
-        "isOpen": accessor(\Portal.isOpen),
+        "is_closeable": accessor(\Portal.isCloseable),
+        "is_open": accessor(\Portal.isOpen),
     ]
 }
 
@@ -102,11 +102,6 @@ class Location: Facet {
         f.exits = exits
         return f
     }
-
-    static let exitAccessor = Accessor(
-        get: { location in return .nil },
-        set: { location, value in
-        })
 
     static let accessors = [
         "exits": accessor(\Location.exits),

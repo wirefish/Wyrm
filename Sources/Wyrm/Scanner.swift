@@ -15,11 +15,12 @@ enum Token: Hashable {
 
     case not, notEqual, equal, equalEqual
     case less, lessEqual, greater, greaterEqual
-    case and, or, leads
+    case and, or
 
     case def, deflocation
     case clone, allow, before, after
-    case `if`, `else`, `for`, `in`, `var`, oneway, to
+    case `if`, `else`, `for`, `in`, `let`, `var`
+    case leads, oneway, to
 
     case boolean(Bool)
     case number(Double)
@@ -233,6 +234,7 @@ class Scanner {
         "else": .else,
         "for": .for,
         "in": .in,
+        "let": .let,
         "var": .var,
         "oneway": .oneway,
         "to": .to,

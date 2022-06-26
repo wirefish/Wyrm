@@ -201,14 +201,9 @@ class Compiler {
             compile(destination, &block)
             block.emit(.makeExit)
 
-        case let .entity(name, prototype, members, clone, handlers):
-            for (name, initialValue) in members {
-                compile(initialValue, &block)
-                block.emit(.assignMember, block.addConstant(.symbol(name)))
-            }
-            // TODO: clone initializer
-            // TODO: handlers
-
+        case .entity:
+            fatalError("invalid attempt to compile entity definition")
+            
         default:
             break
         }

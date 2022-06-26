@@ -44,7 +44,7 @@ indirect enum ParseNode {
 
     // Top-level definitions.
     case entity(name: String, prototype: EntityRef?, members: [Member],
-                clone: CloneInitializer?, handlers: [Handler])
+                clone: CloneInitializer?, handlers: [Handler], startable: Bool)
 
     // True if this node can syntactically be on the left side of an assignment.
     var isAssignable: Bool {
@@ -187,8 +187,9 @@ class Parser {
             }
         }
 
-        return .entity(name: name, prototype: prototype, members: members,
-                       clone: clone, handlers: handlers)
+        let startable = def == .deflocation
+        return .entity(name: name, prototype: prototype, members: members, clone: clone,
+                       handlers: handlers, startable: startable)
     }
 
     private func parsePrototype() -> EntityRef?? {

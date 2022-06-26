@@ -15,12 +15,21 @@ enum Value {
     case exit(Exit)
     case list([Value])
     case function(ScriptFunction)
+    case module(Module)
 
     var asEntity: Entity? {
         if case let .entity(entity) = self {
             return entity
         } else {
             return nil
+        }
+    }
+
+    var asValueDictionary: ValueDictionary? {
+        switch self {
+        case let .entity(e): return e
+        case let .module(m): return m
+        default: return nil
         }
     }
 }

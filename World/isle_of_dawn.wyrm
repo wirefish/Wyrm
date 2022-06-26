@@ -1,0 +1,13 @@
+// This is the starter zone for new characters. It is meant as a basic introduction
+// to the game and tutorial for vital mechanics.
+
+def wooden_door {
+    brief = "a wooden door"
+    is_closeable = true
+    capacity = 33
+}
+
+deflocation anteroom {
+    exits = [wooden_door -> 'north to somewhere_else]
+    capacity = wooden_door.capacity + 1
+}

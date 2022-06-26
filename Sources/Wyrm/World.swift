@@ -60,6 +60,16 @@ class World {
             return module
         }
     }
+
+    func lookup(_ name: String, context: [ValueDictionary]) -> Value? {
+        if let value = context.firstMap({ $0[name] }) ?? coreModule[name] {
+            return value
+        } else if let module = modules[name] {
+            return .module(module)
+        } else {
+            return nil
+        }
+    }
 }
 
 // MARK: - loading files
@@ -129,10 +139,11 @@ extension World {
     }
 
     private func loadEntity(_ node: ParseNode, into module: Module) {
-        guard case let .entity(name, prototypeRef, members, clone, handlers) = node else {
+        guard case let .entity(name, prototypeRef, members, clone, handlers, startable) = node else {
             fatalError("invalid call to loadEntity")
         }
 
+        // Find the prototype and construct the new entity.
         var prototype: Entity?
         if prototypeRef != nil {
             prototype = lookup(prototypeRef!, context: module)
@@ -333,7 +344,7 @@ extension World {
             guard let lhs = eval(lhs, context: context) else {
                 break
             }
-            guard let lhs = lhs as? ValueDictionary else {
+            guard let lhs = lhs.asValueDictionary else {
                 print("cannot apply . operator to operand")
                 break
             }
@@ -359,10 +370,6 @@ extension World {
         }
 
         return nil
-    }
-
-    func lookup(_ name: String, context: [ValueDictionary]) -> Value? {
-        return context.firstMap { $0[name] } ?? coreModule[name]
     }
 
     func lookup(_ ref: EntityRef, context: Module) -> Entity? {
