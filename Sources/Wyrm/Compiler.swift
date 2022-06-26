@@ -116,30 +116,27 @@ class CodeBlock {
 class Compiler {
     func compile(_ node: ParseNode, _ block: inout CodeBlock) {
         switch node {
+        case let .boolean(b):
+            block.emit(b ? .pushTrue : .pushFalse)
 
-        case .literal(let token):
-            switch token {
-            case .boolean(let b):
-                block.emit(b ? .pushTrue : .pushFalse)
-            case .number(let n):
-                if let i = Int8(exactly: n) {
-                    block.emit(.pushSmallInt, UInt8(bitPattern: i))
-                } else {
-                    block.emit(.pushConstant, block.addConstant(.number(n)))
-                }
-            case .symbol(let s):
-                block.emit(.pushConstant, block.addConstant(.symbol(s)))
-            case .string(let s):
-                block.emit(.pushConstant, block.addConstant(.string(s)))
-            default:
-                break
+        case let .number(n):
+            if let i = Int8(exactly: n) {
+                block.emit(.pushSmallInt, UInt8(bitPattern: i))
+            } else {
+                block.emit(.pushConstant, block.addConstant(.number(n)))
             }
 
-        case .identifier(let s):
+        case let .symbol(s):
+            block.emit(.pushConstant, block.addConstant(.symbol(s)))
+
+        case let .string(s):
+            block.emit(.pushConstant, block.addConstant(.string(s)))
+
+        case let .identifier(s):
             block.emit(.pushConstant, block.addConstant(.symbol(s)))
             block.emit(.lookup)
 
-        case .unaryExpr(let op, let rhs):
+        case let .unaryExpr(op, rhs):
             compile(rhs, &block)
             switch op {
             case .not:
@@ -150,7 +147,7 @@ class Compiler {
                 break
             }
 
-        case .binaryExpr(let lhs, let op, let rhs):
+        case let .binaryExpr(lhs, op, rhs):
             compile(lhs, &block)
             compile(rhs, &block)
             switch op {
@@ -168,20 +165,20 @@ class Compiler {
                 break
             }
 
-        case .list(let elements):
+        case let .list(elements):
             elements.forEach { compile($0, &block) }
             block.emit(.makeList, UInt16(elements.count))
 
-        case .call(let fn, let args):
+        case let .call(fn, args):
             compile(fn, &block)
             args.forEach { compile($0, &block ) }
             block.emit(.call, UInt8(args.count))
 
-        case .dot(let lhs, let member):
+        case let .dot(lhs, member):
             compile(lhs, &block)
             block.emit(.lookupMember, block.addConstant(.symbol(member)))
 
-        case .subscript(let lhs, let index):
+        case let .subscript(lhs, index):
             compile(lhs, &block)
             compile(index, &block)
             block.emit(.subscript)
@@ -195,22 +192,21 @@ class Compiler {
             <#code#>
 
 */
-        case .block(let nodes):
+        case let .block(nodes):
             nodes.forEach { compile($0, &block) }
 
-        case .exit(let portal, let direction, let destination):
+        case let .exit(portal, direction, destination):
             compile(portal, &block)
             block.emit(.pushConstant, block.addConstant(.symbol(direction.rawValue)))
             compile(destination, &block)
             block.emit(.makeExit)
 
-        case .entity(name: let name, prototype: let prototype, members: let members,
-                     clone: let clone, handlers: let handlers):
-            for (name, initializer) in members {
-                compile(initializer, &block)
+        case let .entity(name, prototype, members, clone, handlers):
+            for (name, initialValue) in members {
+                compile(initialValue, &block)
                 block.emit(.assignMember, block.addConstant(.symbol(name)))
             }
-            // TODO: initializer
+            // TODO: clone initializer
             // TODO: handlers
 
         default:

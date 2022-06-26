@@ -23,16 +23,10 @@ enum Value {
             return nil
         }
     }
+}
 
-    init?(fromToken token: Token) {
-        switch token {
-        case .boolean(let b): self = .boolean(b)
-        case .number(let n): self = .number(n)
-        case .symbol(let s): self = .symbol(s)
-        case .string(let s): self = .string(s)
-        default: return nil
-        }
-    }
+protocol ValueDictionary {
+    subscript(member: String) -> Value? { get set }
 }
 
 protocol ValueRepresentable {

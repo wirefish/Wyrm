@@ -8,7 +8,7 @@
 // A protocol for an object that encapsulates a collection of related
 // properties which are necessary in order to interact with other objects
 // in a specific way.
-protocol Facet: AnyObject {
+protocol Facet: AnyObject, ValueDictionary {
 
     static var isMutable: Bool { get }
 
@@ -27,8 +27,8 @@ struct Accessor {
 }
 
 extension Facet {
-    // A subscript operator that uses accessors registered by a class
-    // to get or set a property by name.
+    // A subscript operator to implement ValueDictionary. It uses the accessors
+    // registered by a class implementing Facet.
     subscript(member: String) -> Value? {
         get { type(of: self).accessors[member]?.get(self) }
         set { type(of: self).accessors[member]?.set(self, newValue!) }

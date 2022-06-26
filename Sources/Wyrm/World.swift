@@ -6,78 +6,35 @@
 //
 
 import Foundation
-import AppKit
-import XCTest
 
-typealias ScriptFunction = ([Value]) throws -> Value
-
-enum ScriptError: Error {
-    case invalidArgument
-    case wrongNumberOfArguments(got: Int, expected: Int)
-}
-
-// Methods to simplify unpacking values for use by native script functions.
-extension Value {
-    func asBool() throws -> Bool {
-        guard case let .boolean(b) = self else {
-            throw ScriptError.invalidArgument
+extension Array {
+    // Returns the first non-nil value obtained by applying a transform to the
+    // elements of the array.
+    func firstMap<T>(_ transform: (Element) -> T?) -> T? {
+        for value in self {
+            if let transformedValue = transform(value) {
+                return transformedValue
+            }
         }
-        return b
-    }
-
-    func asInt() throws -> Int {
-        guard case let .number(n) = self else {
-            throw ScriptError.invalidArgument
-        }
-        guard let i = Int(exactly: n) else {
-            throw ScriptError.invalidArgument
-        }
-        return i
-    }
-
-    func asDouble() throws -> Double {
-        guard case let .number(n) = self else {
-            throw ScriptError.invalidArgument
-        }
-        return n
-    }
-
-    func asString() throws -> String {
-        guard case let .string(s) = self else {
-            throw ScriptError.invalidArgument
-        }
-        return s
+        return nil
     }
 }
 
-struct ScriptLibrary {
-    static func unpack<T1>(_ args: [Value], _ m1: (Value) -> () throws -> T1) throws -> T1 {
-        guard args.count == 1 else {
-            throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 1)
-        }
-        return try m1(args[0])()
-    }
-
-    static func trunc(_ args: [Value]) throws -> Value {
-        let x = try unpack(args, Value.asDouble)
-        return .number(x.rounded(.towardZero))
-    }
-
-    static let functions = [
-        ("trunc", trunc),
-    ]
-}
-
-class Module {
+class Module: ValueDictionary {
     let name: String
     var bindings = [String:Value]()
 
     init(_ name: String) {
         self.name = name
     }
+
+    subscript(member: String) -> Value? {
+        get { bindings[member] }
+        set { bindings[member] = newValue }
+    }
 }
 
-enum ModuleError: Error {
+enum WorldError: Error {
     case invalidModuleSpec(String)
 }
 
@@ -94,7 +51,7 @@ class World {
         }
     }
 
-    func module(named name: String) -> Module {
+    func requireModule(named name: String) -> Module {
         if let module = modules[name] {
             return module
         } else {
@@ -102,6 +59,54 @@ class World {
             modules[name] = module
             return module
         }
+    }
+}
+
+// MARK: - evaluating expressions
+
+extension World {
+
+    func eval(_ node: ParseNode, context: [ValueDictionary]) -> Value? {
+        switch node {
+        case let .boolean(b):
+            return .boolean(b)
+        case let .number(n):
+            return .number(n)
+        case let .string(s):
+            return .string(s)
+        case let .symbol(s):
+            return .symbol(s)
+
+        case let .identifier(id):
+            return lookup(id, context: context)
+
+        case let .unaryExpr(op, rhs):
+            guard let rhs = eval(rhs, context: context) else {
+                return nil
+            }
+            switch op {
+            case .minus:
+                guard case let .number(n) = rhs else {
+                    fatalError("operand to unary - must be a number")
+                }
+                return .number(-n)
+            case .not:
+                guard case let .boolean(b) = rhs else {
+                    fatalError("operand to ! must be a boolean")
+                }
+                return .boolean(!b)
+            default:
+                fatalError("malformed unaryExpr")
+            }
+            
+        default:
+            print("cannot evaluate expression \(node)")
+            return nil
+        }
+    }
+
+    func lookup(_ name: String, context: [ValueDictionary]) -> Value? {
+        return context.firstMap { $0[name] } ?? coreModule[name]
     }
 
     func lookup(_ ref: EntityRef, context: Module) -> Entity? {
@@ -113,15 +118,18 @@ class World {
             return coreModule.bindings[ref.name]?.asEntity
         }
     }
+}
+
+// MARK: - loading files
+
+extension World {
 
     func load() {
         let files = try! readModulesFile()
 
         for relativePath in files {
             let moduleName = moduleName(for: relativePath)
-            print("loading \(relativePath) into module \(moduleName)")
-
-            let module = module(named: moduleName)
+            let module = requireModule(named: moduleName)
             load(contentsOfFile: relativePath, into: module)
         }
 
@@ -145,12 +153,12 @@ class World {
             let item = line.trimmingCharacters(in: .whitespaces)
             if item.hasSuffix("/") {
                 guard !indented else {
-                    throw ModuleError.invalidModuleSpec("directory name cannot be indented")
+                    throw WorldError.invalidModuleSpec("directory name cannot be indented")
                 }
                 currentDir = item
             } else if indented {
                 guard let dir = currentDir else {
-                    throw ModuleError.invalidModuleSpec("indented filename has no directory")
+                    throw WorldError.invalidModuleSpec("indented filename has no directory")
                 }
                 files.append(dir + item + ".wyrm")
             } else {
@@ -162,21 +170,14 @@ class World {
         return files
     }
 
-    private func moduleName(for relativePath: String) -> String {
-        if let sep = relativePath.lastIndex(of: "/") {
-            return relativePath[..<sep].replacingOccurrences(of: "/", with: "_")
-        } else {
-            return String(relativePath.prefix(while: { $0 != "." }))
-        }
-    }
-
     private func load(contentsOfFile relativePath: String, into module: Module) {
+        print("loading \(relativePath) into module \(module.name)")
+
         let source = try! String(contentsOfFile: rootPath + relativePath, encoding: .utf8)
         let parser = Parser(scanner: Scanner(source))
         for node in parser.parse() {
             switch node {
             case let .entity(name, prototypeRef, members, clone, handlers):
-                print(name, prototypeRef, members, clone, handlers)
                 var prototype: Entity?
                 if prototypeRef != nil {
                     prototype = lookup(prototypeRef!, context: module)
@@ -185,21 +186,17 @@ class World {
                     }
                 }
                 let entity = Entity(withPrototype: prototype)
+                let context: [ValueDictionary] = [entity, module]
 
                 for member in members {
-                    print("setting \(member.name)")
-                    guard let facet = entity.requireFacet(forMember: member.name) else {
-                        print("no facet defines member \(member.name)")
-                        continue
-                    }
-                    print(facet)
-
-                    if case let .literal(value) = member.initialValue {
-                        facet[member.name] = value
+                    if let value = eval(member.initialValue, context: context) {
+                        entity[member.name] = value
                     }
                 }
 
                 module.bindings[name] = .entity(entity)
+
+                print(name, entity)
                 for facet in entity.facets {
                     let m = Mirror(reflecting: facet)
                     print(m.description)
@@ -212,6 +209,13 @@ class World {
                 break
             }
         }
+    }
 
+    private func moduleName(for relativePath: String) -> String {
+        if let sep = relativePath.lastIndex(of: "/") {
+            return relativePath[..<sep].replacingOccurrences(of: "/", with: "_")
+        } else {
+            return String(relativePath.prefix(while: { $0 != "." }))
+        }
     }
 }

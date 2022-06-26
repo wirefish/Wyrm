@@ -17,8 +17,13 @@ indirect enum ParseNode {
     typealias CloneInitializer = ([String], ParseNode)
     typealias Handler = (EventPhase, String, [Parameter], ParseNode)
 
-    // Expressions
-    case literal(Value)
+    // Literal values.
+    case boolean(Bool)
+    case number(Double)
+    case string(String)
+    case symbol(String)
+
+    // Expressions.
     case identifier(String)
     case unaryExpr(Token, ParseNode)
     case binaryExpr(ParseNode, Token, ParseNode)
@@ -30,7 +35,7 @@ indirect enum ParseNode {
     case `subscript`(ParseNode, ParseNode)
     case exit(ParseNode, Direction, ParseNode)
 
-    // Statements
+    // Statements.
     case `var`(String, ParseNode)
     case `if`(ParseNode, ParseNode, ParseNode?)
     case `for`(String, ParseNode, ParseNode)
@@ -41,6 +46,7 @@ indirect enum ParseNode {
     case entity(name: String, prototype: EntityRef?, members: [Member],
                 clone: CloneInitializer?, handlers: [Handler])
 
+    // True if this node can syntactically be on the left side of an assignment.
     var isAssignable: Bool {
         switch self {
         case .identifier(_): return true
@@ -408,9 +414,19 @@ class Parser {
     private func parseExpr(_ prec: Precedence = .or) -> ParseNode? {
         var node: ParseNode?
         switch currentToken {
-        case .boolean, .number, .string, .symbol:
-            node = .literal(Value(fromToken: consume())!)
-        case .identifier(let s):
+        case let .boolean(b):
+            node = .boolean(b)
+            advance()
+        case let .number(n):
+            node = .number(n)
+            advance()
+        case let .string(s):
+            node = .string(s)
+            advance()
+        case let .symbol(s):
+            node = .symbol(s)
+            advance()
+        case let .identifier(s):
             node = .identifier(s)
             advance()
         case .minus, .not:
@@ -518,8 +534,10 @@ class Parser {
             }
         }
 
-        if case .string = currentToken {
-            args.append(.literal(Value(fromToken: consume())!))
+        // Allow for a trailing string/text literal as the final argument.
+        if case let .string(s) = currentToken {
+            args.append(.string(s))
+            advance()
         }
 
         return .call(lhs, args)

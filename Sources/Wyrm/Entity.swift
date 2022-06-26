@@ -5,24 +5,6 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-let notes = """
-
-Compiling an entity creates code blocks for its init() and event handlers as well as a
-code block to set the initial values of its members. Once all the entities are compiled,
-the locations are instantiated. This recursively calls the member initializers for all
-prototypes, if needed. In general an entity's member initializer is not run until the
-entity is referenced.
-
-Not that init() is really an initializer for new entities that use the entity as a prototype,
-allowing them to customize member values. The default init() copies (or if mutable, clones)
-the facets from this entity and declares it the prototype of the new entity. A custom init()
-runs after that.
-
-Only members explicitly present in an entity or its recursive chain of prototypes can be
-accessed within an entity. In particular, init() cannot add new members.
-
-"""
-
 let allFacetTypes: [Facet.Type] = [
     Container.self,
     Location.self,
@@ -42,7 +24,7 @@ typealias EventResponder = (Entity, Event) -> Void
 // and the default core module.
 typealias EntityRef = (module: String?, name: String)
 
-class Entity: Observer {
+class Entity: Observer, ValueDictionary {
     let prototype: Entity?
     var facets = [Facet]()
 
@@ -59,6 +41,7 @@ class Entity: Observer {
 
     func requireFacet(forMember memberName: String) -> Facet? {
         guard let facetType = findFacetType(forMember: memberName) else {
+            print("no facet type defines member \(memberName)")
             return nil
         }
         if let facet = facets.first(where: { type(of: $0) == facetType }) {
@@ -67,6 +50,21 @@ class Entity: Observer {
             let facet = prototype?.facet(facetType)?.clone() ?? facetType.init()
             facets.append(facet)
             return facet
+        }
+    }
+
+    subscript(memberName: String) -> Value? {
+        get {
+            guard let facetType = findFacetType(forMember: memberName) else {
+                return nil
+            }
+            return self.facet(facetType)?[memberName]
+        }
+        set {
+            guard let facet = requireFacet(forMember: memberName) else {
+                return
+            }
+            facet[memberName] = newValue
         }
     }
 }

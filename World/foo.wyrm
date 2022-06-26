@@ -8,4 +8,5 @@ def base {
 def thing: base {
     name = "Better Thing"
     capacity = 55
+    foobar = -capacity
 }
