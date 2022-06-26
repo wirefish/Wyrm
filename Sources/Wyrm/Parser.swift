@@ -8,6 +8,8 @@
 import Foundation
 
 struct Parameter {
+    static let selfConstraint = EntityRef(nil, "self")
+
     let name: String
     let constraint: EntityRef?
 }
@@ -15,7 +17,7 @@ struct Parameter {
 indirect enum ParseNode {
     typealias Member = (String, ParseNode)
     typealias Initializer = ([String], ParseNode)
-    typealias Handler = (String, [Parameter], ParseNode)
+    typealias Handler = (EventPhase, String, [Parameter], ParseNode)
 
     case literal(Token)
     case identifier(String)
@@ -170,9 +172,9 @@ class Parser {
                        initializer: initializer, handlers: handlers)
     }
 
-    private func parsePrototype() -> EntityRef? {
+    private func parsePrototype() -> EntityRef?? {
         if !match(.colon) {
-            return nil
+            return .some(nil)
         }
 
         guard case let .identifier(prefix) = consume() else {
@@ -237,9 +239,15 @@ class Parser {
     }
 
     private func parseHandler() -> ParseNode.Handler? {
-        let phase = consume()
+        var phase: EventPhase
+        switch consume() {
+        case .allow: phase = .allow
+        case .before: phase = .before
+        case .after: phase = .after
+        default: fatalError("invalid event phase")
+        }
 
-        guard case let .identifier(name) = consume() else {
+        guard case let .identifier(event) = consume() else {
             error("expected event name after \(phase)")
             return nil
         }
@@ -268,7 +276,7 @@ class Parser {
         }
 
         if let block = parseBlock() {
-            return (name, params, block)
+            return (phase, event, params, block)
         } else {
             return nil
         }

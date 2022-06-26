@@ -33,6 +33,10 @@ extension Observer {
     }
 }
 
+enum EventPhase {
+    case allow, before, after
+}
+
 // An enumeration of all possible events.
 enum Event {
     case enterLocation(actor: Entity, location: Location, entry: Entity)
