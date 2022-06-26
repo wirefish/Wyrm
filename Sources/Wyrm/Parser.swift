@@ -5,8 +5,6 @@
 //  Created by Craig Becker on 6/23/22.
 //
 
-import Foundation
-
 struct Parameter {
     static let selfConstraint = EntityRef(nil, "self")
 
