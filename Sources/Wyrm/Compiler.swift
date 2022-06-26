@@ -51,7 +51,7 @@ enum Opcode: UInt8 {
 }
 
 class CodeBlock {
-    var locals = [Value]()
+    var locals = [String]()
     var constants = [Value]()
     var bytecode = [UInt8]()
 
@@ -77,24 +77,37 @@ class CodeBlock {
     }
 
     func dump() {
-        print(constants)
+        print("constants:")
+        for (i, value) in constants.enumerated() {
+            print(String(format: "%5d %@", i, String(describing: value)))
+        }
+
+        print("locals:")
+        for (i, name) in locals.enumerated() {
+            print(String(format: "%5d %@", i, name))
+        }
+
+        print("bytecode:")
         var iter = bytecode.makeIterator()
         while let b = iter.next() {
             let op = Opcode(rawValue: b)!
+            let opname = String(describing: op).padding(toLength: 12, withPad: " ",
+                                                        startingAt: 0)
             switch op {
             case .pushSmallInt, .call:
                 let i = Int8(bitPattern: iter.next()!)
-                print(op, i)
+                print(String(format: "  %@ %5d", opname, i))
             case .pushConstant, .assignMember, .lookupMember:
                 var offset = Int(iter.next()!)
                 offset |= Int(iter.next()!) << 8
-                print(op, offset, constants[offset])
+                print(String(format: "  %@ %5d  ; %@",
+                             opname, offset, String(describing: constants[offset])))
             case .makeList:
                 var count: UInt16 = UInt16(iter.next()!)
                 count |= UInt16(iter.next()!) << 8
-                print(op, count)
+                print(String(format: "  %@ %5d", opname, count))
             default:
-                print(op)
+                print(String(format: "  %@", opname))
             }
         }
     }

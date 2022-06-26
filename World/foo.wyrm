@@ -1,7 +1,9 @@
 // This is a test.
 
 def testy: base {
-    name = a + b
+    name = "Bob"
+    things = ["egg", 22, q]
+    age = 33 + 1
     clone(age) {
         q.a = 1
     }
