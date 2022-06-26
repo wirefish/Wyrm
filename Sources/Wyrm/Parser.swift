@@ -78,8 +78,8 @@ enum Precedence: Int, Comparable {
     }
 }
 
-typealias BinaryParserMethod = (Parser) -> (_ lhs: ParseNode) -> ParseNode?
-typealias ParseRule = (method: BinaryParserMethod?, prec: Precedence)
+typealias InfixParserMethod = (Parser) -> (_ lhs: ParseNode) -> ParseNode?
+typealias ParseRule = (method: InfixParserMethod, prec: Precedence)
 
 class Parser {
     static let parseRules: [Token:ParseRule] = [
@@ -443,7 +443,7 @@ class Parser {
 
         while let rule = Parser.parseRules[currentToken], node != nil {
             if prec <= rule.prec {
-                node = rule.method!(self)(node!)
+                node = rule.method(self)(node!)
             } else {
                 break
             }
