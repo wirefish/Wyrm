@@ -28,11 +28,6 @@ enum Direction: String {
     }
 }
 
-// A reference to an entity may contain an explicit module name, in which case only that
-// module is searched. Otherwise, the search uses the current module, any imported modules,
-// and the default core module.
-typealias EntityRef = (module: String?, name: String)
-
 class Portal: Facet {
     static let isMutable = true
 

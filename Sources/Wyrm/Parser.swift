@@ -9,7 +9,7 @@ import Foundation
 
 struct Parameter {
     let name: String
-    let constraint: [String]
+    let constraint: EntityRef?
 }
 
 indirect enum ParseNode {
@@ -32,7 +32,7 @@ indirect enum ParseNode {
     case `for`(String, ParseNode, ParseNode)
     case block([ParseNode])
     case exit(ParseNode, Direction, ParseNode)
-    case entity(name: String, prototype: [String], members: [Member],
+    case entity(name: String, prototype: EntityRef?, members: [Member],
                 initializer: Initializer?, handlers: [Handler])
 }
 
@@ -170,27 +170,25 @@ class Parser {
                        initializer: initializer, handlers: handlers)
     }
 
-    private func parsePrototype() -> [String]? {
+    private func parsePrototype() -> EntityRef? {
         if !match(.colon) {
-            return []
+            return nil
         }
 
-        var prototype = [String]()
-        guard case let .identifier(name) = consume() else {
+        guard case let .identifier(prefix) = consume() else {
             error("expected identifier")
             return nil
         }
-        prototype.append(name)
 
-        while match(.dot) {
+        if match(.dot) {
             guard case let .identifier(name) = consume() else {
                 error("expected identifier")
                 return nil
             }
-            prototype.append(name)
+            return (prefix, name)
+        } else {
+            return (nil, prefix)
         }
-
-        return prototype
     }
 
     private func parseMember() -> ParseNode.Member? {

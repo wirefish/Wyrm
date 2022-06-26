@@ -37,6 +37,11 @@ func findFacetType(forMember memberName: String) -> Facet.Type? {
 typealias EventAllower = (Entity, Event) -> Bool
 typealias EventResponder = (Entity, Event) -> Void
 
+// A reference to an entity may contain an explicit module name, in which case only that
+// module is searched. Otherwise, the search uses the current module, any imported modules,
+// and the default core module.
+typealias EntityRef = (module: String?, name: String)
+
 class Entity: Observer {
     let prototype: Entity?
     var facets = [Facet]()
