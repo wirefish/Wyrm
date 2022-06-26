@@ -192,7 +192,7 @@ class Compiler {
             block.emit(.makeExit)
 
         case .entity(name: let name, prototype: let prototype, members: let members,
-                     initializer: let initializer, handlers: let handlers):
+                     clone: let clone, handlers: let handlers):
             for (name, initializer) in members {
                 compile(initializer, &block)
                 block.emit(.assignMember, block.addConstant(.symbol(name)))

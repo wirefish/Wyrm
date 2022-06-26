@@ -18,7 +18,7 @@ enum Token: Hashable {
     case and, or, leads
 
     case def, deflocation
-    case initializer, allow, before, after
+    case clone, allow, before, after
     case `if`, `else`, `for`, `in`, `var`, oneway, to
 
     case boolean(Bool)
@@ -30,6 +30,11 @@ enum Token: Hashable {
 
     case error(Int, String)
     case endOfInput
+
+    var isAssignment: Bool {
+        return (self == .minusEqual || self == .plusEqual || self == .starEqual ||
+                self == .slashEqual || self == .equal)
+    }
 }
 
 extension Character {
@@ -222,7 +227,7 @@ class Scanner {
         "false": .boolean(false),
         "def": .def,
         "deflocation": .deflocation,
-        "init": .initializer,
+        "clone": .clone,
         "allow": .allow,
         "before": .before,
         "after": .after,

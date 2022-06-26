@@ -14,9 +14,10 @@ struct Parameter {
 
 indirect enum ParseNode {
     typealias Member = (String, ParseNode)
-    typealias Initializer = ([String], ParseNode)
+    typealias CloneInitializer = ([String], ParseNode)
     typealias Handler = (EventPhase, String, [Parameter], ParseNode)
 
+    // Expressions
     case literal(Token)
     case identifier(String)
     case unaryExpr(Token, ParseNode)
@@ -27,13 +28,27 @@ indirect enum ParseNode {
     case call(ParseNode, [ParseNode])
     case dot(ParseNode, String)
     case `subscript`(ParseNode, ParseNode)
+    case exit(ParseNode, Direction, ParseNode)
+
+    // Statements
     case `var`(String, ParseNode)
     case `if`(ParseNode, ParseNode, ParseNode?)
     case `for`(String, ParseNode, ParseNode)
     case block([ParseNode])
-    case exit(ParseNode, Direction, ParseNode)
+    case assignment(ParseNode, Token, ParseNode)
+
+    // Top-level definitions.
     case entity(name: String, prototype: EntityRef?, members: [Member],
-                initializer: Initializer?, handlers: [Handler])
+                clone: CloneInitializer?, handlers: [Handler])
+
+    var isAssignable: Bool {
+        switch self {
+        case .identifier(_): return true
+        case .dot(_, _): return true
+        case .subscript(_, _): return true
+        default: return false
+        }
+    }
 }
 
 enum Precedence: Int, Comparable {
@@ -67,17 +82,17 @@ class Parser {
         .leads: (method: parseExit, prec: .assign),
         .dot: (method: parseDot, prec: .call),
         .minus: (method: parseBinary, prec: .term),
-        .minusEqual: (method: parseBinary, prec: .assign),
+        .minusEqual: (method: parseAssignment, prec: .assign),
         .plus: (method: parseBinary, prec: .term),
-        .plusEqual: (method: parseBinary, prec: .assign),
+        .plusEqual: (method: parseAssignment, prec: .assign),
         .slash: (method: parseBinary, prec: .factor),
-        .slashEqual: (method: parseBinary, prec: .assign),
+        .slashEqual: (method: parseAssignment, prec: .assign),
         .star: (method: parseBinary, prec: .factor),
-        .starEqual: (method: parseBinary, prec: .assign),
+        .starEqual: (method: parseAssignment, prec: .assign),
         .percent: (method: parseBinary, prec: .factor),
-        .percentEqual: (method: parseBinary, prec: .assign),
+        .percentEqual: (method: parseAssignment, prec: .assign),
         .notEqual: (method: parseBinary, prec: .equality),
-        .equal: (method: parseBinary, prec: .assign),
+        .equal: (method: parseAssignment, prec: .assign),
         .equalEqual: (method: parseBinary, prec: .equality),
         .less: (method: parseBinary, prec: .comparison),
         .lessEqual: (method: parseBinary, prec: .comparison),
@@ -113,7 +128,7 @@ class Parser {
         case .def, .deflocation:
             return parseEntity()
         default:
-            print("invalid token \(currentToken) at top level")
+            error("invalid token \(currentToken) at top level")
             advance()
             return nil
         }
@@ -139,7 +154,7 @@ class Parser {
         }
 
         var members = [ParseNode.Member]()
-        var initializer: ParseNode.Initializer?
+        var clone: ParseNode.CloneInitializer?
         var handlers = [ParseNode.Handler]()
         loop: while true {
             switch currentToken {
@@ -153,8 +168,8 @@ class Parser {
                 if let member = parseMember() {
                     members.append(member)
                 }
-            case .initializer:
-                initializer = parseInitializer()
+            case .clone:
+                clone = parseCloneInitializer()
             case .allow, .before, .after:
                 if let handler = parseHandler() {
                     handlers.append(handler)
@@ -167,7 +182,7 @@ class Parser {
         }
 
         return .entity(name: name, prototype: prototype, members: members,
-                       initializer: initializer, handlers: handlers)
+                       clone: clone, handlers: handlers)
     }
 
     private func parsePrototype() -> EntityRef?? {
@@ -208,11 +223,11 @@ class Parser {
         }
     }
 
-    private func parseInitializer() -> ParseNode.Initializer? {
-        advance()  // past init
+    private func parseCloneInitializer() -> ParseNode.CloneInitializer? {
+        advance()  // past clone
 
         guard case .lparen = consume() else {
-            error("expected ( after init")
+            error("expected ( after clone")
             return nil
         }
 
@@ -225,7 +240,7 @@ class Parser {
             params.append(name)
 
             if currentToken != .rparen && !match(.comma) {
-                error("expected , between initializer parameters")
+                error("expected , between parameters")
             }
         }
 
@@ -291,7 +306,7 @@ class Parser {
         case .for:
             return parseFor()
         default:
-            return parseExpr()
+            return parseExpr(.assign)
         }
     }
 
@@ -376,9 +391,21 @@ class Parser {
         return .block(stmts)
     }
 
+    private func parseAssignment(lhs: ParseNode) -> ParseNode? {
+        let op = consume()
+        guard let rhs = parseExpr(Parser.parseRules[op]!.prec.nextHigher()) else {
+            return nil
+        }
+        if !lhs.isAssignable {
+            error("operand before \(op) is not assignable")
+            return nil
+        }
+        return .assignment(lhs, op, rhs)
+    }
+
     // MARK: - parsing expressions
 
-    private func parseExpr(_ prec: Precedence = .assign) -> ParseNode? {
+    private func parseExpr(_ prec: Precedence = .or) -> ParseNode? {
         var node: ParseNode?
         switch currentToken {
         case .boolean, .number, .string, .symbol:
@@ -398,12 +425,18 @@ class Parser {
             return nil
         }
 
-        while let rule = Parser.parseRules[currentToken] {
+        while let rule = Parser.parseRules[currentToken], node != nil {
             if prec <= rule.prec {
                 node = rule.method!(self)(node!)
             } else {
                 break
             }
+        }
+
+        if currentToken.isAssignment {
+            error("invalid assignment")
+            advance()
+            return nil
         }
 
         return node
