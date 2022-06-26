@@ -26,7 +26,6 @@ enum Token: Hashable {
     case symbol(String)
     case string(String)
     case identifier(String)
-    case ref(String?, String)
 
     case error(Int, String)
     case endOfInput
@@ -83,7 +82,6 @@ class Scanner {
             case ",": return .comma
             case ".": return .dot
             case "'": return scanSymbol()
-            case "@": return scanRef()
             case "-": return match("=") ? .minusEqual : match(">") ? .leads : .minus
             case "+": return match("=") ? .plusEqual : .plus
             case "*": return match("=") ? .starEqual : .star
@@ -266,21 +264,5 @@ class Scanner {
             return .error(line, "invalid symbolic constant")
         }
         return .symbol(id)
-    }
-
-    private func scanRef() -> Token {
-        // A reference can look like @name or @namespace.name. Note the leading @
-        // has already been consumed.
-        guard let id = consumeIdentifier() else {
-            return .error(line, "invalid reference")
-        }
-        if match(".") {
-            guard let name = consumeIdentifier() else {
-                return .error(line, "invalid name in reference")
-            }
-            return .ref(id, name)
-        } else {
-            return .ref(nil, id)
-        }
     }
 }
