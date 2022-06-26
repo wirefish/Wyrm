@@ -12,6 +12,7 @@ enum Value {
     case string(String)
     case symbol(String)
     case entity(Entity)
+    case exit(Exit)
     case list([Value])
     case function(ScriptFunction)
 }
@@ -83,6 +84,19 @@ extension String: ValueRepresentable {
 }
 
 extension NounPhrase: ValueRepresentable {
+    init?(fromValue value: Value) {
+        guard case let .string(s) = value else {
+            return nil
+        }
+        self.init(s)
+    }
+
+    func toValue() -> Value {
+        return .string(singular)
+    }
+}
+
+extension VerbPhrase: ValueRepresentable {
     init?(fromValue value: Value) {
         guard case let .string(s) = value else {
             return nil

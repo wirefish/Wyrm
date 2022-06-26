@@ -23,139 +23,9 @@ accessed within an entity. In particular, init() cannot add new members.
 
 """
 
-// FIXME: move this stuff around
-
-class Viewable: Facet {
-    var brief: NounPhrase?
-    var description: String?
-    var icon: String?
-    var size = 22
-
-    static let isMutable = false
-
-    required init() {
-    }
-
-    func clone() -> Facet {
-        let v = Viewable()
-        v.brief = brief
-        return v
-    }
-
-    static let accessors = [
-        "brief": accessor(\Viewable.brief),
-        "size": accessor(\Viewable.size)
-    ]
-}
-
-class Container: Facet {
-    var capacity = 1
-    var contents = [Entity]()
-
-    static let isMutable = true
-
-    required init() {
-    }
-    
-    func clone() -> Facet {
-        let c = Container()
-        c.capacity = capacity
-        c.contents = []  // FIXME: map clone($0)
-        return c
-    }
-
-    static let accessors = [
-        "capacity": accessor(\Container.capacity),
-        "contents": accessor(\Container.contents)
-    ]
-}
-
-enum Size: CaseIterable, ValueRepresentable {
-    case tiny, small, medium, large, huge
-
-    static let names = Dictionary(uniqueKeysWithValues: Size.allCases.map {
-        (String(describing: $0), $0)
-    })
-
-    init?(fromValue value: Value) {
-        if let v = Size.enumCase(fromValue: value, names: Size.names) {
-            self = v
-        } else {
-            return nil
-        }
-    }
-
-    func toValue() -> Value {
-        return .symbol(String(describing: self))
-    }
-}
-
-enum Direction: String {
-    case north, northeast, east, southeast, south, southwest, west, northwest
-    case up, down, `in`, out
-}
-
-typealias EntityPath = [String]
-
-typealias EntityRef = (module: String?, name: String)
-
-class Portal: Facet {
-    var size = Size.large
-
-    static let isMutable = true
-
-    required init() {
-    }
-
-    func clone() -> Facet {
-        let p = Portal()
-        return p
-    }
-
-    static let accessors = [
-        "size": accessor(\Portal.size),
-    ]
-}
-
-// Note that an exit is not an entity or facet itself, but refers to a shared portal
-// entity. What is a good syntax for this? Like an infix/ternary operator of some kind?
-// Colon is free to use in this context, add a 'to' keyword and...
-//   wooden_door: 'north [oneway] to other_room
-// There would be an implied () because you'd always want to instantiate a new entity
-// for the portal instead of sharing some global one. The matching exit would need to
-// look for an existing exit opposite its direction and share the portal. We could go so
-// far as creating opposite exits automagically, prevented by the oneway keyword.
-struct Exit {
-    let portal: Entity
-    let direction: Direction
-    let destination: EntityPath
-}
-
-class Location: Facet {
-    var exits = [Exit]()
-
-    static let isMutable = true
-
-    required init() {
-    }
-
-    func clone() -> Facet {
-        let f = Location()
-        return f
-    }
-
-    static let exitAccessor = Accessor(
-        get: { location in return .nil },
-        set: { location, value in
-        })
-
-    static let accessors = [
-        "exits": exitAccessor,
-    ]
-}
-
 let allFacetTypes: [Facet.Type] = [
     Container.self,
+    Location.self,
     Portal.self,
     Viewable.self,
 ]
@@ -173,6 +43,9 @@ class Entity: Observer {
 
     init(withPrototype prototype: Entity? = nil) {
         self.prototype = prototype
+        if let p = self.prototype {
+            facets = p.facets.map { type(of: $0).isMutable ? $0.clone() : $0 }
+        }
     }
 
     func facet(_ t: Facet.Type) -> Facet? {
@@ -180,16 +53,15 @@ class Entity: Observer {
     }
 
     func requireFacet(forMember memberName: String) -> Facet? {
-        if let facetType = findFacetType(forMember: memberName) {
-            if let facet = self.facet(facetType) {
-                return facet
-            } else {
-                let facet = facetType.init()
-                facets.append(facet)
-                return facet
-            }
-        } else {
+        guard let facetType = findFacetType(forMember: memberName) else {
             return nil
+        }
+        if let facet = self.facet(facetType) {
+            return facet
+        } else {
+            let facet = prototype?.facet(facetType)?.clone() ?? facetType.init()
+            facets.append(facet)
+            return facet
         }
     }
 }

@@ -193,10 +193,7 @@ class Compiler {
 
         case .entity(name: let name, prototype: let prototype, members: let members,
                      initializer: let initializer, handlers: let handlers):
-            for member in members {
-                guard case let .member(name, initializer) = member else {
-                    break
-                }
+            for (name, initializer) in members {
                 compile(initializer, &block)
                 block.emit(.assignMember, block.addConstant(.symbol(name)))
             }

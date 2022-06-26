@@ -13,10 +13,16 @@ struct Parameter {
 }
 
 indirect enum ParseNode {
+    typealias Member = (String, ParseNode)
+    typealias Initializer = ([String], ParseNode)
+    typealias Handler = (String, [Parameter], ParseNode)
+
     case literal(Token)
     case identifier(String)
     case unaryExpr(Token, ParseNode)
     case binaryExpr(ParseNode, Token, ParseNode)
+    case conjuction(ParseNode, ParseNode)
+    case disjunction(ParseNode, ParseNode)
     case list([ParseNode])
     case call(ParseNode, [ParseNode])
     case dot(ParseNode, String)
@@ -25,12 +31,9 @@ indirect enum ParseNode {
     case `if`(ParseNode, ParseNode, ParseNode?)
     case `for`(String, ParseNode, ParseNode)
     case block([ParseNode])
-    case initializer([String], ParseNode)
-    case handler(String, [Parameter], ParseNode)
-    case member(name: String, value: ParseNode)
     case exit(ParseNode, Direction, ParseNode)
-    case entity(name: String, prototype: [String], members: [ParseNode],
-                initializer: ParseNode?, handlers: [ParseNode])
+    case entity(name: String, prototype: [String], members: [Member],
+                initializer: Initializer?, handlers: [Handler])
 }
 
 enum Precedence: Int, Comparable {
@@ -80,8 +83,8 @@ class Parser {
         .lessEqual: (method: parseBinary, prec: .comparison),
         .greater: (method: parseBinary, prec: .comparison),
         .greaterEqual: (method: parseBinary, prec: .comparison),
-        .and: (method: parseBinary, prec: .and),
-        .or: (method: parseBinary, prec: .or),
+        .and: (method: parseAnd, prec: .and),
+        .or: (method: parseOr, prec: .or),
     ]
 
     let scanner: Scanner
@@ -135,9 +138,9 @@ class Parser {
             return nil
         }
 
-        var members = [ParseNode]()
-        var initializer: ParseNode?
-        var handlers = [ParseNode]()
+        var members = [ParseNode.Member]()
+        var initializer: ParseNode.Initializer?
+        var handlers = [ParseNode.Handler]()
         loop: while true {
             switch currentToken {
             case .endOfInput:
@@ -190,7 +193,7 @@ class Parser {
         return prototype
     }
 
-    private func parseMember() -> ParseNode? {
+    private func parseMember() -> ParseNode.Member? {
         guard case let .identifier(name) = consume() else {
             fatalError("invalid call to parseMember")
         }
@@ -200,14 +203,14 @@ class Parser {
             return nil
         }
 
-        if let value = parseExpr() {
-            return .member(name: name, value: value)
+        if let initializer = parseExpr() {
+            return (name, initializer)
         } else {
             return nil
         }
     }
 
-    private func parseInitializer() -> ParseNode? {
+    private func parseInitializer() -> ParseNode.Initializer? {
         advance()  // past init
 
         guard case .lparen = consume() else {
@@ -229,13 +232,13 @@ class Parser {
         }
 
         if let block = parseBlock() {
-            return .initializer(params, block)
+            return (params, block)
         } else {
             return nil
         }
     }
 
-    private func parseHandler() -> ParseNode? {
+    private func parseHandler() -> ParseNode.Handler? {
         let phase = consume()
 
         guard case let .identifier(name) = consume() else {
@@ -267,7 +270,7 @@ class Parser {
         }
 
         if let block = parseBlock() {
-            return .handler(name, params, block)
+            return (name, params, block)
         } else {
             return nil
         }
@@ -443,6 +446,24 @@ class Parser {
         let op = consume()
         if let rhs = parseExpr(Parser.parseRules[op]!.prec.nextHigher()) {
             return .binaryExpr(lhs, op, rhs)
+        } else {
+            return nil
+        }
+    }
+
+    private func parseAnd(lhs: ParseNode) -> ParseNode? {
+        advance()
+        if let rhs = parseExpr(.and.nextHigher()) {
+            return .conjuction(lhs, rhs)
+        } else {
+            return nil
+        }
+    }
+
+    private func parseOr(lhs: ParseNode) -> ParseNode? {
+        advance()
+        if let rhs = parseExpr(.or.nextHigher()) {
+            return .disjunction(lhs, rhs)
         } else {
             return nil
         }

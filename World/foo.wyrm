@@ -4,4 +4,5 @@ def testy {
     age = -33
     density = farkulate(123)
     exits = [wooden_door -> north to hell, another_door -> south to lib.heaven]
+    barf = a || b && c
 }

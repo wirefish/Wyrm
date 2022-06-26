@@ -59,6 +59,17 @@ extension Facet {
             })
     }
 
+    static func accessor<T: Facet, V: ValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
+        return Accessor(
+            get: { .list(($0 as! T)[keyPath: keyPath].map { $0.toValue() }) },
+            set: { (object, value) in
+                guard case let .list(list) = value else {
+                    return
+                }
+                (object as! T)[keyPath: keyPath] = list.compactMap { V.init(fromValue: $0) }
+            })
+    }
+
     static func accessor<T: Facet, V: RawRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor where V.RawValue == String {
         return Accessor(
             get: {
@@ -74,7 +85,7 @@ extension Facet {
             })
     }
 
-   static func accessor<T: Facet>(_ keyPath: ReferenceWritableKeyPath<T, [Entity]>) -> Accessor {
+    static func accessor<T: Facet>(_ keyPath: ReferenceWritableKeyPath<T, [Entity]>) -> Accessor {
         return Accessor(
             get: { .list(($0 as! T)[keyPath: keyPath].map { Value.entity($0) }) },
             set: { (object, value) in
