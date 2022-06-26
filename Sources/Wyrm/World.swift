@@ -5,8 +5,6 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-import Foundation
-
 typealias ScriptFunction = ([Value]) throws -> Value
 
 enum ScriptError: Error {
