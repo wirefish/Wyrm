@@ -6,7 +6,7 @@
 //
 
 // Possible directions of movement.
-enum Direction: String {
+enum Direction: CaseIterable, ValueRepresentable {
     case north, northeast, east, southeast, south, southwest, west, northwest
     case up, down, `in`, out
 
@@ -26,10 +26,29 @@ enum Direction: String {
         case .out: return .in
         }
     }
+
+    static let names = Dictionary(uniqueKeysWithValues: Direction.allCases.map {
+        (String(describing: $0), $0)
+    })
+
+    init?(fromValue value: Value) {
+        if let v = Direction.enumCase(fromValue: value, names: Direction.names) {
+            self = v
+        } else {
+            return nil
+        }
+    }
+
+    func toValue() -> Value {
+        return .symbol(String(describing: self))
+    }
 }
 
 class Portal: Facet {
     static let isMutable = true
+
+    var isCloseable = false
+    var isOpen = true
 
     required init() {
     }
@@ -39,7 +58,10 @@ class Portal: Facet {
         return p
     }
 
-    static let accessors = [String:Accessor]()
+    static let accessors = [
+        "isCloseable": accessor(\Portal.isCloseable),
+        "isOpen": accessor(\Portal.isOpen),
+    ]
 }
 
 // Note that an exit is not an entity or facet itself, but refers to a shared portal
@@ -48,6 +70,12 @@ struct Exit: ValueRepresentable {
     let portal: Entity
     let direction: Direction
     let destination: EntityRef
+
+    init(portal: Entity, direction: Direction, destination: EntityRef) {
+        self.portal = portal
+        self.direction = direction
+        self.destination = destination
+    }
 
     init?(fromValue value: Value) {
         guard case let .exit(exit) = value else {

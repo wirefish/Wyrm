@@ -24,9 +24,12 @@ typealias EventResponder = (Entity, Event) -> Void
 // and the default core module.
 typealias EntityRef = (module: String?, name: String)
 
-class Entity: Observer, ValueDictionary {
+class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
     let prototype: Entity?
+    let id = idIterator.next()!
     var facets = [Facet]()
+
+    static var idIterator = (1...).makeIterator()
 
     init(withPrototype prototype: Entity? = nil) {
         self.prototype = prototype
@@ -67,4 +70,6 @@ class Entity: Observer, ValueDictionary {
             facet[memberName] = newValue
         }
     }
+
+    var debugDescription: String { "<Wyrm.Entity id=\(id) facets=\(facets)>" }
 }

@@ -85,7 +85,7 @@ class Parser {
     static let parseRules: [Token:ParseRule] = [
         .lparen: (method: parseCall, prec: .call),
         .lsquare: (method: parseSubscript, prec: .call),
-        .leads: (method: parseExit, prec: .assign),
+        .leads: (method: parseExit, prec: .factor),
         .dot: (method: parseDot, prec: .call),
         .minus: (method: parseBinary, prec: .term),
         .minusEqual: (method: parseAssignment, prec: .assign),
@@ -572,24 +572,24 @@ class Parser {
     private func parseExit(lhs: ParseNode) -> ParseNode? {
         assert(match(.leads))
 
-        guard case let .identifier(name) = consume() else {
-            error("expected identifier after :")
+        guard case let .symbol(name) = consume() else {
+            error("expected symbol after ->")
             return nil
         }
 
-        guard let dir = Direction(rawValue: name) else {
-            error("invalid direction \(name) after :")
+        guard let dir = Direction(fromValue: .symbol(name)) else {
+            error("invalid direction \(name) after ->")
             return nil
         }
 
         let _ = match(.oneway)  // FIXME:
 
         if !match(.to) {
-            error("expected to after exit direction")
+            error("expected 'to' after exit direction")
             return nil
         }
 
-        guard let rhs = parseExpr(.or) else {
+        guard let rhs = parseExpr() else {
             return nil
         }
 

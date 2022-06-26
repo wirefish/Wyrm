@@ -1,12 +1,10 @@
 // This is a test.
 
-def base {
-    name = "Basic Thing"
-    capacity = 33
+def woodenDoor {
+    brief = "a wooden door"
+    isCloseable = true
 }
 
-def thing: base {
-    name = "Better Thing"
-    capacity = 55
-    foobar = -capacity
+deflocation anteroom {
+    exits = [woodenDoor -> 'north to somewhereElse]
 }
