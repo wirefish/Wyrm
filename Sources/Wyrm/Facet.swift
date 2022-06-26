@@ -55,7 +55,11 @@ extension Facet {
                 return ($0 as! T)[keyPath: keyPath]?.toValue() ?? .nil
             },
             set: {
-                ($0 as! T)[keyPath: keyPath] = V.init(fromValue: $1)
+                guard let value = V.init(fromValue: $1) else {
+                    print("cannot set property of type \(V?.self) from value \($1)")
+                    return
+                }
+                ($0 as! T)[keyPath: keyPath] = value
             })
     }
 

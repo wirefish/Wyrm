@@ -5,6 +5,10 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+import Foundation
+import AppKit
+import XCTest
+
 typealias ScriptFunction = ([Value]) throws -> Value
 
 enum ScriptError: Error {
@@ -80,15 +84,13 @@ enum ModuleError: Error {
 class World {
     let rootPath: String
     var modules = [String:Module]()
-
-    static let coreModuleName = "__CORE__"
+    let coreModule = Module("__CORE__")
 
     init(rootPath: String) {
         self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
 
-        let core = Module(World.coreModuleName)
         for (name, fn) in ScriptLibrary.functions {
-            core.bindings[name] = .function(fn)
+            coreModule.bindings[name] = .function(fn)
         }
     }
 
@@ -102,22 +104,25 @@ class World {
         }
     }
 
+    func lookup(_ ref: EntityRef, context: Module) -> Entity? {
+        if let moduleName = ref.module {
+            return modules[moduleName]?.bindings[ref.name]?.asEntity
+        } else if let value = context.bindings[ref.name] {
+            return value.asEntity
+        } else {
+            return coreModule.bindings[ref.name]?.asEntity
+        }
+    }
+
     func load() {
         let files = try! readModulesFile()
-
-        let compiler = Compiler()
 
         for relativePath in files {
             let moduleName = moduleName(for: relativePath)
             print("loading \(relativePath) into module \(moduleName)")
-            let nodes = parse(contentsOfFile: relativePath)
-            print(nodes)
 
-            for node in nodes {
-                var block = CodeBlock()
-                compiler.compile(node, &block)
-                block.dump()
-            }
+            let module = module(named: moduleName)
+            load(contentsOfFile: relativePath, into: module)
         }
 
         for (name, module) in modules {
@@ -165,9 +170,48 @@ class World {
         }
     }
 
-    private func parse(contentsOfFile relativePath: String) -> [ParseNode] {
+    private func load(contentsOfFile relativePath: String, into module: Module) {
         let source = try! String(contentsOfFile: rootPath + relativePath, encoding: .utf8)
         let parser = Parser(scanner: Scanner(source))
-        return parser.parse()
+        for node in parser.parse() {
+            switch node {
+            case let .entity(name, prototypeRef, members, clone, handlers):
+                print(name, prototypeRef, members, clone, handlers)
+                var prototype: Entity?
+                if prototypeRef != nil {
+                    prototype = lookup(prototypeRef!, context: module)
+                    if prototype == nil {
+                        print("cannot find prototype \(prototypeRef!)")
+                    }
+                }
+                let entity = Entity(withPrototype: prototype)
+
+                for member in members {
+                    print("setting \(member.name)")
+                    guard let facet = entity.requireFacet(forMember: member.name) else {
+                        print("no facet defines member \(member.name)")
+                        continue
+                    }
+                    print(facet)
+
+                    if case let .literal(value) = member.initialValue {
+                        facet[member.name] = value
+                    }
+                }
+
+                module.bindings[name] = .entity(entity)
+                for facet in entity.facets {
+                    let m = Mirror(reflecting: facet)
+                    print(m.description)
+                    for (label, value) in m.children {
+                        print("  \(label!) = \(value)")
+                    }
+                }
+
+            default:
+                break
+            }
+        }
+
     }
 }

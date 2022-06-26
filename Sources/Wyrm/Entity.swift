@@ -61,7 +61,7 @@ class Entity: Observer {
         guard let facetType = findFacetType(forMember: memberName) else {
             return nil
         }
-        if let facet = self.facet(facetType) {
+        if let facet = facets.first(where: { type(of: $0) == facetType }) {
             return facet
         } else {
             let facet = prototype?.facet(facetType)?.clone() ?? facetType.init()

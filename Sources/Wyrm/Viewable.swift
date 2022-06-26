@@ -26,6 +26,7 @@ enum Size: CaseIterable, ValueRepresentable {
 }
 
 class Viewable: Facet {
+    var name: String?
     var brief: NounPhrase?
     var pose: VerbPhrase?
     var description: String?
@@ -39,11 +40,13 @@ class Viewable: Facet {
 
     func clone() -> Facet {
         let v = Viewable()
+        v.name = name
         v.brief = brief
         return v
     }
 
     static let accessors = [
+        "name": accessor(\Viewable.name),
         "brief": accessor(\Viewable.brief),
         "pose": accessor(\Viewable.pose),
         "size": accessor(\Viewable.size),

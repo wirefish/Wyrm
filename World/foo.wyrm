@@ -1,10 +1,11 @@
 // This is a test.
 
-def testy: base {
-    name = "Bob"
-    things = ["egg", 22, q]
-    age = 33 + 1
-    clone(age) {
-        q.a = 1
-    }
+def base {
+    name = "Basic Thing"
+    capacity = 33
+}
+
+def thing: base {
+    name = "Better Thing"
+    capacity = 55
 }

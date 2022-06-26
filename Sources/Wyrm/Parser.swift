@@ -13,12 +13,12 @@ struct Parameter {
 }
 
 indirect enum ParseNode {
-    typealias Member = (String, ParseNode)
+    typealias Member = (name: String, initialValue: ParseNode)
     typealias CloneInitializer = ([String], ParseNode)
     typealias Handler = (EventPhase, String, [Parameter], ParseNode)
 
     // Expressions
-    case literal(Token)
+    case literal(Value)
     case identifier(String)
     case unaryExpr(Token, ParseNode)
     case binaryExpr(ParseNode, Token, ParseNode)
@@ -409,7 +409,7 @@ class Parser {
         var node: ParseNode?
         switch currentToken {
         case .boolean, .number, .string, .symbol:
-            node = .literal(consume())
+            node = .literal(Value(fromToken: consume())!)
         case .identifier(let s):
             node = .identifier(s)
             advance()
@@ -519,7 +519,7 @@ class Parser {
         }
 
         if case .string = currentToken {
-            args.append(.literal(consume()))
+            args.append(.literal(Value(fromToken: consume())!))
         }
 
         return .call(lhs, args)
