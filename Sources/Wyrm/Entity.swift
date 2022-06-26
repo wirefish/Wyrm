@@ -54,7 +54,7 @@ class Entity: Observer {
     }
 
     func facet(_ t: Facet.Type) -> Facet? {
-        return facets.first { type(of: $0) == t }
+        facets.first { type(of: $0) == t } ?? prototype?.facet(t)
     }
 
     func requireFacet(forMember memberName: String) -> Facet? {
