@@ -89,11 +89,26 @@ extension Facet {
             })
     }
 
-    static func accessor<T: Facet>(_ keyPath: ReferenceWritableKeyPath<T, [Entity]>) -> Accessor {
+    static func accessor<T: Facet, V: ReferenceValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
         return Accessor(
-            get: { .list(($0 as! T)[keyPath: keyPath].map { Value.entity($0) }) },
+            get: { ($0 as! T)[keyPath: keyPath].toValue() },
+            set: {
+                if let value = V.fromValue($1) as? V {
+                    ($0 as! T)[keyPath: keyPath] = value
+                }
+            })
+    }
+
+    static func accessor<T: Facet, V: ReferenceValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
+        return Accessor(
+            get: { .list(($0 as! T)[keyPath: keyPath].map { $0.toValue() }) },
             set: { (object, value) in
-                // FIXME: Not implemented
+                guard case let .list(list) = value else {
+                    return
+                }
+                (object as! T)[keyPath: keyPath] = list.compactMap {
+                    V.fromValue($0) as? V
+                }
             })
     }
 }

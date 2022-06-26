@@ -38,6 +38,8 @@ protocol ValueDictionary {
     subscript(member: String) -> Value? { get set }
 }
 
+// MARK: - representing value types
+
 protocol ValueRepresentable {
     init?(fromValue value: Value)
     func toValue() -> Value
@@ -127,5 +129,25 @@ extension VerbPhrase: ValueRepresentable {
 
     func toValue() -> Value {
         return .string(singular)
+    }
+}
+
+// MARK: - representing reference types
+
+protocol ReferenceValueRepresentable {
+    static func fromValue(_ value: Value) -> ReferenceValueRepresentable?
+    func toValue() -> Value
+}
+
+extension Entity: ReferenceValueRepresentable {
+    static func fromValue(_ value: Value) -> ReferenceValueRepresentable? {
+        guard case let .entity(entity) = value else {
+            return nil
+        }
+        return entity
+    }
+
+    func toValue() -> Value {
+        return .entity(self)
     }
 }
