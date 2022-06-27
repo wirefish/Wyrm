@@ -74,6 +74,16 @@ class Entity: Observer, ValueDictionary, Equatable, CustomDebugStringConvertible
         }
     }
 
+    func findHandler(phase: EventPhase, event: String) -> CodeBlock? {
+        // FIXME: This needs to match arguments against constraints as well.
+        for handler in handlers {
+            if handler.phase == phase && handler.event == event {
+                return handler.method
+            }
+        }
+        return nil
+    }
+
     static func == (lhs: Entity, rhs: Entity) -> Bool {
         return lhs === rhs
     }

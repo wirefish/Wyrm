@@ -5,16 +5,11 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-import NIOCore
-
 enum Opcode: UInt8 {
-    case nop = 0
-
     // Manipulate the value stack.
-    case pushNil
-    case pushTrue
+    case pushTrue = 1
     case pushFalse
-    case pushSmallInt  // next byte is signed value -128...127
+    case pushInt  // next byte is signed value -128...127
     case pushConstant  // next two bytes are offset into constants table
     case pop
     case pushLocal  // next byte is unsigned index of local
@@ -33,17 +28,17 @@ enum Opcode: UInt8 {
     // Lookup the value of an identifier constant and push that value onto the stack.
     case lookupSymbol
 
-    // Resolve a reference on the top of the stack.
-    case lookup
+    // Lookup a member of an object.
+    case lookupMember
 
     // Pop the value on top of the stack and store it in a member of the enclosing entity.
     case assignMember
 
-    // Lookup a member of an object.
-    case lookupMember
-
     // Subscript a list.
     case `subscript`
+
+    // Assign an element of a list.
+    case assignSubscript
 
     // The next two bytes are the number of values to pop from the stack. Replace them with
     // a value representing a list of those values.
@@ -64,7 +59,7 @@ enum Opcode: UInt8 {
 }
 
 class CodeBlock {
-    var locals = [String]()
+    var localNames = [String]()
     var constants = [Value]()
     var bytecode = [UInt8]()
 
@@ -110,7 +105,7 @@ class CodeBlock {
         }
 
         print("locals:")
-        for (i, name) in locals.enumerated() {
+        for (i, name) in localNames.enumerated() {
             print(String(format: "%5d %@", i, name))
         }
 
@@ -121,12 +116,12 @@ class CodeBlock {
             let opname = String(describing: op).padding(toLength: 12, withPad: " ",
                                                         startingAt: 0)
             switch op {
-            case .pushSmallInt, .call:
+            case .pushInt, .call:
                 let i = Int8(bitPattern: iter.next()!)
                 print(String(format: "  %@ %5d", opname, i))
             case .pushLocal, .popLocal:
                 let i = iter.next()!
-                print(String(format: "  %@ %5d  ; %@", opname, i, locals[Int(i)]))
+                print(String(format: "  %@ %5d  ; %@", opname, i, localNames[Int(i)]))
             case .pushConstant, .assignMember, .lookupMember, .lookupSymbol:
                 var offset = Int(iter.next()!)
                 offset |= Int(iter.next()!) << 8
@@ -146,7 +141,7 @@ class CodeBlock {
 class Compiler {
     func compileFunction(parameters: [Parameter], body: ParseNode) -> CodeBlock? {
         var block = CodeBlock()
-        block.locals = parameters.map { $0.name }
+        block.localNames = parameters.map { $0.name }
         compile(body, &block)
         return block
     }
@@ -158,7 +153,7 @@ class Compiler {
 
         case let .number(n):
             if let i = Int8(exactly: n) {
-                block.emit(.pushSmallInt, UInt8(bitPattern: i))
+                block.emit(.pushInt, UInt8(bitPattern: i))
             } else {
                 block.emit(.pushConstant, block.addConstant(.number(n)))
             }
@@ -170,7 +165,7 @@ class Compiler {
             block.emit(.pushConstant, block.addConstant(.symbol(s)))
 
         case let .identifier(s):
-            if let localIndex = block.locals.firstIndex(of: s) {
+            if let localIndex = block.localNames.firstIndex(of: s) {
                 block.emit(.pushLocal, UInt8(localIndex))
             } else {
                 block.emit(.lookupSymbol, block.addConstant(.symbol(s)))
@@ -179,10 +174,8 @@ class Compiler {
         case let .unaryExpr(op, rhs):
             compile(rhs, &block)
             switch op {
-            case .not:
-                block.emit(.not)
-            case .minus:
-                block.emit(.negate)
+            case .not: block.emit(.not)
+            case .minus: block.emit(.negate)
             default:
                 break
             }
@@ -191,18 +184,18 @@ class Compiler {
             compile(lhs, &block)
             compile(rhs, &block)
             switch op {
-            case .plus:
-                block.emit(.add)
-            case .minus:
-                block.emit(.subtract)
-            case .star:
-                block.emit(.multiply)
-            case .slash:
-                block.emit(.divide)
-            case .percent:
-                block.emit(.modulus)
-            default:
-                break
+            case .plus: block.emit(.add)
+            case .minus: block.emit(.subtract)
+            case .star: block.emit(.multiply)
+            case .slash: block.emit(.divide)
+            case .percent: block.emit(.modulus)
+            case .less: block.emit(.less)
+            case .lessEqual: block.emit(.lessEqual)
+            case .greater: block.emit(.greater)
+            case .greaterEqual: block.emit(.greaterEqual)
+            case .notEqual: block.emit(.notEqual)
+            case .equalEqual: block.emit(.equal)
+            default: break
             }
 
         case let .conjuction(lhs, rhs):
@@ -244,8 +237,8 @@ class Compiler {
             block.emit(.makeExit)
 
         case let .var(name, initialValue):
-            let index = UInt8(block.locals.count)
-            block.locals.append(name)
+            let index = UInt8(block.localNames.count)
+            block.localNames.append(name)
             compile(initialValue, &block)
             block.emit(.popLocal, index)
 
@@ -277,8 +270,30 @@ class Compiler {
         case let .block(nodes):
             nodes.forEach { compile($0, &block) }
 
-        case .assignment(_, _, _):
-            fatalError("assignment not yet implemented")
+        case let .assignment(lhs, _, rhs):
+            // TODO: += and friends
+            switch lhs {
+            case let .identifier(s):
+                guard let localIndex = block.localNames.firstIndex(of: s) else {
+                    fatalError("undefined local")
+                }
+                compile(rhs, &block)
+                block.emit(.popLocal, UInt8(localIndex))
+
+            case let .subscript(expr, index):
+                compile(expr, &block)
+                compile(index, &block)
+                compile(rhs, &block)
+                block.emit(.assignSubscript)
+
+            case let .dot(expr, member):
+                compile(expr, &block)
+                compile(rhs, &block)
+                block.emit(.assignMember, block.addConstant(.symbol(member)))
+
+            default:
+                fatalError("invalid assignment")
+            }
 
         case .entity:
             fatalError("invalid attempt to compile entity definition")

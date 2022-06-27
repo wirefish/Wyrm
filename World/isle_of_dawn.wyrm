@@ -49,10 +49,11 @@ def spirit_warden {  // FIXME: lib.npc
         He wears dark blue robes with gold embroidered trim.
 
     after enter_location(actor, location, entry) {
-        var foobar = 1 + 2
-        await sleep(3)
-        print(actor)
-        show(actor, "{self} beckons to you.")
+        var numbers = [1, 2, 3]
+        numbers[1] = "foo"
+        var thing = gravel_path -> 'north to hilltop
+        self.pose = "looks ill."
+        return 1 > 2
     }
 }
 

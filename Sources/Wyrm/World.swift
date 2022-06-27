@@ -76,11 +76,11 @@ class World {
         }
     }
 
-    func lookup(_ ref: EntityRef, context: Module) -> Entity? {
+    func lookup(_ ref: EntityRef, context: Module?) -> Entity? {
         if let moduleName = ref.module {
             return modules[moduleName]?.bindings[ref.name]?.asEntity
         } else {
-            return context.bindings[ref.name]?.asEntity
+            return context?.bindings[ref.name]?.asEntity
         }
     }
 }
@@ -408,5 +408,227 @@ extension World {
         default:
             return nil
         }
+    }
+}
+
+// MARK: - executing compiled functions
+
+enum ExecError: Error {
+    case typeMismatch
+    case undefinedSymbol(String)
+}
+
+extension CodeBlock {
+    func getUInt16(at offset: Int) -> UInt16 {
+        UInt16(bytecode[offset]) | (UInt16(bytecode[offset + 1]) << 8)
+    }
+}
+
+extension World {
+
+    func exec(_ code: CodeBlock, args: [Value], context: [ValueDictionary]) throws -> Value {
+        // The arguments are always the first locals, and self is always the first argument.
+        // Subsequent locals start with no value.
+        var locals = args
+        locals += Array<Value>(repeating: .nil, count: code.localNames.count - args.count)
+
+        var stack = [Value]()
+        var ip = 0
+        loop: while (true) {
+            let op = Opcode(rawValue: code.bytecode[ip])!
+            ip += 1
+            switch op {
+
+            case .pushTrue: stack.append(.boolean(true))
+
+            case .pushFalse: stack.append(.boolean(false))
+
+            case .pushInt:
+                let v = Int8(bitPattern: code.bytecode[ip])
+                stack.append(.number(Double(v)))
+                ip += 1
+
+            case .pushConstant:
+                let index = UInt16(code.bytecode[ip]) | (UInt16(code.bytecode[ip + 1]) << 8)
+                stack.append(code.constants[Int(index)])
+                ip += 2
+
+            case .pop:
+                let _ = stack.removeLast()
+
+            case .pushLocal:
+                let index = Int(code.bytecode[ip])
+                stack.append(locals[index])
+                ip += 1
+
+            case .popLocal:
+                let index = Int(code.bytecode[ip])
+                locals[index] = stack.removeLast()
+                ip += 1
+
+            case .not:
+                guard case let .boolean(b) = stack.removeLast() else {
+                    throw ExecError.typeMismatch
+                }
+                stack.append(.boolean(!b))
+
+            case .negate:
+                guard case let .number(n) = stack.removeLast() else {
+                    throw ExecError.typeMismatch
+                }
+                stack.append(.number(-n))
+
+            case .add, .subtract, .multiply, .divide, .modulus:
+                let rhs = stack.removeLast()
+                let lhs = stack.removeLast()
+                guard case let .number(a) = lhs, case let .number(b) = rhs else {
+                    throw ExecError.typeMismatch
+                }
+                switch op {
+                case .add: stack.append(.number(a + b))
+                case .subtract: stack.append(.number(a - b))
+                case .multiply: stack.append(.number(a * b))
+                case .divide: stack.append(.number(a / b))
+                case .modulus: stack.append(.number(a.truncatingRemainder(dividingBy: b)))
+                default: break
+                }
+
+            case .equal, .notEqual:
+                let rhs = stack.removeLast()
+                let lhs = stack.removeLast()
+                switch lhs {
+                case let .boolean(a):
+                    guard case let .boolean(b) = rhs else {
+                        throw ExecError.typeMismatch
+                    }
+                    switch op {
+                    case .equal: stack.append(.boolean(a == b))
+                    case .notEqual: stack.append(.boolean(a != b))
+                    default: break
+                    }
+
+                case let .number(a):
+                    guard case let .number(b) = rhs else {
+                        throw ExecError.typeMismatch
+                    }
+                    switch op {
+                    case .equal: stack.append(.boolean(a == b))
+                    case .notEqual: stack.append(.boolean(a != b))
+                    default: break
+                    }
+
+                default:
+                    throw ExecError.typeMismatch
+                }
+
+            case .less, .lessEqual, .greater, .greaterEqual:
+                let rhs = stack.removeLast()
+                let lhs = stack.removeLast()
+                guard case let .number(a) = lhs, case let .number(b) = rhs else {
+                    throw ExecError.typeMismatch
+                }
+                switch op {
+                case .less: stack.append(.boolean(a < b))
+                case .lessEqual: stack.append(.boolean(a <= b))
+                case .greater: stack.append(.boolean(a > b))
+                case .greaterEqual: stack.append(.boolean(a >= b))
+                default: break
+                }
+
+            case .jump:
+                let offset = UInt16(code.bytecode[ip]) | (UInt16(code.bytecode[ip + 1]) << 8)
+                ip += 2 + Int(offset)
+
+            case .jumpIf:
+                guard case let .boolean(b) = stack.last else {
+                    throw ExecError.typeMismatch
+                }
+                if (b) {
+                    let offset = UInt16(code.bytecode[ip]) | (UInt16(code.bytecode[ip + 1]) << 8)
+                    ip += 2 + Int(offset)
+                } else {
+                    ip += 2
+                }
+
+            case .jumpIfNot:
+                guard case let .boolean(b) = stack.last else {
+                    throw ExecError.typeMismatch
+                }
+                if (!b) {
+                    let offset = UInt16(code.bytecode[ip]) | (UInt16(code.bytecode[ip + 1]) << 8)
+                    ip += 2 + Int(offset)
+                } else {
+                    ip += 2
+                }
+
+            case .lookupSymbol:
+                let index = code.getUInt16(at: ip)
+                guard case let .symbol(s) = code.constants[Int(index)] else {
+                    throw ExecError.typeMismatch
+                }
+                guard let value = lookup(s, context: context) else {
+                    throw ExecError.undefinedSymbol(s)
+                }
+                stack.append(value)
+                ip += 2
+
+            case .assignMember:
+                let index = code.getUInt16(at: ip)
+                guard case let .symbol(s) = code.constants[Int(index)] else {
+                    throw ExecError.typeMismatch
+                }
+                let rhs = stack.removeLast()
+                guard var obj = stack.removeLast().asValueDictionary else {
+                    throw ExecError.typeMismatch
+                }
+                obj[s] = rhs
+                ip += 2
+
+            case .subscript:
+                guard let index = Int(fromValue: stack.removeLast()) else {
+                    throw ExecError.typeMismatch
+                }
+                guard case let .list(list) = stack.removeLast() else {
+                    throw ExecError.typeMismatch
+                }
+                stack.append(list[index])
+
+            case .assignSubscript:
+                let rhs = stack.removeLast()
+                let index = try stack.removeLast().asInt()
+                guard case var .list(list) = stack.removeLast() else {
+                    throw ExecError.typeMismatch
+                }
+                list[index] = rhs
+
+            case .makeList:
+                let count = Int(code.getUInt16(at: ip))
+                let values = Array<Value>(stack[(stack.count - count)..<stack.count])
+                stack.removeLast(count)
+                stack.append(.list(values))
+                ip += 2
+
+            case .makeExit:
+                guard case let .entity(destination) = stack.removeLast(),
+                      let direction = Direction(fromValue: stack.removeLast()),
+                      case let .entity(portal) = stack.removeLast() else {
+                    throw ExecError.typeMismatch
+                }
+                // FIXME: destination is bogus
+                stack.append(.exit(Exit(portal: Entity(withPrototype: portal), direction: direction,
+                                        destination: EntityRef(module: nil, name: ""))))
+
+            case .return:
+                break loop
+
+            default:
+                fatalError("instruction \(op) not implemented")
+            }
+        }
+
+        print("stack:", stack)
+        print("locals:", locals)
+
+        return stack.last ?? .nil
     }
 }
