@@ -20,7 +20,7 @@ extension Array {
     }
 }
 
-class Module: Equatable, ValueDictionary {
+class Module: ValueDictionary {
     let name: String
     var bindings = [String:Value]()
 
@@ -52,7 +52,7 @@ class World {
         self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
 
         for (name, fn) in ScriptLibrary.functions {
-            coreModule.bindings[name] = .function(ScriptFunction(name: name, fn: fn))
+            coreModule.bindings[name] = .function(NativeFunction(name: name, fn: fn))
         }
     }
 
@@ -358,7 +358,7 @@ extension World {
             guard args.allSatisfy({ $0 != nil}) else {
                 break
             }
-            return try! fn.fn(args.map({ $0! }))
+            return try! fn.call(args.map({ $0! }))
 
         case let .dot(lhs, member):
             guard let lhs = eval(lhs, context: context) else {
@@ -443,7 +443,7 @@ extension World {
 
             case .pushFalse: stack.append(.boolean(false))
 
-            case .pushInt:
+            case .pushSmallInt:
                 let v = Int8(bitPattern: code.bytecode[ip])
                 stack.append(.number(Double(v)))
                 ip += 1

@@ -53,6 +53,7 @@ def spirit_warden {  // FIXME: lib.npc
         numbers[1] = "foo"
         var thing = gravel_path -> 'north to hilltop
         self.pose = "looks ill."
+        numbers[2] = "foo"
         return 1 > 2
     }
 }

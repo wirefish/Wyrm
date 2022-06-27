@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-class ValueList: Equatable, CustomDebugStringConvertible {
+class ValueList: CustomDebugStringConvertible {
     var values: [Value]
 
     init<S>(_ elements: S) where S: Sequence, S.Element: ValueRepresentable {
@@ -36,7 +36,7 @@ enum Value: Equatable {
     case entity(Entity)
     case exit(Exit)
     case list(ValueList)
-    case function(ScriptFunction)
+    case function(Callable)
     case module(Module)
 
     var asEntity: Entity? {
@@ -54,6 +54,25 @@ enum Value: Equatable {
         default: return nil
         }
     }
+
+    // NOTE: This is a very specific notion of equality -- any cases that contain
+    // reference types (directly or indirectly) will never compare equal.
+    static func == (lhs: Value, rhs: Value) -> Bool {
+        if case .nil = lhs, case .nil = rhs {
+            return true
+        } else if case let .boolean(a) = lhs, case let .boolean(b) = rhs {
+            return a == b
+        } else if case let .number(a) = lhs, case let .number(b) = rhs {
+            return a == b
+        } else if case let .string(a) = lhs, case let .string(b) = rhs {
+            return a == b
+        } else if case let .symbol(a) = lhs, case let .symbol(b) = rhs {
+            return a == b
+       } else {
+            return false
+        }
+    }
+
 }
 
 protocol ValueDictionary {

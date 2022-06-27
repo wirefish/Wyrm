@@ -21,12 +21,12 @@ typealias EventHandler = (phase: EventPhase, event: String, method: CodeBlock)
 // A reference to an entity may contain an explicit module name, in which case only that
 // module is searched. Otherwise, the search uses the current module, any imported modules,
 // and the default core module.
-struct EntityRef: Equatable {
+struct EntityRef {
     let module: String?
     let name: String
 }
 
-class Entity: Observer, ValueDictionary, Equatable, CustomDebugStringConvertible {
+class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
     let prototype: Entity?
     let id = idIterator.next()!
     var facets = [Facet]()
@@ -82,10 +82,6 @@ class Entity: Observer, ValueDictionary, Equatable, CustomDebugStringConvertible
             }
         }
         return nil
-    }
-
-    static func == (lhs: Entity, rhs: Entity) -> Bool {
-        return lhs === rhs
     }
 
     var debugDescription: String { "<Wyrm.Entity id=\(id) facets=\(facets)>" }

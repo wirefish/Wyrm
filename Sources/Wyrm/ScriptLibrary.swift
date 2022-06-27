@@ -5,12 +5,22 @@
 //  Created by Craig Becker on 6/26/22.
 //
 
-struct ScriptFunction: Equatable {
+protocol Callable {
+    func call(_ args: [Value]) throws -> Value?
+}
+
+extension Callable {
+    func call(_ args: Value...) throws -> Value? {
+        return try call(args)
+    }
+}
+
+struct NativeFunction: Callable {
     let name: String
     let fn: ([Value]) throws -> Value
 
-    static func == (lhs: ScriptFunction, rhs: ScriptFunction) -> Bool {
-        return false
+    func call(_ args: [Value]) throws -> Value? {
+        return try fn(args)
     }
 }
 

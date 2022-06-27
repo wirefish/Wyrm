@@ -9,7 +9,7 @@ enum Opcode: UInt8 {
     // Manipulate the value stack.
     case pushTrue = 1
     case pushFalse
-    case pushInt  // next byte is signed value -128...127
+    case pushSmallInt  // next byte is signed value -128...127
     case pushConstant  // next two bytes are offset into constants table
     case pop
     case pushLocal  // next byte is unsigned index of local
@@ -116,7 +116,7 @@ class CodeBlock {
             let opname = String(describing: op).padding(toLength: 12, withPad: " ",
                                                         startingAt: 0)
             switch op {
-            case .pushInt, .call:
+            case .pushSmallInt, .call:
                 let i = Int8(bitPattern: iter.next()!)
                 print(String(format: "  %@ %5d", opname, i))
             case .pushLocal, .popLocal:
@@ -153,7 +153,7 @@ class Compiler {
 
         case let .number(n):
             if let i = Int8(exactly: n) {
-                block.emit(.pushInt, UInt8(bitPattern: i))
+                block.emit(.pushSmallInt, UInt8(bitPattern: i))
             } else {
                 block.emit(.pushConstant, block.addConstant(.number(n)))
             }
