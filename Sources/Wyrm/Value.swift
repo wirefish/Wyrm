@@ -21,7 +21,7 @@ class ValueList: Equatable, CustomDebugStringConvertible {
     }
 
     static func == (lhs: ValueList, rhs: ValueList) -> Bool {
-        return false
+        return lhs === rhs
     }
 
     var debugDescription: String { "<Wyrm.ValueList \(values)>" }
