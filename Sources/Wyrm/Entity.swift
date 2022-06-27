@@ -16,18 +16,21 @@ func findFacetType(forMember memberName: String) -> Facet.Type? {
     return allFacetTypes.first { $0.accessors.keys.contains(memberName) }
 }
 
-typealias EventAllower = (Entity, Event) -> Bool
-typealias EventResponder = (Entity, Event) -> Void
+typealias EventHandler = (phase: EventPhase, event: String, method: CodeBlock)
 
 // A reference to an entity may contain an explicit module name, in which case only that
 // module is searched. Otherwise, the search uses the current module, any imported modules,
 // and the default core module.
-typealias EntityRef = (module: String?, name: String)
+struct EntityRef: Equatable {
+    let module: String?
+    let name: String
+}
 
-class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
+class Entity: Observer, ValueDictionary, Equatable, CustomDebugStringConvertible {
     let prototype: Entity?
     let id = idIterator.next()!
     var facets = [Facet]()
+    var handlers = [EventHandler]()
 
     static var idIterator = (1...).makeIterator()
 
@@ -69,6 +72,10 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
             }
             facet[memberName] = newValue
         }
+    }
+
+    static func == (lhs: Entity, rhs: Entity) -> Bool {
+        return lhs === rhs
     }
 
     var debugDescription: String { "<Wyrm.Entity id=\(id) facets=\(facets)>" }

@@ -49,7 +49,9 @@ def spirit_warden {  // FIXME: lib.npc
         He wears dark blue robes with gold embroidered trim.
 
     after enter_location(actor, location, entry) {
+        var foobar = 1 + 2
         await sleep(3)
+        print(actor)
         show(actor, "{self} beckons to you.")
     }
 }
@@ -66,5 +68,6 @@ deflocation pavilion: isle_location {
         on their behalf. For example, type `talk warden` to talk to the spirit
         warden. He may have something interesting to say.
 
+    contents = [sprit_warden]
     exits = [gravel_path -> 'north to hilltop]
 }

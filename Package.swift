@@ -17,7 +17,8 @@ let package = Package(
         // in this package, and on products in packages this package depends on.
         .executableTarget(
             name: "Wyrm",
-            dependencies: ["TOMLDecoder"]),
+            dependencies: ["TOMLDecoder",
+                           .product(name: "NIOCore", package: "swift-nio")]),
         .testTarget(
             name: "WyrmTests",
             dependencies: ["Wyrm"]),

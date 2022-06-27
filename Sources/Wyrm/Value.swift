@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-enum Value {
+enum Value: Equatable {
     case `nil`
     case boolean(Bool)
     case number(Double)

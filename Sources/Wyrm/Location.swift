@@ -6,7 +6,7 @@
 //
 
 // Possible directions of movement.
-enum Direction: CaseIterable, ValueRepresentable {
+enum Direction: Equatable, CaseIterable, ValueRepresentable {
     case north, northeast, east, southeast, south, southwest, west, northwest
     case up, down, `in`, out
 
@@ -66,7 +66,7 @@ class Portal: Facet {
 
 // Note that an exit is not an entity or facet itself, but refers to a shared portal
 // entity.
-struct Exit: ValueRepresentable {
+struct Exit: ValueRepresentable, Equatable {
     let portal: Entity
     let direction: Direction
     let destination: EntityRef

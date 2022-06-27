@@ -5,7 +5,14 @@
 //  Created by Craig Becker on 6/26/22.
 //
 
-typealias ScriptFunction = ([Value]) throws -> Value
+struct ScriptFunction: Equatable {
+    let name: String
+    let fn: ([Value]) throws -> Value
+
+    static func == (lhs: ScriptFunction, rhs: ScriptFunction) -> Bool {
+        return false
+    }
+}
 
 enum ScriptError: Error {
     case invalidArgument

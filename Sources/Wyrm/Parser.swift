@@ -6,7 +6,7 @@
 //
 
 struct Parameter {
-    static let selfConstraint = EntityRef(nil, "self")
+    static let selfConstraint = EntityRef(module: nil, name: "self")
 
     let name: String
     let constraint: EntityRef?
@@ -39,6 +39,8 @@ indirect enum ParseNode {
     case `var`(String, ParseNode)
     case `if`(ParseNode, ParseNode, ParseNode?)
     case `for`(String, ParseNode, ParseNode)
+    case await(ParseNode)
+    case `return`(ParseNode)
     case block([ParseNode])
     case assignment(ParseNode, Token, ParseNode)
 
@@ -207,9 +209,9 @@ class Parser {
                 error("expected identifier")
                 return nil
             }
-            return (prefix, name)
+            return EntityRef(module: prefix, name: name)
         } else {
-            return (nil, prefix)
+            return EntityRef(module: nil, name: prefix)
         }
     }
 
@@ -312,6 +314,10 @@ class Parser {
             return parseIf()
         case .for:
             return parseFor()
+        case .await:
+            return parseAwait()
+        case .return:
+            return parseReturn()
         default:
             return parseExpr(.assign)
         }
@@ -396,6 +402,22 @@ class Parser {
         }
 
         return .block(stmts)
+    }
+
+    private func parseAwait() -> ParseNode? {
+        assert(match(.await))
+        guard let rhs = parseExpr() else {
+            return nil
+        }
+        return .await(rhs)
+    }
+
+    private func parseReturn() -> ParseNode? {
+        assert(match(.return))
+        guard let rhs = parseExpr() else {
+            return nil
+        }
+        return .return(rhs)
     }
 
     private func parseAssignment(lhs: ParseNode) -> ParseNode? {

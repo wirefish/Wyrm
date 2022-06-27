@@ -20,7 +20,7 @@ extension Array {
     }
 }
 
-class Module: ValueDictionary {
+class Module: Equatable, ValueDictionary {
     let name: String
     var bindings = [String:Value]()
 
@@ -32,6 +32,10 @@ class Module: ValueDictionary {
         get { bindings[member] }
         set { bindings[member] = newValue }
     }
+
+    static func == (lhs: Module, rhs: Module) -> Bool {
+        return lhs === rhs
+    }
 }
 
 enum WorldError: Error {
@@ -42,12 +46,13 @@ class World {
     let rootPath: String
     var modules = [String:Module]()
     let coreModule = Module("__CORE__")
+    var startableEntities = [Entity]()
 
     init(rootPath: String) {
         self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
 
         for (name, fn) in ScriptLibrary.functions {
-            coreModule.bindings[name] = .function(fn)
+            coreModule.bindings[name] = .function(ScriptFunction(name: name, fn: fn))
         }
     }
 
@@ -68,6 +73,14 @@ class World {
             return .module(module)
         } else {
             return nil
+        }
+    }
+
+    func lookup(_ ref: EntityRef, context: Module) -> Entity? {
+        if let moduleName = ref.module {
+            return modules[moduleName]?.bindings[ref.name]?.asEntity
+        } else {
+            return context.bindings[ref.name]?.asEntity
         }
     }
 }
@@ -139,7 +152,8 @@ extension World {
     }
 
     private func loadEntity(_ node: ParseNode, into module: Module) {
-        guard case let .entity(name, prototypeRef, members, clone, handlers, startable) = node else {
+        // FIXME: handle clone initializer
+        guard case let .entity(name, prototypeRef, members, _, handlers, startable) = node else {
             fatalError("invalid call to loadEntity")
         }
 
@@ -154,23 +168,28 @@ extension World {
         let entity = Entity(withPrototype: prototype)
         let context: [ValueDictionary] = [entity, module]
 
-        for member in members {
-            if let value = eval(member.initialValue, context: context) {
-                entity[member.name] = value
+        // Initialize the members.
+        for (name, initialValue) in members {
+            if let value = eval(initialValue, context: context) {
+                entity[name] = value
+            }
+        }
+
+        // Compile the event handlers.
+        let compiler = Compiler()
+        for (phase, name, parameters, body) in handlers {
+            let parameters = [Parameter(name: "self", constraint: nil)] + parameters
+            if let code = compiler.compileFunction(parameters: parameters, body: body) {
+                print("handler \(phase) \(name):")
+                code.dump()
+                entity.handlers.append((phase, name, code))
             }
         }
 
         module.bindings[name] = .entity(entity)
-
-        print(name, entity)
-        for facet in entity.facets {
-            let m = Mirror(reflecting: facet)
-            print(m.description)
-            for (label, value) in m.children {
-                print("  \(label!) = \(value)")
-            }
+        if startable {
+            startableEntities.append(entity)
         }
-
     }
 
     private func moduleName(for relativePath: String) -> String {
@@ -321,24 +340,25 @@ extension World {
                 print("exit portal must be an entity")
                 break
             }
-            // TODO: dest must be a tree of dotted identifiers. Don't evaluate it,
-            // just use the identifiers as the path for the exit object.
-            let destRef = EntityRef(nil, "")
+            guard let destRef = asEntityRef(dest) else {
+                print("exit destination must be an entity reference")
+                break
+            }
             return .exit(Exit(portal: Entity(withPrototype: portalPrototype),
                               direction: dir, destination: destRef))
 
-        case let .call(fn, args):
-            guard let fn = eval(fn, context: context) else {
+        case let .call(lhs, args):
+            guard let lhs = eval(lhs, context: context) else {
                 break
             }
-            guard case let .function(fn) = fn else {
+            guard case let .function(fn) = lhs else {
                 break
             }
             let args = args.map { eval($0, context: context) }
             guard args.allSatisfy({ $0 != nil}) else {
                 break
             }
-            return try! fn(args.map({ $0! }))
+            return try! fn.fn(args.map({ $0! }))
 
         case let .dot(lhs, member):
             guard let lhs = eval(lhs, context: context) else {
@@ -372,13 +392,21 @@ extension World {
         return nil
     }
 
-    func lookup(_ ref: EntityRef, context: Module) -> Entity? {
-        if let moduleName = ref.module {
-            return modules[moduleName]?.bindings[ref.name]?.asEntity
-        } else if let value = context.bindings[ref.name] {
-            return value.asEntity
-        } else {
-            return coreModule.bindings[ref.name]?.asEntity
+    func asEntityRef(_ node: ParseNode) -> EntityRef? {
+        switch node {
+        case let .binaryExpr(lhs, op, rhs):
+            guard op == .dot,
+                  case let .identifier(moduleName) = lhs,
+                  case let .identifier(name) = rhs else {
+                return nil
+            }
+            return EntityRef(module: moduleName, name: name)
+
+        case let .identifier(name):
+            return EntityRef(module: nil, name: name)
+
+        default:
+            return nil
         }
     }
 }

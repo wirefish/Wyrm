@@ -5,6 +5,8 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+import NIOCore
+
 enum Opcode: UInt8 {
     case nop = 0
 
@@ -15,6 +17,8 @@ enum Opcode: UInt8 {
     case pushSmallInt  // next byte is signed value -128...127
     case pushConstant  // next two bytes are offset into constants table
     case pop
+    case pushLocal  // next byte is unsigned index of local
+    case popLocal  // next byte is unsigned index of local
 
     // Transform the top of the value stack with a unary operation.
     case not, negate
@@ -23,8 +27,11 @@ enum Opcode: UInt8 {
     case add, subtract, multiply, divide, modulus
     case equal, notEqual, less, lessEqual, greater, greaterEqual
 
-    // Change the instruction offset.
-    case jump, jumpIfFalse
+    // Change the instruction pointer. The next two bytes are an unsigned offset.
+    case jump, jumpIf, jumpIfNot
+
+    // Lookup the value of an identifier constant and push that value onto the stack.
+    case lookupSymbol
 
     // Resolve a reference on the top of the stack.
     case lookup
@@ -48,6 +55,12 @@ enum Opcode: UInt8 {
     // Call a function. The top of the stack contains the function and the arguments.
     // The next byte is the number of arguments.
     case call
+
+    // Await the result of a promise.
+    case await
+
+    // Return the value at the top of the stack.
+    case `return`
 }
 
 class CodeBlock {
@@ -70,10 +83,24 @@ class CodeBlock {
         bytecode.append(UInt8(arg >> 8))
     }
 
+    func emitJump(_ op: Opcode) -> Int {
+        emit(op, UInt16(0xffff))
+        return bytecode.count - 2
+    }
+
+    func patchJump(at pos: Int) {
+        let offset = UInt16(bytecode.count - pos - 2)
+        bytecode[pos] = UInt8(offset & 0xff)
+        bytecode[pos + 1] = (UInt8(offset >> 8))
+    }
+
     func addConstant(_ value: Value) -> UInt16 {
-        let n = constants.count
+        if let index = constants.firstIndex(of: value) {
+            return UInt16(index)
+        }
+        let index = constants.count
         constants.append(value)
-        return UInt16(n)
+        return UInt16(index)
     }
 
     func dump() {
@@ -97,7 +124,10 @@ class CodeBlock {
             case .pushSmallInt, .call:
                 let i = Int8(bitPattern: iter.next()!)
                 print(String(format: "  %@ %5d", opname, i))
-            case .pushConstant, .assignMember, .lookupMember:
+            case .pushLocal, .popLocal:
+                let i = iter.next()!
+                print(String(format: "  %@ %5d  ; %@", opname, i, locals[Int(i)]))
+            case .pushConstant, .assignMember, .lookupMember, .lookupSymbol:
                 var offset = Int(iter.next()!)
                 offset |= Int(iter.next()!) << 8
                 print(String(format: "  %@ %5d  ; %@",
@@ -114,6 +144,13 @@ class CodeBlock {
 }
 
 class Compiler {
+    func compileFunction(parameters: [Parameter], body: ParseNode) -> CodeBlock? {
+        var block = CodeBlock()
+        block.locals = parameters.map { $0.name }
+        compile(body, &block)
+        return block
+    }
+
     func compile(_ node: ParseNode, _ block: inout CodeBlock) {
         switch node {
         case let .boolean(b):
@@ -126,15 +163,18 @@ class Compiler {
                 block.emit(.pushConstant, block.addConstant(.number(n)))
             }
 
-        case let .symbol(s):
-            block.emit(.pushConstant, block.addConstant(.symbol(s)))
-
         case let .string(s):
             block.emit(.pushConstant, block.addConstant(.string(s)))
 
-        case let .identifier(s):
+        case let .symbol(s):
             block.emit(.pushConstant, block.addConstant(.symbol(s)))
-            block.emit(.lookup)
+
+        case let .identifier(s):
+            if let localIndex = block.locals.firstIndex(of: s) {
+                block.emit(.pushLocal, UInt8(localIndex))
+            } else {
+                block.emit(.lookupSymbol, block.addConstant(.symbol(s)))
+            }
 
         case let .unaryExpr(op, rhs):
             compile(rhs, &block)
@@ -165,6 +205,20 @@ class Compiler {
                 break
             }
 
+        case let .conjuction(lhs, rhs):
+            compile(lhs, &block)
+            let jump = block.emitJump(.jumpIfNot)
+            block.emit(.pop)
+            compile(rhs, &block)
+            block.patchJump(at: jump)
+
+        case let .disjunction(lhs, rhs):
+            compile(lhs, &block)
+            let jump = block.emitJump(.jumpIf)
+            block.emit(.pop)
+            compile(rhs, &block)
+            block.patchJump(at: jump)
+
         case let .list(elements):
             elements.forEach { compile($0, &block) }
             block.emit(.makeList, UInt16(elements.count))
@@ -183,29 +237,51 @@ class Compiler {
             compile(index, &block)
             block.emit(.subscript)
 
-/*
-        case .var(_, _):
-            <#code#>
-        case .if(_, _, _):
-            <#code#>
-        case .for(_, _, _):
-            <#code#>
-
-*/
-        case let .block(nodes):
-            nodes.forEach { compile($0, &block) }
-
         case let .exit(portal, direction, destination):
             compile(portal, &block)
             block.emit(.pushConstant, block.addConstant(direction.toValue()))
             compile(destination, &block)
             block.emit(.makeExit)
 
+        case let .var(name, initialValue):
+            let index = UInt8(block.locals.count)
+            block.locals.append(name)
+            compile(initialValue, &block)
+            block.emit(.popLocal, index)
+
+        case let .if(predicate, thenBlock, elseBlock):
+            compile(predicate, &block)
+            let skipThen = block.emitJump(.jumpIfNot)
+            block.emit(.pop)
+            compile(thenBlock, &block)
+            if let elseBlock = elseBlock {
+                let skipElse = block.emitJump(.jump)
+                block.patchJump(at: skipThen)
+                compile(elseBlock, &block)
+                block.patchJump(at: skipElse)
+            } else {
+                block.patchJump(at: skipThen)
+            }
+
+        case .for:
+            fatalError("for loop not yet implemented")
+
+        case let .await(rhs):
+            compile(rhs, &block)
+            block.emit(.await)
+
+        case let .return(rhs):
+            compile(rhs, &block)
+            block.emit(.return)
+
+        case let .block(nodes):
+            nodes.forEach { compile($0, &block) }
+
+        case .assignment(_, _, _):
+            fatalError("assignment not yet implemented")
+
         case .entity:
             fatalError("invalid attempt to compile entity definition")
-            
-        default:
-            break
         }
     }
 }
