@@ -299,6 +299,10 @@ class Compiler {
                 fatalError("invalid assignment")
             }
 
+        case let .ignoredValue(expr):
+            compile(expr, &block)
+            block.emit(.pop)
+
         case .entity:
             fatalError("invalid attempt to compile entity definition")
         }

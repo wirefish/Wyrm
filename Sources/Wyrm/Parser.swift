@@ -43,6 +43,7 @@ indirect enum ParseNode {
     case `return`(ParseNode)
     case block([ParseNode])
     case assignment(ParseNode, Token, ParseNode)
+    case ignoredValue(ParseNode)
 
     // Top-level definitions.
     case entity(name: String, prototype: EntityRef?, members: [Member],
@@ -319,7 +320,14 @@ class Parser {
         case .return:
             return parseReturn()
         default:
-            return parseExpr(.assign)
+            guard let expr = parseExpr(.assign) else {
+                return nil
+            }
+            if case .assignment = expr {
+                return expr
+            } else {
+                return .ignoredValue(expr)
+            }
         }
     }
 

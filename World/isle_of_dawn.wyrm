@@ -51,6 +51,7 @@ def spirit_warden {  // FIXME: lib.npc
     after enter_location(actor, location, entry) {
         // await sleep(3)
         show(actor, "The spirit warden beckons in your direction.")
+        return 1 + 2
     }
 }
 
