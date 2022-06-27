@@ -78,6 +78,10 @@ protocol ValueDictionary {
     subscript(member: String) -> Value? { get set }
 }
 
+protocol Callable {
+    func call(_ args: [Value], context: [ValueDictionary]) throws -> Value?
+}
+
 // MARK: - representing value types
 
 protocol ValueRepresentable {

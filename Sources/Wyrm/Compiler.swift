@@ -58,10 +58,14 @@ enum Opcode: UInt8 {
     case `return`
 }
 
-class CodeBlock {
-    var localNames = [String]()
+class ScriptFunction: Callable {
+    var locals = [String]()
     var constants = [Value]()
     var bytecode = [UInt8]()
+
+    func call(_ args: [Value], context: [ValueDictionary]) throws -> Value? {
+        return nil
+    }
 
     func emit(_ op: Opcode) {
         bytecode.append(op.rawValue)
@@ -105,7 +109,7 @@ class CodeBlock {
         }
 
         print("locals:")
-        for (i, name) in localNames.enumerated() {
+        for (i, name) in locals.enumerated() {
             print(String(format: "%5d %@", i, name))
         }
 
@@ -121,7 +125,7 @@ class CodeBlock {
                 print(String(format: "  %@ %5d", opname, i))
             case .pushLocal, .popLocal:
                 let i = iter.next()!
-                print(String(format: "  %@ %5d  ; %@", opname, i, localNames[Int(i)]))
+                print(String(format: "  %@ %5d  ; %@", opname, i, locals[Int(i)]))
             case .pushConstant, .assignMember, .lookupMember, .lookupSymbol:
                 var offset = Int(iter.next()!)
                 offset |= Int(iter.next()!) << 8
@@ -139,14 +143,14 @@ class CodeBlock {
 }
 
 class Compiler {
-    func compileFunction(parameters: [Parameter], body: ParseNode) -> CodeBlock? {
-        var block = CodeBlock()
-        block.localNames = parameters.map { $0.name }
+    func compileFunction(parameters: [Parameter], body: ParseNode) -> ScriptFunction? {
+        var block = ScriptFunction()
+        block.locals = parameters.map { $0.name }
         compile(body, &block)
         return block
     }
 
-    func compile(_ node: ParseNode, _ block: inout CodeBlock) {
+    func compile(_ node: ParseNode, _ block: inout ScriptFunction) {
         switch node {
         case let .boolean(b):
             block.emit(b ? .pushTrue : .pushFalse)
@@ -165,7 +169,7 @@ class Compiler {
             block.emit(.pushConstant, block.addConstant(.symbol(s)))
 
         case let .identifier(s):
-            if let localIndex = block.localNames.firstIndex(of: s) {
+            if let localIndex = block.locals.firstIndex(of: s) {
                 block.emit(.pushLocal, UInt8(localIndex))
             } else {
                 block.emit(.lookupSymbol, block.addConstant(.symbol(s)))
@@ -237,8 +241,8 @@ class Compiler {
             block.emit(.makeExit)
 
         case let .var(name, initialValue):
-            let index = UInt8(block.localNames.count)
-            block.localNames.append(name)
+            let index = UInt8(block.locals.count)
+            block.locals.append(name)
             compile(initialValue, &block)
             block.emit(.popLocal, index)
 
@@ -274,7 +278,7 @@ class Compiler {
             // TODO: += and friends
             switch lhs {
             case let .identifier(s):
-                guard let localIndex = block.localNames.firstIndex(of: s) else {
+                guard let localIndex = block.locals.firstIndex(of: s) else {
                     fatalError("undefined local")
                 }
                 compile(rhs, &block)

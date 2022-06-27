@@ -43,17 +43,23 @@ enum WorldError: Error {
 }
 
 class World {
+    static var instance: World!
+
     let rootPath: String
     var modules = [String:Module]()
     let coreModule = Module("__CORE__")
     var startableEntities = [Entity]()
 
     init(rootPath: String) {
-        self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
+        assert(World.instance == nil)
 
+        self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
+        
         for (name, fn) in ScriptLibrary.functions {
             coreModule.bindings[name] = .function(NativeFunction(name: name, fn: fn))
         }
+
+        World.instance = self
     }
 
     func requireModule(named name: String) -> Module {
@@ -358,7 +364,7 @@ extension World {
             guard args.allSatisfy({ $0 != nil}) else {
                 break
             }
-            return try! fn.call(args.map({ $0! }))
+            return try! fn.call(args.map({ $0! }), context: [])
 
         case let .dot(lhs, member):
             guard let lhs = eval(lhs, context: context) else {
@@ -416,9 +422,10 @@ extension World {
 enum ExecError: Error {
     case typeMismatch
     case undefinedSymbol(String)
+    case expectedCallable
 }
 
-extension CodeBlock {
+extension ScriptFunction {
     func getUInt16(at offset: Int) -> UInt16 {
         UInt16(bytecode[offset]) | (UInt16(bytecode[offset + 1]) << 8)
     }
@@ -426,15 +433,15 @@ extension CodeBlock {
 
 extension World {
 
-    func exec(_ code: CodeBlock, args: [Value], context: [ValueDictionary]) throws -> Value {
+    func exec(_ code: ScriptFunction, args: [Value], context: [ValueDictionary]) throws -> Value {
         // The arguments are always the first locals, and self is always the first argument.
         // Subsequent locals start with no value.
         var locals = args
-        locals += Array<Value>(repeating: .nil, count: code.localNames.count - args.count)
+        locals += Array<Value>(repeating: .nil, count: code.locals.count - args.count)
 
         var stack = [Value]()
         var ip = 0
-        loop: while (true) {
+        loop: while ip < code.bytecode.count {
             let op = Opcode(rawValue: code.bytecode[ip])!
             ip += 1
             switch op {
@@ -595,7 +602,9 @@ extension World {
 
             case .assignSubscript:
                 let rhs = stack.removeLast()
-                let index = try stack.removeLast().asInt()
+                guard let index = Int.init(fromValue: stack.removeLast()) else {
+                    throw ExecError.typeMismatch
+                }
                 guard case let .list(list) = stack.removeLast() else {
                     throw ExecError.typeMismatch
                 }
@@ -617,6 +626,16 @@ extension World {
                 // FIXME: destination is bogus
                 stack.append(.exit(Exit(portal: Entity(withPrototype: portal), direction: direction,
                                         destination: EntityRef(module: nil, name: ""))))
+
+            case .call:
+                let argCount = Int(code.bytecode[ip])
+                let args = Array<Value>(stack[(stack.count - argCount)..<stack.count])
+                stack.removeLast(argCount)
+                guard case let .function(fn) = stack.removeLast() else {
+                    throw ExecError.expectedCallable
+                }
+                stack.append(try fn.call(args, context: []) ?? .nil)
+                ip += 1
 
             case .return:
                 break loop

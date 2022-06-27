@@ -20,7 +20,7 @@ enum EventPhase {
     case allow, before, after
 }
 
-typealias EventHandler = (phase: EventPhase, event: String, method: CodeBlock)
+typealias EventHandler = (phase: EventPhase, event: String, method: ScriptFunction)
 
 // A reference to an entity may contain an explicit module name, in which case only that
 // module is searched. Otherwise, the search uses the current module, any imported modules,
@@ -78,7 +78,7 @@ class Entity: ValueDictionary, CustomDebugStringConvertible {
         }
     }
 
-    func findHandler(phase: EventPhase, event: String) -> CodeBlock? {
+    func findHandler(phase: EventPhase, event: String) -> ScriptFunction? {
         // FIXME: This needs to match arguments against constraints as well.
         for handler in handlers {
             if handler.phase == phase && handler.event == event {
