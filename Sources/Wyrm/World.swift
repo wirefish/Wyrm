@@ -330,7 +330,7 @@ extension World {
             guard values.allSatisfy({ $0 != nil}) else {
                 break
             }
-            return .list(values.map({ $0! }))
+            return .list(ValueList(values.map({ $0! })))
 
         case let .exit(portal, dir, dest):
             guard let portal = eval(portal, context: context) else {
@@ -383,7 +383,7 @@ extension World {
                 print("subscript index must be an integer")
                 break
             }
-            return lhs[index]
+            return lhs.values[index]
 
         default:
             fatalError("not an expression: \(node)")
@@ -591,21 +591,21 @@ extension World {
                 guard case let .list(list) = stack.removeLast() else {
                     throw ExecError.typeMismatch
                 }
-                stack.append(list[index])
+                stack.append(list.values[index])
 
             case .assignSubscript:
                 let rhs = stack.removeLast()
                 let index = try stack.removeLast().asInt()
-                guard case var .list(list) = stack.removeLast() else {
+                guard case let .list(list) = stack.removeLast() else {
                     throw ExecError.typeMismatch
                 }
-                list[index] = rhs
+                list.values[index] = rhs
 
             case .makeList:
                 let count = Int(code.getUInt16(at: ip))
                 let values = Array<Value>(stack[(stack.count - count)..<stack.count])
                 stack.removeLast(count)
-                stack.append(.list(values))
+                stack.append(.list(ValueList(values)))
                 ip += 2
 
             case .makeExit:

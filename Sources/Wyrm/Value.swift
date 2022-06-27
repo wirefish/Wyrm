@@ -5,6 +5,28 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+class ValueList: Equatable, CustomDebugStringConvertible {
+    var values: [Value]
+
+    init<S>(_ elements: S) where S: Sequence, S.Element: ValueRepresentable {
+        values = elements.map { $0.toValue() }
+    }
+
+    init<S>(_ elements: S) where S: Sequence, S.Element: ReferenceValueRepresentable {
+        values = elements.map { $0.toValue() }
+    }
+
+    init<S>(_ elements: S) where S: Sequence, S.Element == Value {
+        values = [Value].init(elements)
+    }
+
+    static func == (lhs: ValueList, rhs: ValueList) -> Bool {
+        return false
+    }
+
+    var debugDescription: String { "<Wyrm.ValueList \(values)>" }
+}
+
 enum Value: Equatable {
     case `nil`
     case boolean(Bool)
@@ -13,7 +35,7 @@ enum Value: Equatable {
     case symbol(String)
     case entity(Entity)
     case exit(Exit)
-    case list([Value])
+    case list(ValueList)
     case function(ScriptFunction)
     case module(Module)
 
