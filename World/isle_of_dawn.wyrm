@@ -11,6 +11,9 @@ def isle_location {
 
 def gravel_path {
     brief = "a gravel path"
+    description = |
+        The path's surface of finely crushed white stone contrasts with the lush
+        greenery which surrounds you.
 }
 
 // hilltop
@@ -19,7 +22,8 @@ deflocation hilltop: isle_location {
     name = "Hilltop"
     description = |
         You are standing atop a low hill in the center of a small island. A
-        ring of ancient standing stones surrounds you.
+        ring of ancient standing stones encircles the crown of the hill. The long
+        grass that covers the hillside sways back and forth in the gentle breeze.
 
     // FIXME: visible standing stones
 
@@ -49,9 +53,23 @@ def spirit_warden {  // FIXME: lib.npc
         He wears dark blue robes with gold embroidered trim.
 
     after enter_location(actor, location, entry) {
-        // await sleep(3)
+        // FIXME: await sleep(3)
         show(actor, "The spirit warden beckons in your direction.")
-        return 1 + 2
+    }
+
+    when talk(actor, target: self, topic) {
+        tell(self, actor) |
+            Welcome to Atalea, hero! Or perhaps I should say "welcome back..."
+
+            I don't know how to explain this, but you died long ago. My condolences.
+            For reasons unknown, however, you have been recalled from the Dreamlands
+            and once again walk in the physical world.
+
+            My colleagues stand ready to help reorient you after your long absence. As
+            you explore this isle, talk to anyone you meet; we are all here to help.
+
+            To the south you will meet an odd creature who will get you started. Head
+            that way when you are ready.
     }
 }
 
@@ -68,5 +86,9 @@ deflocation pavilion: isle_location {
         warden. He may have something interesting to say.
 
     contents = [sprit_warden]
-    exits = [gravel_path -> 'north to hilltop]
+    exits = [gravel_path -> 'north to hilltop, gravel_path -> 'south to wildflower_field]
 }
+
+// wildflower_field
+
+// FIXME: defquest choose_a_race

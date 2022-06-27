@@ -179,7 +179,7 @@ class Parser {
                 }
             case .clone:
                 clone = parseCloneInitializer()
-            case .allow, .before, .after:
+            case .allow, .before, .when, .after:
                 if let handler = parseHandler() {
                     handlers.append(handler)
                 }
@@ -266,6 +266,7 @@ class Parser {
         switch consume() {
         case .allow: phase = .allow
         case .before: phase = .before
+        case .when: phase = .when
         case .after: phase = .after
         default: fatalError("invalid event phase")
         }

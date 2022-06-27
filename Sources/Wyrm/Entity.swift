@@ -17,7 +17,7 @@ func findFacetType(forMember memberName: String) -> Facet.Type? {
 }
 
 enum EventPhase {
-    case allow, before, after
+    case allow, before, when, after
 }
 
 typealias EventHandler = (phase: EventPhase, event: String, method: ScriptFunction)
