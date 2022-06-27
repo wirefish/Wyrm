@@ -72,7 +72,6 @@ enum Value: Equatable {
             return false
         }
     }
-
 }
 
 protocol ValueDictionary {

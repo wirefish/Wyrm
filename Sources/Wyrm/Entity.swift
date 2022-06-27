@@ -16,6 +16,10 @@ func findFacetType(forMember memberName: String) -> Facet.Type? {
     return allFacetTypes.first { $0.accessors.keys.contains(memberName) }
 }
 
+enum EventPhase {
+    case allow, before, after
+}
+
 typealias EventHandler = (phase: EventPhase, event: String, method: CodeBlock)
 
 // A reference to an entity may contain an explicit module name, in which case only that
@@ -26,7 +30,7 @@ struct EntityRef {
     let name: String
 }
 
-class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
+class Entity: ValueDictionary, CustomDebugStringConvertible {
     let prototype: Entity?
     let id = idIterator.next()!
     var facets = [Facet]()
