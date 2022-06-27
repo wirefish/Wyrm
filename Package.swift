@@ -17,7 +17,7 @@ let package = Package(
         // in this package, and on products in packages this package depends on.
         .executableTarget(
             name: "Wyrm",
-            dependencies: []),
+            dependencies: ["TOMLDecoder"]),
         .testTarget(
             name: "WyrmTests",
             dependencies: ["Wyrm"]),
