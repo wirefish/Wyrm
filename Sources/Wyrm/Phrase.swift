@@ -126,7 +126,8 @@ func guessPluralVerb(_ s: Substring) -> String {
 struct VerbPhrase: Codable {
     let singular: String
     let plural: String
-    
+
+    // FIXME: this is wrong, plural need to consider the first word not the last.
     init(_ rawPhrase: String) {
         let phrase = trimmed(rawPhrase)
         if phrase.isEmpty {

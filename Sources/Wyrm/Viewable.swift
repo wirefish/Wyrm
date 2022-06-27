@@ -32,6 +32,7 @@ class Viewable: Facet {
     var description: String?
     var icon: String?
     var size = Size.medium
+    var alts = [NounPhrase]()
 
     static let isMutable = false
 
@@ -49,7 +50,10 @@ class Viewable: Facet {
         "name": accessor(\Viewable.name),
         "brief": accessor(\Viewable.brief),
         "pose": accessor(\Viewable.pose),
+        "description": accessor(\Viewable.description),
+        "icon": accessor(\Viewable.icon),
         "size": accessor(\Viewable.size),
+        "alts": accessor(\Viewable.alts),
     ]
 }
 

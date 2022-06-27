@@ -91,6 +91,11 @@ struct Exit: ValueRepresentable {
 
 class Location: Facet {
     var exits = [Exit]()
+    var tutorial: String?
+
+    // FIXME: these should be symbols
+    var domain: String?
+    var surface: String?
 
     static let isMutable = true
 
@@ -105,5 +110,8 @@ class Location: Facet {
 
     static let accessors = [
         "exits": accessor(\Location.exits),
+        "tutorial": accessor(\Location.tutorial),
+        "domain": accessor(\Location.domain),
+        "surface": accessor(\Location.surface),
     ]
 }
