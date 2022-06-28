@@ -8,10 +8,12 @@
 class Quest: Observer, ValueDictionaryObject {
     var handlers = [EventHandler]()
     var name = ""
+    var summary = ""
     var level = 1
 
     static let accessors = [
         "name": accessor(\Quest.name),
+        "summary": accessor(\Quest.summary),
         "level": accessor(\Quest.level),
     ]
 
