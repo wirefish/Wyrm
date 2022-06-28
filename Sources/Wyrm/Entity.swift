@@ -5,6 +5,19 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+// A protocol for an object that encapsulates a collection of related
+// properties which are necessary in order to interact with other objects
+// in a specific way.
+protocol Facet: ValueDictionaryObject {
+
+    static var isMutable: Bool { get }
+
+    init()
+
+    func clone() -> Facet
+}
+
+// A registry of all classes that implement the Facet protocol.
 let allFacetTypes: [Facet.Type] = [
     Container.self,
     Location.self,
@@ -16,21 +29,14 @@ func findFacetType(forMember memberName: String) -> Facet.Type? {
     return allFacetTypes.first { $0.accessors.keys.contains(memberName) }
 }
 
-enum EventPhase {
-    case allow, before, when, after
-}
-
-typealias EventHandler = (phase: EventPhase, event: String, method: ScriptFunction)
-
 // A reference to an entity may contain an explicit module name, in which case only that
-// module is searched. Otherwise, the search uses the current module, any imported modules,
-// and the default core module.
+// module is searched. Otherwise, the search uses the current module and any imported modules.
 struct EntityRef {
     let module: String?
     let name: String
 }
 
-class Entity: ValueDictionary, CustomDebugStringConvertible {
+class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
     let prototype: Entity?
     let id = idIterator.next()!
     var facets = [Facet]()
@@ -71,7 +77,7 @@ class Entity: ValueDictionary, CustomDebugStringConvertible {
             return self.facet(facetType)?[memberName]
         }
         set {
-            guard let facet = requireFacet(forMember: memberName) else {
+            guard var facet = requireFacet(forMember: memberName) else {
                 return
             }
             facet[memberName] = newValue
