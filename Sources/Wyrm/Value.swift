@@ -90,7 +90,7 @@ protocol ValueDictionary {
 }
 
 // A pair of functions used to get and set the value of a particular property
-// of a Facet.
+// of an object that behaves as a value dictionary.
 struct Accessor {
     let get: (ValueDictionaryObject) -> Value
     let set: (ValueDictionaryObject, Value) -> Void
@@ -111,7 +111,8 @@ extension ValueDictionaryObject {
     // Generic accessor functions to help classes implement the accessors property
     // required by this protocol.
 
-    static func accessor<T: Facet, V: ValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
+    static func accessor<T: ValueDictionaryObject, V: ValueRepresentable>
+    (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
         return Accessor(
             get: {
                 return ($0 as! T)[keyPath: keyPath].toValue()
@@ -123,7 +124,8 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: Facet, V: ValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, V?>) -> Accessor {
+    static func accessor<T: ValueDictionaryObject, V: ValueRepresentable>
+    (_ keyPath: ReferenceWritableKeyPath<T, V?>) -> Accessor {
         return Accessor(
             get: {
                 return ($0 as! T)[keyPath: keyPath]?.toValue() ?? .nil
@@ -137,7 +139,8 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: Facet, V: ValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
+    static func accessor<T: ValueDictionaryObject, V: ValueRepresentable>
+    (_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
         return Accessor(
             get: { .list(ValueList(($0 as! T)[keyPath: keyPath])) },
             set: { (object, value) in
@@ -148,7 +151,8 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: Facet, V: RawRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor where V.RawValue == String {
+    static func accessor<T: ValueDictionaryObject, V: RawRepresentable>
+    (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor where V.RawValue == String {
         return Accessor(
             get: {
                 let s = ($0 as! T)[keyPath: keyPath].rawValue
@@ -163,7 +167,8 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: Facet, V: ReferenceValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
+    static func accessor<T: ValueDictionaryObject, V: ReferenceValueRepresentable>
+    (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
         return Accessor(
             get: { ($0 as! T)[keyPath: keyPath].toValue() },
             set: {
@@ -173,7 +178,8 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: Facet, V: ReferenceValueRepresentable>(_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
+    static func accessor<T: ValueDictionaryObject, V: ReferenceValueRepresentable>
+    (_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
         return Accessor(
             get: { .list(ValueList(($0 as! T)[keyPath: keyPath])) },
             set: { (object, value) in

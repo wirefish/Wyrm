@@ -5,8 +5,15 @@
 //  Created by Craig Becker on 6/28/22.
 //
 
-class Quest: Observer, ValueDictionary {
+class Quest: Observer, ValueDictionaryObject {
     var handlers = [EventHandler]()
+    var name = ""
+    var level = 1
+
+    static let accessors = [
+        "name": accessor(\Quest.name),
+        "level": accessor(\Quest.level),
+    ]
 
     subscript(member: String) -> Value? {
         get {
