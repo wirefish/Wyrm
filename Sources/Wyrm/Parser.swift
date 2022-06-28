@@ -218,13 +218,24 @@ class Parser {
 
         var params = [Parameter]()
         while !match(.rparen) {
-            guard case let .identifier(name) = consume() else {
+            guard case var .identifier(name) = consume() else {
                 error("parameter name must be an identifier")
                 return nil
             }
 
-            guard let constraint = parsePrototype() else {
+            guard var constraint = parsePrototype() else {
                 return nil
+            }
+
+            // As a special case, a parameter named self is just an anonymous parameter with
+            // a self constraint.
+            if name == "self" {
+                if constraint == nil {
+                    constraint = EntityRef(module: nil, name:"self")
+                    name = "$\(params.count + 1)"
+                } else {
+                    error("parameter named self cannot have a constraint")
+                }
             }
 
             params.append(Parameter(name: name, constraint: constraint))
