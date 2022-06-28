@@ -18,3 +18,4 @@ let context: [ValueDictionary] = [world.modules["isle_of_dawn"]!, entity]
 
 let result = try! world.exec(handler, args: [.entity(entity), .nil, .nil, .nil], context: context)
 print(result)
+print((entity.facet(Viewable.self) as! Viewable).brief)

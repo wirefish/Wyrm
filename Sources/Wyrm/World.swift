@@ -151,8 +151,11 @@ extension World {
             case .entity:
                 loadEntity(node, into: module)
 
+            case .quest:
+                loadQuest(node, into: module)
+
             default:
-                break
+                fatalError("unexpected node at top level")
             }
         }
     }
@@ -171,12 +174,34 @@ extension World {
             }
         }
         let entity = Entity(withPrototype: prototype)
-        let context: [ValueDictionary] = [entity, module]
+
+        initializeObject(entity, members: members, handlers: handlers, module: module)
+        module.bindings[name] = .entity(entity)
+
+        if startable {
+            startableEntities.append(entity)
+        }
+    }
+
+    private func loadQuest(_ node: ParseNode, into module: Module) {
+        guard case let .quest(name, members, handlers) = node else {
+            fatalError("invalid call to loadQuest")
+        }
+
+        let quest = Quest()
+        initializeObject(quest, members: members, handlers: handlers, module: module)
+        module.bindings[name] = .quest(quest)
+    }
+
+    private func initializeObject(_ object: ValueDictionary & Observer,
+                            members: [ParseNode.Member], handlers: [ParseNode.Handler],
+                            module: Module) {
+        let context: [ValueDictionary] = [object, module]
 
         // Initialize the members.
         for (name, initialValue) in members {
             if let value = eval(initialValue, context: context) {
-                entity[name] = value
+                object[name] = value
             }
         }
 
@@ -187,16 +212,11 @@ extension World {
             if let code = compiler.compileFunction(parameters: parameters, body: body) {
                 print("handler \(phase) \(name):")
                 code.dump()
-                entity.handlers.append((phase, name, code))
+                object.addHandler((phase, name, code))
             }
         }
-
-        module.bindings[name] = .entity(entity)
-        if startable {
-            startableEntities.append(entity)
-        }
     }
-
+    
     private func moduleName(for relativePath: String) -> String {
         if let sep = relativePath.lastIndex(of: "/") {
             return relativePath[..<sep].replacingOccurrences(of: "/", with: "_")

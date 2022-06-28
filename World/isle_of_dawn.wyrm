@@ -91,4 +91,9 @@ deflocation pavilion: isle_location {
 
 // wildflower_field
 
-// FIXME: defquest choose_a_race
+defquest choose_a_race {
+    name = "Let's Get Physical"
+    summary = |
+        Choose your physical form by meditating at one of the racial shrines
+        on the Isle of Dawn, then return to the officious kobold.
+}

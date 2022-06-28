@@ -14,6 +14,7 @@ enum Value: Equatable {
     case string(String)
     case symbol(String)
     case entity(Entity)
+    case quest(Quest)
     case exit(Exit)
     case list(ValueList)
     case function(Callable)
@@ -85,7 +86,7 @@ protocol Callable {
 
 // MARK: - ValueDictionary
 
-protocol ValueDictionary {
+protocol ValueDictionary: AnyObject {
     subscript(member: String) -> Value? { get set }
 }
 
@@ -96,7 +97,7 @@ struct Accessor {
     let set: (ValueDictionaryObject, Value) -> Void
 }
 
-protocol ValueDictionaryObject: ValueDictionary, AnyObject {
+protocol ValueDictionaryObject: ValueDictionary {
     static var accessors: [String:Accessor] { get }
 }
 

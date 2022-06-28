@@ -15,4 +15,8 @@ protocol Observer {
     // Return the function that should be called to respond to an event.
     // The observer is passed as the first argument.
     func findHandler(phase: EventPhase, event: String) -> ScriptFunction?
+
+    // Adds a handler that should be considered after all previously-added
+    // handlers.
+    func addHandler(_ handler: EventHandler)
 }

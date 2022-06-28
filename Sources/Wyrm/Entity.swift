@@ -77,7 +77,7 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
             return self.facet(facetType)?[memberName]
         }
         set {
-            guard var facet = requireFacet(forMember: memberName) else {
+            guard let facet = requireFacet(forMember: memberName) else {
                 return
             }
             facet[memberName] = newValue
@@ -92,6 +92,10 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
             }
         }
         return nil
+    }
+
+    func addHandler(_ handler: EventHandler) {
+        handlers.append(handler)
     }
 
     var debugDescription: String { "<Wyrm.Entity id=\(id) facets=\(facets)>" }

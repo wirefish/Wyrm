@@ -303,8 +303,8 @@ class Compiler {
             compile(expr, &block)
             block.emit(.pop)
 
-        case .entity:
-            fatalError("invalid attempt to compile entity definition")
+        case .entity, .quest:
+            fatalError("invalid attempt to compile object definition")
         }
     }
 }
