@@ -14,7 +14,6 @@ struct Parameter {
 
 indirect enum ParseNode {
     typealias Member = (name: String, initialValue: ParseNode)
-    typealias CloneInitializer = ([String], ParseNode)
     typealias Handler = (EventPhase, String, [Parameter], ParseNode)
 
     // Literal values.
@@ -47,7 +46,7 @@ indirect enum ParseNode {
 
     // Top-level definitions.
     case entity(name: String, prototype: EntityRef?, members: [Member],
-                clone: CloneInitializer?, handlers: [Handler], startable: Bool)
+                handlers: [Handler], startable: Bool)
 
     // True if this node can syntactically be on the left side of an assignment.
     var isAssignable: Bool {
@@ -163,7 +162,6 @@ class Parser {
         }
 
         var members = [ParseNode.Member]()
-        var clone: ParseNode.CloneInitializer?
         var handlers = [ParseNode.Handler]()
         loop: while true {
             switch currentToken {
@@ -177,8 +175,6 @@ class Parser {
                 if let member = parseMember() {
                     members.append(member)
                 }
-            case .clone:
-                clone = parseCloneInitializer()
             case .allow, .before, .when, .after:
                 if let handler = parseHandler() {
                     handlers.append(handler)
@@ -191,7 +187,7 @@ class Parser {
         }
 
         let startable = def == .deflocation
-        return .entity(name: name, prototype: prototype, members: members, clone: clone,
+        return .entity(name: name, prototype: prototype, members: members,
                        handlers: handlers, startable: startable)
     }
 
@@ -228,34 +224,6 @@ class Parser {
 
         if let initializer = parseExpr() {
             return (name, initializer)
-        } else {
-            return nil
-        }
-    }
-
-    private func parseCloneInitializer() -> ParseNode.CloneInitializer? {
-        advance()  // past clone
-
-        guard case .lparen = consume() else {
-            error("expected ( after clone")
-            return nil
-        }
-
-        var params = [String]()
-        while !match(.rparen) {
-            guard case let .identifier(name) = consume() else {
-                error("parameter name must be an identifier")
-                return nil
-            }
-            params.append(name)
-
-            if currentToken != .rparen && !match(.comma) {
-                error("expected , between parameters")
-            }
-        }
-
-        if let block = parseBlock() {
-            return (params, block)
         } else {
             return nil
         }

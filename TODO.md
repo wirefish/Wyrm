@@ -14,6 +14,4 @@
 
 - fix plural verb forms.
 
-- do we need clone initializers? they aren't needed for exits any more.
-
 - fix exit dest in exec().

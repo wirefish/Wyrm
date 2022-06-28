@@ -18,7 +18,7 @@ enum Token: Hashable {
     case and, or
 
     case def, deflocation
-    case clone, allow, before, when, after
+    case allow, before, when, after
     case `if`, `else`, `for`, `in`, `let`, `var`, await, `return`
     case leads, oneway, to
 
@@ -226,7 +226,6 @@ class Scanner {
         "false": .boolean(false),
         "def": .def,
         "deflocation": .deflocation,
-        "clone": .clone,
         "allow": .allow,
         "before": .before,
         "when": .when,

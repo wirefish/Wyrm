@@ -158,8 +158,7 @@ extension World {
     }
 
     private func loadEntity(_ node: ParseNode, into module: Module) {
-        // FIXME: handle clone initializer
-        guard case let .entity(name, prototypeRef, members, _, handlers, startable) = node else {
+        guard case let .entity(name, prototypeRef, members, handlers, startable) = node else {
             fatalError("invalid call to loadEntity")
         }
 
