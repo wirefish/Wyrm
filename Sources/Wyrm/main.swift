@@ -5,17 +5,15 @@
 
 import NIOCore
 import TOMLDecoder
+import CoreFoundation
 
 let world = World(rootPath: "/Users/craig/Projects/Wyrm/World")
+
+let start = CFAbsoluteTimeGetCurrent()
 world.load()
+print(CFAbsoluteTimeGetCurrent() - start)
 
-let entity = world.lookup(EntityRef(module: "isle_of_dawn", name: "spirit_warden"),
-                          context: nil)!
+print(world.lookup(EntityRef(module: "isle_of_dawn", name: "officious_kobold"), context: nil)!)
 
-let handler = entity.findHandler(phase: .after, event: "enter_location")!
-
-let context: [ValueDictionary] = [world.modules["isle_of_dawn"]!, entity]
-
-let result = try! world.exec(handler, args: [.entity(entity), .nil, .nil, .nil], context: context)
-print(result)
-print((entity.facet(Viewable.self) as! Viewable).brief)
+let e = world.lookup(EntityRef(module: "isle_of_dawn", name: "wildflower_field"), context: nil)!
+print(e["contents"])

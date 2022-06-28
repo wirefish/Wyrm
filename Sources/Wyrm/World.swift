@@ -103,10 +103,6 @@ extension World {
             let module = requireModule(named: moduleName)
             load(contentsOfFile: relativePath, into: module)
         }
-
-        for (name, module) in modules {
-            print(name, module.bindings.keys)
-        }
     }
 
     private func readModulesFile() throws -> [String] {
@@ -188,7 +184,7 @@ extension World {
             fatalError("invalid call to loadQuest")
         }
 
-        let quest = Quest()
+        let quest = Quest(id: "\(module.name).\(name)")
         initializeObject(quest, members: members, handlers: handlers, module: module)
         module.bindings[name] = .quest(quest)
     }
@@ -210,8 +206,6 @@ extension World {
         for (phase, name, parameters, body) in handlers {
             let parameters = [Parameter(name: "self", constraint: nil)] + parameters
             if let code = compiler.compileFunction(parameters: parameters, body: body) {
-                print("handler \(phase) \(name):")
-                code.dump()
                 object.addHandler((phase, name, code))
             }
         }
@@ -376,14 +370,22 @@ extension World {
             guard let lhs = eval(lhs, context: context) else {
                 break
             }
-            guard case let .function(fn) = lhs else {
-                break
-            }
             let args = args.map { eval($0, context: context) }
             guard args.allSatisfy({ $0 != nil}) else {
                 break
             }
-            return try! fn.call(args.map({ $0! }), context: [])
+            switch lhs {
+            case let .function(fn):
+                return try! fn.call(args.map({ $0! }), context: [])
+            case let .entity(e):
+                guard args.isEmpty else {
+                    print("cannot pass arguments when cloning an entity")
+                    break
+                }
+                return .entity(Entity(withPrototype: e))
+            default:
+                print("expression is not callable")
+            }
 
         case let .dot(lhs, member):
             guard let lhs = eval(lhs, context: context) else {
@@ -663,9 +665,6 @@ extension World {
                 fatalError("instruction \(op) not implemented")
             }
         }
-
-        print("stack:", stack)
-        print("locals:", locals)
 
         return stack.last ?? .nil
     }

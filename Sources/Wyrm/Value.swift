@@ -308,3 +308,16 @@ extension Entity: ReferenceValueRepresentable {
         return .entity(self)
     }
 }
+
+extension Quest: ReferenceValueRepresentable {
+    static func fromValue(_ value: Value) -> ReferenceValueRepresentable? {
+        guard case let .quest(quest) = value else {
+            return nil
+        }
+        return quest
+    }
+
+    func toValue() -> Value {
+        return .quest(self)
+    }
+}

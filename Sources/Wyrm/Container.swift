@@ -17,7 +17,7 @@ class Container: Facet {
     func clone() -> Facet {
         let c = Container()
         c.capacity = capacity
-        c.contents = []  // FIXME: map clone($0)
+        c.contents = []  // FIXME: map clone($0)? prototype.clone()?
         return c
     }
 

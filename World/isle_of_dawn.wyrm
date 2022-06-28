@@ -96,4 +96,149 @@ defquest choose_a_race {
     summary = |
         Choose your physical form by meditating at one of the racial shrines
         on the Isle of Dawn, then return to the officious kobold.
+
+    before offer_quest(npc, self, avatar) {
+        tell(npc, avatar) |
+            Hello, friend! As you may have noticed, your current body
+            is just a ghostly manifestation of your spirit. To fix that you'll need to
+            select a race and take on a physical form. It just so happens I can help
+            you do exactly that!
+    }
+
+    after offer_quest(npc, self, avatar) {
+        show_tutorial(avatar, 'offer_quest) |
+            The kobold is offering you a quest! Quests are tasks set for you by the
+            denizens of the world. Completing them can provide you with many kinds
+            of rewards. Type `help quests` for more information.
+    }
+
+    after accept_quest(avatar, self, npc) {
+        tell(npc, avatar) |
+            Excellent! To the west you will find several shrines, each
+            dedicated to a different race. Talk to the caretaker at each shrine to
+            learn more about his or her people.
+
+            Then, when you find the race that's right for you, return to the selected
+            shrine and `meditate`. The caretaker will, ahem, take care of the rest.
+
+            Return to me once you have completed this task.
+
+        show_tutorial(avatar, 'accept_quest) |
+            You can use the `quest` command to see the quests you've accepted and track
+            your progress toward their completion.
+    }
+
+    after advise_quest(avatar, self, npc) {
+        tell(npc, avatar) |
+            Have you selected a race yet? The caretakers to the west
+            will be more than happy to describe their races and help you make the
+            right decision.
+    }
+
+    after finish_quest(avatar, self, npc) {
+        tell(npc, avatar) |
+            A fine choice! I had no doubt you would choose to become
+            {avatar.race}. I am something of an expert in these matters, after all.
+
+            I can't help but notice that your new body, while quite lovely, is also
+            quite naked. Aren't you cold? To the south you will find my friend Dhalia,
+            the seamstress; talk to her and she will make sure you go forth in style.
+    }
+}
+
+def officious_kobold {  // FIXME: lib.npc
+    brief =  "an officious kobold"
+    pose = "sits at a low table in the shade of a large umbrella."
+    description = |
+        The kobold is a tiny humanoid with reptilian features, sparse wiry
+        hair, and knobbly gray skin. It is, however, impeccably groomed.
+    offers_quests = [choose_a_race]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Good to see you again! You might have heard that some of my kind have
+            occupied an old copper mine, deep in the forest west of Arwyck. I assure
+            you I have nothing whatsoever to do with those filthy creatures, despite
+            our shared ancestry.
+    }
+}
+
+deflocation wildflower_field: isle_location {
+    name = "Field of Wildflowers"
+    description = |
+        Flowers of every color and description bloom in the expansive fields
+        along the sides of the path. The air is heavy with their fragrance.
+
+    tutorial = |
+        The ! symbol on the map means that a creature wants to talk to you
+        about an available quest. You can `talk` to the creature to learn more. When
+        you see the &mldr; symbol, you can `talk` to the creature about a quest you
+        have accepted but not yet completed. If you see the &#x2713; symbol, then
+        you have completed a quest and can `talk` to the creature to receive your
+        rewards!
+
+        The kobold has a quest for you. Try typing `talk kobold`.
+
+    contents = [officious_kobold()]
+    exits = [gravel_path -> 'north to pavilion, gravel_path -> 'south to clothing_stall,
+             gravel_path -> 'west to human_shrine]
+}
+
+// human_shrine
+
+def human_caretaker {  // FIXME: lib.npc
+    brief = "the human caretaker"
+    pose = "stands nearby with a welcoming expression."
+    description = |
+        The caretaker is a tall, athletic woman wearing a practical leather
+        outfit and a broad-brimmed hat. Various gardening tools hang from her wide
+        leather belt.
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Hello, traveler. I imagine you are curious about humans.
+            Here is what I can tell you.
+
+            First and foremost, humans are known for their optimism and their
+            adaptability. We feel like we can do anything, and do it well. Perhaps
+            you've heard the expression, "Jack of all trades, master of none?" Some
+            might consider it a negative, but we humans take pride in our ability to
+            do a little bit of everything.
+
+            Second, humans are especially noted for their skill as gatherers and
+            farmers. We are adept at using our ingenuity to extract the bounty of the
+            earth.
+
+            If you want to join humankind, `meditate` here. I will then use the power of
+            the shrine to complete your transformation.
+    }
+}
+
+deflocation human_shrine: isle_location {
+    name = "Shrine of Humanity"
+    description = |
+        This part of the isle is a large garden. Plants bearing flowers,
+        fruits, and vegetables are arranged in orderly rows. The soil is dark and
+        fertile.
+    contents = [human_caretaker()]
+    exits = [gravel_path -> 'east to wildflower_field, gravel_path -> 'north to elven_shrine,
+             gravel_path -> 'west to ogre_shrine]
+
+    when meditate(actor, location) {
+        if (quest_incomplete(actor, choose_a_race)) {
+            show(actor) |
+                A calming warmth suffuses your being. The caretaker smiles
+                broadly as she reaches out to you with her open hand, holding it inches
+                from your ghostly form. She smiles broadly as the warmth spreads to her
+                hand.
+
+                After a moment she closes her palm. You see a faint glow between her
+                fingers which quickly grows brighter. When she opens her hand she holds
+                a tiny seedling, its delicate leaves unfolding before your eyes.
+            change_race(actor, lib.human)
+            complete_quest(actor, choose_a_race)
+        } else {
+            show(actor) "The caretaker nods in approval."
+        }
+    }
 }

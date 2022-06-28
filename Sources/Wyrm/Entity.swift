@@ -17,11 +17,13 @@ protocol Facet: ValueDictionaryObject {
     func clone() -> Facet
 }
 
-// A registry of all classes that implement the Facet protocol.
+// A registry of all classes that implement the Facet protocol. This is used to
+// look up the facet required when setting a specific member of an Entity.
 let allFacetTypes: [Facet.Type] = [
     Container.self,
     Location.self,
     Portal.self,
+    Questgiver.self,
     Viewable.self,
 ]
 
