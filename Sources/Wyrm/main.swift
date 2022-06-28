@@ -3,8 +3,6 @@
 //  Wyrm
 //
 
-import NIOCore
-import TOMLDecoder
 import CoreFoundation
 
 let world = World(rootPath: "/Users/craig/Projects/Wyrm/World")
@@ -17,3 +15,6 @@ print(world.lookup(EntityRef(module: "isle_of_dawn", name: "officious_kobold"), 
 
 let e = world.lookup(EntityRef(module: "isle_of_dawn", name: "wildflower_field"), context: nil)!
 print(e["contents"])
+
+let server = Server()
+server.run()
