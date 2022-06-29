@@ -5,8 +5,6 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-import Foundation
-
 extension Array {
     // Returns the first non-nil value obtained by applying a transform to the
     // elements of the array.
