@@ -21,6 +21,9 @@ enum EquippedSlot: Hashable {
 class Avatar: Entity {
     var level = 0
 
+    // Current location.
+    weak var location: Location?
+
     // Equipped items.
     var equipped = [EquippedSlot:Item?]()
 

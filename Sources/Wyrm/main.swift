@@ -28,5 +28,8 @@ if case let .list(contents) = (e.asEntity)?["contents"] {
     }
 }
 
+let av = Avatar(withPrototype: nil)
+print(Command.processInput(actor: av, input: "look star through telescope") ?? "")
+
 let server = Server()
 server.run()
