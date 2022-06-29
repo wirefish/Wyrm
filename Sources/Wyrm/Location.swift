@@ -49,9 +49,9 @@ enum Direction: CaseIterable, ValueRepresentable {
 struct Exit: ValueRepresentable {
     let portal: Entity
     let direction: Direction
-    let destination: EntityRef
+    let destination: ValueRef
 
-    init(portal: Entity, direction: Direction, destination: EntityRef) {
+    init(portal: Entity, direction: Direction, destination: ValueRef) {
         self.portal = portal
         self.direction = direction
         self.destination = destination

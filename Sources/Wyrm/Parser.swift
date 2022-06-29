@@ -6,10 +6,10 @@
 //
 
 struct Parameter {
-    static let selfConstraint = EntityRef(module: nil, name: "self")
+    static let selfConstraint = ValueRef.relative("self")
 
     let name: String
-    let constraint: EntityRef?
+    let constraint: ValueRef?
 }
 
 indirect enum ParseNode {
@@ -45,7 +45,7 @@ indirect enum ParseNode {
     case ignoredValue(ParseNode)
 
     // Top-level definitions.
-    case entity(name: String, prototype: EntityRef, members: [Member],
+    case entity(name: String, prototype: ValueRef, members: [Member],
                 handlers: [Handler], startable: Bool)
     case quest(name: String, members: [Member], handlers: [Handler])
 
@@ -231,7 +231,7 @@ class Parser {
             // a self constraint.
             if name == "self" {
                 if constraint == nil {
-                    constraint = EntityRef(module: nil, name:"self")
+                    constraint = Parameter.selfConstraint
                     name = "$\(params.count + 1)"
                 } else {
                     error("parameter named self cannot have a constraint")
@@ -274,7 +274,7 @@ class Parser {
                        handlers: handlers, startable: startable)
     }
 
-    private func parsePrototype() -> EntityRef?? {
+    private func parsePrototype() -> ValueRef?? {
         if !match(.colon) {
             return .some(nil)
         }
@@ -289,9 +289,9 @@ class Parser {
                 error("expected identifier")
                 return nil
             }
-            return EntityRef(module: prefix, name: name)
+            return .absolute(prefix, name)
         } else {
-            return EntityRef(module: nil, name: prefix)
+            return .relative(prefix)
         }
     }
 

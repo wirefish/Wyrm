@@ -41,8 +41,8 @@ extension Observer {
                         return false
                     }
                 } else {
-                    // FIXME: module that function was defined in
-                    guard let c = World.instance.lookup(parameter.constraint!, context: nil) else {
+                    guard case let .entity(c) = World.instance.lookup(parameter.constraint!,
+                                                                      in: handler.fn.module) else {
                         print("cannot find entity for constraint \(parameter.constraint!)")
                         return false
                     }

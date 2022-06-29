@@ -42,6 +42,11 @@ enum WorldError: Error {
     case invalidModuleSpec(String)
 }
 
+enum ValueRef: Equatable, Codable {
+    case absolute(String, String)
+    case relative(String)
+}
+
 class World {
     static var instance: World!
 
@@ -64,7 +69,7 @@ class World {
                               ("item", Item(withPrototype: nil)),
                               ("location", Location(withPrototype: nil)),
                               ("portal", Portal(withPrototype: nil))] {
-            proto.ref = EntityRef(module: builtins.name, name: name)
+            proto.ref = .absolute(builtins.name, name)
             builtins[name] = .entity(proto)
         }
 
@@ -91,11 +96,12 @@ class World {
         }
     }
 
-    func lookup(_ ref: EntityRef, context: Module?) -> Entity? {
-        if let moduleName = ref.module {
-            return modules[moduleName]?.bindings[ref.name]?.asEntity
-        } else {
-            return context?.bindings[ref.name]?.asEntity ?? builtins.bindings[ref.name]?.asEntity
+    func lookup(_ ref: ValueRef, in context: Module?) -> Value? {
+        switch ref {
+        case let .absolute(module, name):
+            return modules[module]?.bindings[name]
+        case let .relative(name):
+            return context?.bindings[name] ?? builtins.bindings[name]
         }
     }
 }
@@ -171,14 +177,14 @@ extension World {
         }
 
         // Find the prototype and construct the new entity.
-        guard let prototype = lookup(prototypeRef, context: module) else {
+        guard case let .entity(prototype) = lookup(prototypeRef, in: module) else {
             print("cannot find prototype \(prototypeRef)")
             return
         }
         let entity = prototype.clone()
 
         initializeObject(entity, members: members, handlers: handlers, module: module)
-        entity.ref = EntityRef(module: module.name, name: name)
+        entity.ref = .absolute(module.name, name)
         module.bindings[name] = .entity(entity)
 
         if startable {
@@ -366,7 +372,7 @@ extension World {
                 print("exit portal must be an entity")
                 break
             }
-            guard let destRef = asEntityRef(dest) else {
+            guard let destRef = asValueRef(dest) else {
                 print("exit destination must be an entity reference")
                 break
             }
@@ -426,7 +432,7 @@ extension World {
         return nil
     }
 
-    func asEntityRef(_ node: ParseNode) -> EntityRef? {
+    func asValueRef(_ node: ParseNode) -> ValueRef? {
         switch node {
         case let .binaryExpr(lhs, op, rhs):
             guard op == .dot,
@@ -434,10 +440,10 @@ extension World {
                   case let .identifier(name) = rhs else {
                 return nil
             }
-            return EntityRef(module: moduleName, name: name)
+            return .absolute(moduleName, name)
 
         case let .identifier(name):
-            return EntityRef(module: nil, name: name)
+            return .relative(name)
 
         default:
             return nil
@@ -613,7 +619,7 @@ extension World {
                     throw ExecError.typeMismatch
                 }
                 let rhs = stack.removeLast()
-                guard var obj = stack.removeLast().asValueDictionary else {
+                guard let obj = stack.removeLast().asValueDictionary else {
                     throw ExecError.typeMismatch
                 }
                 obj[s] = rhs
@@ -651,9 +657,8 @@ extension World {
                       case let .entity(portal) = stack.removeLast() else {
                     throw ExecError.typeMismatch
                 }
-                // FIXME: destination is bogus
                 stack.append(.exit(Exit(portal: Entity(withPrototype: portal), direction: direction,
-                                        destination: EntityRef(module: nil, name: ""))))
+                                        destination: destination.ref!)))
 
             case .call:
                 let argCount = Int(code.bytecode[ip])

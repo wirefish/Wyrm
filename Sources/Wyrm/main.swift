@@ -12,10 +12,10 @@ let start = CFAbsoluteTimeGetCurrent()
 world.load()
 print(String(format: "loaded world in %.4f seconds", CFAbsoluteTimeGetCurrent() - start))
 
-print(world.lookup(EntityRef(module: "isle_of_dawn", name: "officious_kobold"), context: nil)!)
+print(world.lookup(.absolute("isle_of_dawn", "officious_kobold"), in: nil)!)
 
-let e = world.lookup(EntityRef(module: "isle_of_dawn", name: "wildflower_field"), context: nil)!
-if case let .list(contents) = e["contents"] {
+let e = world.lookup(.absolute("isle_of_dawn", "wildflower_field"), in: nil)!
+if case let .list(contents) = (e.asEntity)?["contents"] {
     print(contents)
     let k = contents.values.first!
     print(k)
