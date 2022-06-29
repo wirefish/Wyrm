@@ -30,7 +30,7 @@ class Portal: Entity, Viewable, Matchable, Traversable {
     var isClosed = false
     var isLocked = false
 
-    required init(withPrototype prototype: Entity?) {
+    init(withPrototype prototype: Portal?) {
         super.init(withPrototype: prototype)
     }
 

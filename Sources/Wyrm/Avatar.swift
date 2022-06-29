@@ -16,7 +16,7 @@ class Avatar: Entity {
     // A mapping from identifiers of completed quests to the time of completion.
     var completedQuests = [String:CFAbsoluteTime]()
 
-    required init(withPrototype prototype: Entity?) {
+    init(withPrototype prototype: Avatar?) {
         super.init(withPrototype: prototype)
     }
 

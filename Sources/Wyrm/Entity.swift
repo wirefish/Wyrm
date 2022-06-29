@@ -13,12 +13,7 @@ struct EntityRef: Equatable {
     let name: String
 }
 
-protocol Cloneable {
-    init(withPrototype prototype: Entity?)
-    func clone() -> Entity
-}
-
-class Entity: Cloneable, Observer, ValueDictionary, CustomDebugStringConvertible {
+class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
     let id = idIterator.next()!
     let prototype: Entity?
     var handlers = [EventHandler]()
@@ -26,7 +21,7 @@ class Entity: Cloneable, Observer, ValueDictionary, CustomDebugStringConvertible
 
     static var idIterator = (1...).makeIterator()
 
-    required init(withPrototype prototype: Entity?) {
+    init(withPrototype prototype: Entity?) {
         self.prototype = prototype
         extraMembers = prototype?.extraMembers ?? [:]
     }

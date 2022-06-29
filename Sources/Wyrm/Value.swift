@@ -76,7 +76,7 @@ class ValueList: CustomDebugStringConvertible {
         return lhs === rhs
     }
 
-    var debugDescription: String { "<Wyrm.ValueList \(values)>" }
+    var debugDescription: String { "<ValueList \(values)>" }
 }
 
 // FIXME: move this?

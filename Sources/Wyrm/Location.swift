@@ -79,7 +79,7 @@ class Location: Entity, Container {
     var domain: String?
     var surface: String?
 
-    required init(withPrototype prototype: Entity?) {
+    init(withPrototype prototype: Location?) {
         super.init(withPrototype: prototype)
     }
 
@@ -88,9 +88,22 @@ class Location: Entity, Container {
     }
 
     static let accessors = [
+        "capacity": accessor(\Location.capacity),
+        "contents": accessor(\Location.contents),
         "exits": accessor(\Location.exits),
         "tutorial": accessor(\Location.tutorial),
         "domain": accessor(\Location.domain),
         "surface": accessor(\Location.surface),
     ]
+
+    override subscript(member: String) -> Value? {
+        get { return Location.accessors[member]?.get(self) ?? super[member] }
+        set {
+            if let acc = Location.accessors[member] {
+                acc.set(self, newValue!)
+            } else {
+                super[member] = newValue
+            }
+        }
+    }
 }

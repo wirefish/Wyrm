@@ -47,7 +47,7 @@ class World {
 
     let rootPath: String
     var modules = [String:Module]()
-    let coreModule = Module("__CORE__")
+    let builtins = Module("__BUILTINS__")
     var startableEntities = [Entity]()
 
     init(rootPath: String) {
@@ -56,7 +56,14 @@ class World {
         self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
         
         for (name, fn) in ScriptLibrary.functions {
-            coreModule.bindings[name] = .function(NativeFunction(name: name, fn: fn))
+            builtins[name] = .function(NativeFunction(name: name, fn: fn))
+        }
+
+        for (name, proto) in [("entity", Entity(withPrototype: nil)),
+                              ("item", Item(withPrototype: nil)),
+                              ("location", Location(withPrototype: nil)),
+                              ("portal", Portal(withPrototype: nil))] {
+            builtins[name] = .entity(proto)
         }
 
         World.instance = self
@@ -73,7 +80,7 @@ class World {
     }
 
     func lookup(_ name: String, context: [ValueDictionary]) -> Value? {
-        if let value = context.firstMap({ $0[name] }) ?? coreModule[name] {
+        if let value = context.firstMap({ $0[name] }) ?? builtins[name] {
             return value
         } else if let module = modules[name] {
             return .module(module)
@@ -86,7 +93,7 @@ class World {
         if let moduleName = ref.module {
             return modules[moduleName]?.bindings[ref.name]?.asEntity
         } else {
-            return context?.bindings[ref.name]?.asEntity
+            return context?.bindings[ref.name]?.asEntity ?? builtins.bindings[ref.name]?.asEntity
         }
     }
 }

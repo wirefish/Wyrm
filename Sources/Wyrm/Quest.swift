@@ -40,7 +40,7 @@ class Quest: Observer, ValueDictionaryObject, CustomDebugStringConvertible {
         handlers.append(handler)
     }
 
-    var debugDescription: String { "<Wyrm.Quest \(id)>" }
+    var debugDescription: String { "<Quest \(id)>" }
 
     func acceptableBy(_ avatar: Avatar) -> Bool {
         // TODO: call out to quest method
