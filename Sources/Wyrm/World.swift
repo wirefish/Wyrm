@@ -205,8 +205,8 @@ extension World {
         let compiler = Compiler()
         for (phase, name, parameters, body) in handlers {
             let parameters = [Parameter(name: "self", constraint: nil)] + parameters
-            if let code = compiler.compileFunction(parameters: parameters, body: body) {
-                object.addHandler((phase, name, code))
+            if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
+                object.addHandler((phase, name, fn))
             }
         }
     }

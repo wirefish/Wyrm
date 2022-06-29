@@ -59,9 +59,16 @@ enum Opcode: UInt8 {
 }
 
 class ScriptFunction: Callable {
+    let parameters: [Parameter]
+    weak var module: Module?
     var locals = [String]()
     var constants = [Value]()
     var bytecode = [UInt8]()
+
+    init(parameters: [Parameter], module: Module) {
+        self.parameters = parameters
+        self.module = module
+    }
 
     func call(_ args: [Value], context: [ValueDictionary]) throws -> Value? {
         return nil
@@ -143,8 +150,9 @@ class ScriptFunction: Callable {
 }
 
 class Compiler {
-    func compileFunction(parameters: [Parameter], body: ParseNode) -> ScriptFunction? {
-        var block = ScriptFunction()
+    func compileFunction(parameters: [Parameter], body: ParseNode,
+                         in module: Module) -> ScriptFunction? {
+        var block = ScriptFunction(parameters: parameters, module: module)
         block.locals = parameters.map { $0.name }
         compile(body, &block)
         return block

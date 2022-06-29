@@ -44,26 +44,6 @@ enum Direction: CaseIterable, ValueRepresentable {
     }
 }
 
-class Portal: Facet {
-    static let isMutable = true
-
-    var isCloseable = false
-    var isOpen = true
-
-    required init() {
-    }
-
-    func clone() -> Facet {
-        let p = Portal()
-        return p
-    }
-
-    static let accessors = [
-        "is_closeable": accessor(\Portal.isCloseable),
-        "is_open": accessor(\Portal.isOpen),
-    ]
-}
-
 // Note that an exit is not an entity or facet itself, but refers to a shared portal
 // entity.
 struct Exit: ValueRepresentable {
@@ -89,7 +69,9 @@ struct Exit: ValueRepresentable {
     }
 }
 
-class Location: Facet {
+class Location: Entity, Container {
+    var capacity: Int = Int.max
+    var contents = [Entity]()
     var exits = [Exit]()
     var tutorial: String?
 
@@ -97,15 +79,12 @@ class Location: Facet {
     var domain: String?
     var surface: String?
 
-    static let isMutable = true
-
-    required init() {
+    required init(withPrototype prototype: Entity?) {
+        super.init(withPrototype: prototype)
     }
 
-    func clone() -> Facet {
-        let f = Location()
-        f.exits = exits
-        return f
+    override func clone() -> Entity {
+        return Location(withPrototype: self)
     }
 
     static let accessors = [

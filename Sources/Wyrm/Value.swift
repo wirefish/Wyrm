@@ -86,33 +86,22 @@ protocol Callable {
 
 // MARK: - ValueDictionary
 
+// A pair of functions used to get and set the value of a particular property
+// of an object that behaves as a value dictionary.
+struct Accessor {
+    let get: (ValueDictionary) -> Value
+    let set: (ValueDictionary, Value) -> Void
+}
+
 protocol ValueDictionary: AnyObject {
     subscript(member: String) -> Value? { get set }
 }
 
-// A pair of functions used to get and set the value of a particular property
-// of an object that behaves as a value dictionary.
-struct Accessor {
-    let get: (ValueDictionaryObject) -> Value
-    let set: (ValueDictionaryObject, Value) -> Void
-}
-
-protocol ValueDictionaryObject: ValueDictionary {
-    static var accessors: [String:Accessor] { get }
-}
-
-extension ValueDictionaryObject {
-    // A subscript operator to implement ValueDictionary. It uses the accessors
-    // registered by a class implementing Facet.
-    subscript(member: String) -> Value? {
-        get { type(of: self).accessors[member]?.get(self) }
-        set { type(of: self).accessors[member]?.set(self, newValue!) }
-    }
-
+extension ValueDictionary {
     // Generic accessor functions to help classes implement the accessors property
     // required by this protocol.
 
-    static func accessor<T: ValueDictionaryObject, V: ValueRepresentable>
+    static func accessor<T: ValueDictionary, V: ValueRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
         return Accessor(
             get: {
@@ -125,7 +114,7 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: ValueDictionaryObject, V: ValueRepresentable>
+    static func accessor<T: ValueDictionary, V: ValueRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, V?>) -> Accessor {
         return Accessor(
             get: {
@@ -140,7 +129,7 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: ValueDictionaryObject, V: ValueRepresentable>
+    static func accessor<T: ValueDictionary, V: ValueRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
         return Accessor(
             get: { .list(ValueList(($0 as! T)[keyPath: keyPath])) },
@@ -152,7 +141,7 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: ValueDictionaryObject, V: RawRepresentable>
+    static func accessor<T: ValueDictionary, V: RawRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor where V.RawValue == String {
         return Accessor(
             get: {
@@ -168,7 +157,7 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: ValueDictionaryObject, V: ReferenceValueRepresentable>
+    static func accessor<T: ValueDictionary, V: ReferenceValueRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
         return Accessor(
             get: { ($0 as! T)[keyPath: keyPath].toValue() },
@@ -179,7 +168,7 @@ extension ValueDictionaryObject {
             })
     }
 
-    static func accessor<T: ValueDictionaryObject, V: ReferenceValueRepresentable>
+    static func accessor<T: ValueDictionary, V: ReferenceValueRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
         return Accessor(
             get: { .list(ValueList(($0 as! T)[keyPath: keyPath])) },
@@ -194,6 +183,18 @@ extension ValueDictionaryObject {
     }
 }
 
+protocol ValueDictionaryObject: ValueDictionary {
+    static var accessors: [String:Accessor] { get }
+}
+
+extension ValueDictionaryObject {
+    // A subscript operator to implement ValueDictionary. It uses the accessors
+    // registered by a class implementing Facet.
+    subscript(member: String) -> Value? {
+        get { type(of: self).accessors[member]?.get(self) }
+        set { type(of: self).accessors[member]?.set(self, newValue!) }
+    }
+}
 
 // MARK: - representing value types
 

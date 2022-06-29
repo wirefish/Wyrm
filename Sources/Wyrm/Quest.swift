@@ -5,23 +5,8 @@
 //  Created by Craig Becker on 6/28/22.
 //
 
-class Questgiver: Facet {
-    var offers_quests = [Quest]()
-
-    static let isMutable = false
-
-    required init() {
-    }
-
-    func clone() -> Facet {
-        let f = Questgiver()
-        f.offers_quests = offers_quests
-        return f
-    }
-
-    static let accessors = [
-        "offers_quests": accessor(\Questgiver.offers_quests),
-    ]
+protocol Interactable {
+    var offers_quests: [Quest] { get }
 }
 
 class Quest: Observer, ValueDictionaryObject, CustomDebugStringConvertible {
@@ -42,8 +27,13 @@ class Quest: Observer, ValueDictionaryObject, CustomDebugStringConvertible {
 
     var handlers = [EventHandler]()
 
+    func matchHandlers(observer: Entity, phase: EventPhase, event: String, args: [Value]) -> [EventHandler] {
+        return matchHandlers(handlers: handlers, observer: observer, phase: phase,
+                             event: event, args: args)
+    }
+
     func findHandler(phase: EventPhase, event: String) -> ScriptFunction? {
-        handlers.firstMap { $0.phase == phase && $0.event == event ? $0.method : nil }
+        handlers.firstMap { $0.phase == phase && $0.event == event ? $0.fn : nil }
     }
 
     func addHandler(_ handler: EventHandler) {
