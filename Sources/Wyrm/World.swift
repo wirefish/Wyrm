@@ -60,9 +60,11 @@ class World {
         }
 
         for (name, proto) in [("entity", Entity(withPrototype: nil)),
+                              ("equipment", Equipment(withPrototype: nil)),
                               ("item", Item(withPrototype: nil)),
                               ("location", Location(withPrototype: nil)),
                               ("portal", Portal(withPrototype: nil))] {
+            proto.ref = EntityRef(module: builtins.name, name: name)
             builtins[name] = .entity(proto)
         }
 
@@ -169,16 +171,14 @@ extension World {
         }
 
         // Find the prototype and construct the new entity.
-        var prototype: Entity?
-        if prototypeRef != nil {
-            prototype = lookup(prototypeRef!, context: module)
-            if prototype == nil {
-                print("cannot find prototype \(prototypeRef!)")
-            }
+        guard let prototype = lookup(prototypeRef, context: module) else {
+            print("cannot find prototype \(prototypeRef)")
+            return
         }
-        let entity = Entity(withPrototype: prototype)
+        let entity = prototype.clone()
 
         initializeObject(entity, members: members, handlers: handlers, module: module)
+        entity.ref = EntityRef(module: module.name, name: name)
         module.bindings[name] = .entity(entity)
 
         if startable {
@@ -389,7 +389,7 @@ extension World {
                     print("cannot pass arguments when cloning an entity")
                     break
                 }
-                return .entity(Entity(withPrototype: e))
+                return .entity(e.clone())
             default:
                 print("expression is not callable")
             }

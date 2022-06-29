@@ -7,8 +7,22 @@
 
 import CoreFoundation
 
+enum EquippedSlot: Hashable {
+    // Weapons and tools.
+    case mainHand, offHand
+
+    // Clothing.
+    case head, torso, hands, waist, legs, feet
+
+    // Accessories.
+    case ears, neck, wrists, leftFinger, rightFinger
+}
+
 class Avatar: Entity {
     var level = 0
+
+    // Equipped items.
+    var equipped = [EquippedSlot:Item?]()
 
     // A mapping from identifiers of active quests to the current quest state.
     var activeQuests = [String:Value]()

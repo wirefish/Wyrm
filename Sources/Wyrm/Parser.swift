@@ -45,7 +45,7 @@ indirect enum ParseNode {
     case ignoredValue(ParseNode)
 
     // Top-level definitions.
-    case entity(name: String, prototype: EntityRef?, members: [Member],
+    case entity(name: String, prototype: EntityRef, members: [Member],
                 handlers: [Handler], startable: Bool)
     case quest(name: String, members: [Member], handlers: [Handler])
 
@@ -262,7 +262,8 @@ class Parser {
             return nil
         }
 
-        guard let prototype = parsePrototype() else {
+        guard case let prototype?? = parsePrototype() else {
+            error("prototype required for entity definition")
             return nil
         }
 

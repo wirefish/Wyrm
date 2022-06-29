@@ -8,13 +8,14 @@
 // A reference to an entity may contain an explicit module name, in which case only that
 // module is searched. Otherwise, the search uses the current module, and any imported modules,
 // and the builtins module.
-struct EntityRef: Equatable {
+struct EntityRef: Equatable, Codable {
     let module: String?
     let name: String
 }
 
 class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
     let id = idIterator.next()!
+    var ref: EntityRef?
     let prototype: Entity?
     var handlers = [EventHandler]()
     var extraMembers: [String:Value]
@@ -45,5 +46,13 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
         handlers.append(handler)
     }
 
-    var debugDescription: String { "<\(type(of: self)) id=\(id)>" }
+    var debugDescription: String {
+        if let ref = ref {
+            return "<\(type(of: self)) ref=\(ref.module!).\(ref.name)>"
+        } else if let protoRef = prototype?.ref {
+            return "<\(type(of: self)) id=\(id) proto=\(protoRef.module!).\(protoRef.name)>"
+        } else {
+            return "<\(type(of: self)) id=\(id) proto=??>"
+        }
+    }
 }

@@ -3,13 +3,13 @@
 
 // TODO: region
 
-def isle_location {
+def isle_location: location {
     // FIXME: these should be symbols
     domain = "outdoor"
     surface = "grass"
 }
 
-def gravel_path {
+def gravel_path: portal {
     brief = "a gravel path"
     description = |
         The path's surface of finely crushed white stone contrasts with the lush
@@ -44,7 +44,7 @@ deflocation hilltop: isle_location {
 
 // pavilion
 
-def spirit_warden {  // FIXME: lib.npc
+def spirit_warden: item {  // FIXME: lib.npc
     brief = "the spirit warden"
     pose = "stands nearby, smiling amiably."
     description = |
@@ -146,7 +146,7 @@ defquest choose_a_race {
     }
 }
 
-def officious_kobold {  // FIXME: lib.npc
+def officious_kobold: item {  // FIXME: lib.npc
     brief =  "an officious kobold"
     pose = "sits at a low table in the shade of a large umbrella."
     description = |
@@ -186,7 +186,7 @@ deflocation wildflower_field: isle_location {
 
 // human_shrine
 
-def human_caretaker {  // FIXME: lib.npc
+def human_caretaker: item {  // FIXME: lib.npc
     brief = "the human caretaker"
     pose = "stands nearby with a welcoming expression."
     description = |
