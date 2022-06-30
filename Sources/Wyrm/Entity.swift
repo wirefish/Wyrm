@@ -6,22 +6,33 @@
 //
 
 class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
+    static var idIterator = (1...).makeIterator()
+
     let id = idIterator.next()!
     var ref: ValueRef?
     let prototype: Entity?
     var handlers = [EventHandler]()
-    var extraMembers: [String:Value]
+    var extraMembers = [String:Value]()
 
-    static var idIterator = (1...).makeIterator()
-
-    init(withPrototype prototype: Entity?) {
+    required init(withPrototype prototype: Entity?) {
         self.prototype = prototype
-        extraMembers = prototype?.extraMembers ?? [:]
     }
 
-    func clone() -> Entity {
-        assert(ref != nil)
-        return Entity(withPrototype: self)
+    func copyProperties(from other: Entity) {
+        extraMembers = other.extraMembers
+    }
+
+    func copy() -> Self {
+        let entity = Self.init(withPrototype: self.prototype)
+        entity.copyProperties(from: self)
+        return entity
+    }
+
+    func extend() -> Self {
+        assert(self.ref != nil, "cannot extend anonymous entity")
+        let entity = Self.init(withPrototype: self)
+        entity.copyProperties(from: self)
+        return entity
     }
 
     subscript(memberName: String) -> Value? {
@@ -60,14 +71,13 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     // Matchable
     var alts = [NounPhrase]()
 
-    init(withPrototype prototype: PhysicalEntity?) {
-        if let prototype = prototype {
-            brief = prototype.brief
-            pose = prototype.pose
-            description = prototype.description
-            icon = prototype.icon
-        }
-        super.init(withPrototype: prototype)
+    override func copyProperties(from other: Entity) {
+        let other = other as! PhysicalEntity
+        brief = other.brief
+        pose = other.pose
+        description = other.description
+        icon = other.icon
+        super.copyProperties(from: other)
     }
 
     private static let accessors = [

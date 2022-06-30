@@ -32,12 +32,4 @@ class Avatar: Entity {
 
     // A mapping from identifiers of completed quests to the time of completion.
     var completedQuests = [String:CFAbsoluteTime]()
-
-    init(withPrototype prototype: Avatar?) {
-        super.init(withPrototype: prototype)
-    }
-
-    override func clone() -> Entity {
-        fatalError("avatars cannot be cloned")
-    }
 }

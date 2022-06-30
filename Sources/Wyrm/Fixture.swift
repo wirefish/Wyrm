@@ -11,12 +11,11 @@ class Fixture: PhysicalEntity, Container {
     var capacity = 0
     var contents = [PhysicalEntity]()
 
-    init(withPrototype prototype: Fixture?) {
-        if let prototype = prototype {
-            size = prototype.size
-            capacity = prototype.capacity
-            contents = prototype.contents
-        }
-        super.init(withPrototype: prototype)
+    override func copyProperties(from other: Entity) {
+        let other = other as! Fixture
+        size = other.size
+        capacity = other.capacity
+        contents = other.contents
+        super.copyProperties(from: other)
     }
 }

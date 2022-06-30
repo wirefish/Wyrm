@@ -182,7 +182,7 @@ extension World {
             print("cannot find prototype \(prototypeRef)")
             return
         }
-        let entity = prototype.clone()
+        let entity = prototype.extend()
 
         initializeObject(entity, members: members, handlers: handlers, module: module)
         entity.ref = .absolute(module.name, name)
@@ -396,7 +396,7 @@ extension World {
                     print("cannot pass arguments when cloning an entity")
                     break
                 }
-                return .entity(e.clone())
+                return .entity(e.extend())
             default:
                 print("expression is not callable")
             }

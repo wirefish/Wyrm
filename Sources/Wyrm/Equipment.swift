@@ -35,12 +35,10 @@ enum EquippableSlot: CaseIterable, ValueRepresentable {
 class Equipment: Item {
     var slot: EquippableSlot?
 
-    init(withPrototype prototype: Equipment?) {
-        super.init(withPrototype: prototype)
-    }
-
-    override func clone() -> Entity {
-        return Equipment(withPrototype: self)
+    override func copyProperties(from other: Entity) {
+        let other = other as! Equipment
+        slot = other.slot
+        super.copyProperties(from: other)
     }
 
     private static let accessors = [

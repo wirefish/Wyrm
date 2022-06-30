@@ -80,12 +80,15 @@ class Location: Entity, Container {
     var domain: String?
     var surface: String?
 
-    init(withPrototype prototype: Location?) {
-        super.init(withPrototype: prototype)
-    }
-
-    override func clone() -> Entity {
-        return Location(withPrototype: self)
+    override func copyProperties(from other: Entity) {
+        let other = other as! Location
+        size = other.size
+        capacity = other.capacity
+        tutorial = other.tutorial
+        domain = other.domain
+        surface = other.surface
+        // do not copy contents or exits
+        super.copyProperties(from: other)
     }
 
     static let accessors = [

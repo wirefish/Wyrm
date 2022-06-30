@@ -11,8 +11,11 @@ class Creature: PhysicalEntity, Attackable {
     var currentHealth: Int = 1  // FIXME:
     var maxHealth: Int { return 10 + 10 * level }
 
-    init(withPrototype prototype: Creature?) {
-        super.init(withPrototype: prototype)
+    override func copyProperties(from other: Entity) {
+        let other = other as! Creature
+        level = other.level
+        currentHealth = other.currentHealth
+        super.copyProperties(from: other)
     }
 
     func defenseAgainst(damageType: DamageType) -> Int { 0 }

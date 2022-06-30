@@ -12,19 +12,14 @@ class Item: PhysicalEntity, Encodable {
     var level = 0
     var useVerbs = [String]()
 
-    init(withPrototype prototype: Item?) {
-        if let prototype = prototype {
-            size = prototype.size
-            stackLimit = prototype.stackLimit
-            count = prototype.count
-            level = prototype.level
-            useVerbs = prototype.useVerbs
-        }
-        super.init(withPrototype: prototype)
-    }
-
-    override func clone() -> Entity {
-        return Item(withPrototype: self)
+    override func copyProperties(from other: Entity) {
+        let other = other as! Item
+        size = other.size
+        stackLimit = other.stackLimit
+        count = other.count
+        level = other.level
+        useVerbs = other.useVerbs
+        super.copyProperties(from: other)
     }
 
     private static let accessors = [

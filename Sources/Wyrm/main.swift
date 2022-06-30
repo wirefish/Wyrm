@@ -37,11 +37,18 @@ server.run()
 #endif
 
 let item = Item(withPrototype: nil)
+item.ref = .absolute("__BUILTIN__", "item")
 
-let thing = Item(withPrototype: item)
+let thing = item.extend()
+thing.ref = .absolute("testy", "thing")
 thing.stackLimit = 10
+print("thing is \(thing)")
 
-let thing1 = Item(withPrototype: thing)
-let thing2 = Item(withPrototype: thing)
+let thing1 = thing.extend()
+let thing2 = thing.extend()
+
+print("thing1 is \(thing1)")
 
 print(Fixture.combine(thing1, into: thing2))
+
+print("thing3 is \(thing1.copy())")
