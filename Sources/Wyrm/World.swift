@@ -62,8 +62,11 @@ class World {
             builtins[name] = .function(NativeFunction(name: name, fn: fn))
         }
 
-        for (name, proto) in [("entity", Entity(withPrototype: nil)),
+        for (name, proto) in [("avatar", Avatar(withPrototype: nil)),
+                              ("creature", Creature(withPrototype: nil)),
+                              ("entity", Entity(withPrototype: nil)),
                               ("equipment", Equipment(withPrototype: nil)),
+                              ("fixture", Fixture(withPrototype: nil)),
                               ("item", Item(withPrototype: nil)),
                               ("location", Location(withPrototype: nil)),
                               ("portal", Portal(withPrototype: nil))] {

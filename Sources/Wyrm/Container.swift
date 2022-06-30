@@ -6,6 +6,7 @@
 //
 
 protocol Container {
+    var size: Size { get }
     var capacity: Int { get }
     var contents: [Entity] { get set }
 }

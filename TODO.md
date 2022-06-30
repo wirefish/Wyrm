@@ -60,11 +60,11 @@ Then the concrete class hierarchy is:
 
 [+] Equipment: Item, Equippable
 
-[ ] Fixture: Entity, Viewable, Matchable, Container. Things like desks or obelisks that may or may not actually be able to contain things. (can have zero capacity)
+[+] Fixture: Entity, Viewable, Matchable, Container. Things like desks or obelisks that may or may not actually be able to contain things. (can have zero capacity)
 
-[ ] Creature: Entity, Viewable, Matchable, Attackable
+[+] Creature: Entity, Viewable, Matchable, Attackable
 
 - Note NPC is just a library prototype, a creature with .good attitude and some default handlers. Technically attackable except due to alignment, not by players.
 
-[ ] Avatar: Entity, Viewable, Matchable, Attackable, Container. Not a subclass of Creature since it will implement the protocols very differently.
+[+] Avatar: Entity, Viewable, Matchable, Attackable, Container. Not a subclass of Creature since it will implement the protocols very differently.
 
