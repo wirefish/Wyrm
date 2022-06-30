@@ -66,20 +66,46 @@ struct TokenSequence: Sequence, IteratorProtocol {
     }
 }
 
+struct Grammar {
+    let verbs: [String]
+    let clauses: [ClauseSpec]
+
+    init?(_ s: String) {
+        var it = TokenSequence(s).makeIterator()
+
+        guard let verbs = it.next() else {
+            logger.error("command grammar is empty")
+            return nil
+        }
+        self.verbs = verbs.split(separator: "|").map { String($0) }
+
+        var clauses = [ClauseSpec]()
+        while let clause = it.next() {
+            let parts = clause.split(separator: ":", maxSplits: 1)
+            guard parts.count == 2 else {
+                logger.error("malformed clause specification \(clause)")
+                return nil
+            }
+            let preps = parts[0].split(separator: "|").map{ String($0) }
+            let name = String(parts[1])
+            clauses.append(.phrase(preps, name))
+        }
+        self.clauses = clauses
+    }
+}
+
 class Command {
     typealias RunFunction = (Avatar, String, [Clause?]) -> Void
 
-    let verbs: [String]
-    let grammar: [ClauseSpec]
+    let grammar: Grammar
     let fn: RunFunction
     let allPreps: [String:Int]
 
-    init(_ verbs: [String], _ grammar: [ClauseSpec], _ fn: @escaping RunFunction) {
-        self.verbs = verbs
-        self.grammar = grammar
+    init(_ grammarSpec: String, _ fn: @escaping RunFunction) {
+        self.grammar = Grammar(grammarSpec)!
         self.fn = fn
 
-        allPreps = [String:Int](uniqueKeysWithValues: grammar.enumerated().flatMap {
+        allPreps = [String:Int](uniqueKeysWithValues: grammar.clauses.enumerated().flatMap {
             (index, spec) -> [(String, Int)] in
             guard case let .phrase(preps, _) = spec else {
                 return []
@@ -98,7 +124,7 @@ class Command {
 
         // Each iteration of this loop attempts to match the remaining input against
         // the next clause in the grammar.
-        for spec in grammar {
+        for spec in grammar.clauses {
             switch spec {
             case .word:
                 if let word = tokens.next() {
@@ -156,7 +182,7 @@ class Command {
 
     static let verbsToCommands = [String:Command](
         uniqueKeysWithValues: allCommands.flatMap { command in
-            command.verbs.map { ($0, command) }
+            command.grammar.verbs.map { ($0, command) }
         })
 
     static func processInput(actor: Avatar, input: String) -> String? {
@@ -181,10 +207,10 @@ class Command {
 }
 
 // TEST:
-let lookCommand = Command(["look"],
-                          [.phrase(["at"], "target"),
-                           .phrase(["with", "using", "through"], "tool")]) {
+let lookCommand = Command("look at:target with|using|through:tool") {
     actor, verb, clauses in
-    print("look", actor, verb, clauses)
+    guard let location = actor.location else {
+        return
+    }
 }
 
