@@ -3,8 +3,10 @@
 //  Wyrm
 //
 
-import CoreFoundation
 import Foundation
+
+let config = try! Config(contentsOfFile: "/Users/craig/Projects/Wyrm/config.toml")
+print(config)
 
 let world = World(rootPath: "/Users/craig/Projects/Wyrm/World")
 
