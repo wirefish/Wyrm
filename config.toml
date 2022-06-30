@@ -3,4 +3,5 @@ host = "localhost"
 port = 8000
 
 [world]
+root_path = "/Users/craig/Projects/Wyrm/World"
 avatar_prototype = "avatar"

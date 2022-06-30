@@ -5,6 +5,10 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+import CoreFoundation
+import NIOCore
+import NIOPosix
+
 extension Array {
     // Returns the first non-nil value obtained by applying a transform to the
     // elements of the array.
@@ -112,13 +116,16 @@ class World {
 extension World {
 
     func load() {
-        let files = try! readModulesFile()
-
-        for relativePath in files {
+        logger.info("loading world from \(rootPath)")
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        for relativePath in try! readModulesFile() {
             let moduleName = moduleName(for: relativePath)
             let module = requireModule(named: moduleName)
             load(contentsOfFile: relativePath, into: module)
         }
+
+        logger.info(String(format: "loaded world in %.3f seconds", CFAbsoluteTimeGetCurrent() - startTime))
     }
 
     private func readModulesFile() throws -> [String] {
@@ -154,7 +161,7 @@ extension World {
     }
 
     private func load(contentsOfFile relativePath: String, into module: Module) {
-        print("loading \(relativePath) into module \(module.name)")
+        logger.info("loading \(relativePath)")
 
         let source = try! String(contentsOfFile: rootPath + relativePath, encoding: .utf8)
         let parser = Parser(scanner: Scanner(source))

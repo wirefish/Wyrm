@@ -5,6 +5,7 @@
 //  Created by Craig Becker on 6/28/22.
 //
 
+import Dispatch
 import NIOCore
 import NIOPosix
 import NIOHTTP1
@@ -191,15 +192,16 @@ private final class WebSocketTimeHandler: ChannelInboundHandler {
 class Server {
     let host: String
     let port: Int
+    var channel: Channel!
+    var group: EventLoopGroup!
 
-    init() {
-        // FIXME: use config
-        host = "localhost"
-        port = 8000
+    init(config: Config) {
+        host = config.server.host
+        port = config.server.port
     }
 
     func run() {
-        let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 
         let upgrader = NIOWebSocketServerUpgrader(
             shouldUpgrade: { (channel: Channel, head: HTTPRequestHead) in
@@ -233,16 +235,22 @@ class Server {
             try! group.syncShutdownGracefully()
         }
 
-        let channel = try! bootstrap.bind(host: self.host, port: self.port).wait()
+        channel = try! bootstrap.bind(host: self.host, port: self.port).wait()
 
         guard let localAddress = channel.localAddress else {
             fatalError("could not bind to address")
         }
-        print("server started and listening on \(localAddress)")
+        logger.info("server listening on \(localAddress)")
+
+        // group.next().scheduleTask(in: .seconds(3), { logger.fatal("oopsie") })
 
         // This will never unblock as we don't close the ServerChannel
         try! channel.closeFuture.wait()
 
-        print("server closed")
+        logger.info("server stopped")
+    }
+
+    func stop() {
+        let _ = channel.close(mode: .all)
     }
 }
