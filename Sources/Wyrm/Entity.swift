@@ -20,6 +20,7 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
     }
 
     func clone() -> Entity {
+        assert(ref != nil)
         return Entity(withPrototype: self)
     }
 
