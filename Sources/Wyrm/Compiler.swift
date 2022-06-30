@@ -47,6 +47,9 @@ enum Opcode: UInt8 {
     // Create an exit from the three values on the top of the stack.
     case makeExit
 
+    // Replace the entity on the top of the stack with a clone.
+    case clone
+
     // Call a function. The top of the stack contains the function and the arguments.
     // The next byte is the number of arguments.
     case call
@@ -227,6 +230,10 @@ class Compiler {
         case let .list(elements):
             elements.forEach { compile($0, &block) }
             block.emit(.makeList, UInt16(elements.count))
+
+        case let .clone(lhs):
+            compile(lhs, &block)
+            block.emit(.clone)
 
         case let .call(fn, args):
             compile(fn, &block)

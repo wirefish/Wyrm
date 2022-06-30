@@ -379,6 +379,16 @@ extension World {
             return .exit(Exit(portal: Entity(withPrototype: portalPrototype),
                               direction: dir, destination: destRef))
 
+        case let .clone(lhs):
+            guard let lhs = eval(lhs, context: context) else {
+                break
+            }
+            guard case let .entity(entity) = lhs else {
+                print("cannot clone non-entity")
+                break
+            }
+            return .entity(entity.clone())
+
         case let .call(lhs, args):
             guard let lhs = eval(lhs, context: context) else {
                 break
@@ -387,18 +397,11 @@ extension World {
             guard args.allSatisfy({ $0 != nil}) else {
                 break
             }
-            switch lhs {
-            case let .function(fn):
-                return try! fn.call(args.map({ $0! }), context: [])
-            case let .entity(e):
-                guard args.isEmpty else {
-                    print("cannot pass arguments when cloning an entity")
-                    break
-                }
-                return .entity(e.clone())
-            default:
+            guard case let .function(fn) = lhs else {
                 print("expression is not callable")
+                break
             }
+            return try! fn.call(args.map({ $0! }), context: [])
 
         case let .dot(lhs, member):
             guard let lhs = eval(lhs, context: context) else {

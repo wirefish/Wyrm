@@ -29,6 +29,7 @@ indirect enum ParseNode {
     case conjuction(ParseNode, ParseNode)
     case disjunction(ParseNode, ParseNode)
     case list([ParseNode])
+    case clone(ParseNode)
     case call(ParseNode, [ParseNode])
     case dot(ParseNode, String)
     case `subscript`(ParseNode, ParseNode)
@@ -100,6 +101,7 @@ class Parser {
         .starEqual: (method: parseAssignment, prec: .assign),
         .percent: (method: parseBinary, prec: .factor),
         .percentEqual: (method: parseAssignment, prec: .assign),
+        .not: (method: parseClone, prec: .unary),
         .notEqual: (method: parseBinary, prec: .equality),
         .equal: (method: parseAssignment, prec: .assign),
         .equalEqual: (method: parseBinary, prec: .equality),
@@ -527,6 +529,11 @@ class Parser {
         }
 
         return .list(elements)
+    }
+
+    private func parseClone(lhs: ParseNode) -> ParseNode? {
+        assert(match(.not))
+        return .clone(lhs)
     }
 
     private func parseBinary(lhs: ParseNode) -> ParseNode? {

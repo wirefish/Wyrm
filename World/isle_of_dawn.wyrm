@@ -179,7 +179,7 @@ deflocation wildflower_field: isle_location {
 
         The kobold has a quest for you. Try typing `talk kobold`.
 
-    contents = [officious_kobold()]
+    contents = [officious_kobold!]
     exits = [gravel_path -> 'north to pavilion, gravel_path -> 'south to clothing_stall,
              gravel_path -> 'west to human_shrine]
 }
@@ -220,7 +220,7 @@ deflocation human_shrine: isle_location {
         This part of the isle is a large garden. Plants bearing flowers,
         fruits, and vegetables are arranged in orderly rows. The soil is dark and
         fertile.
-    contents = [human_caretaker()]
+    contents = [human_caretaker!]
     exits = [gravel_path -> 'east to wildflower_field, gravel_path -> 'north to elven_shrine,
              gravel_path -> 'west to ogre_shrine]
 
