@@ -209,6 +209,7 @@ class Command {
 // TEST:
 let lookCommand = Command("look at:target with|using|through:tool") {
     actor, verb, clauses in
+    print(clauses)
     guard let location = actor.location else {
         return
     }
