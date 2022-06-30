@@ -5,16 +5,7 @@
 //  Created by Craig Becker on 6/30/22.
 //
 
-class Creature: Entity, Viewable, Matchable, Attackable {
-    // Viewable
-    var brief: NounPhrase?
-    var pose: VerbPhrase?
-    var description: String?
-    var icon: String?
-
-    // Matchable
-    var alts = [NounPhrase]()
-
+class Creature: PhysicalEntity, Attackable {
     // Attackable
     var level = 1
     var currentHealth: Int = 1  // FIXME:

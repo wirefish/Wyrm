@@ -5,16 +5,7 @@
 //  Created by Craig Becker on 6/29/22.
 //
 
-class Item: Entity, Viewable, Matchable, Encodable {
-    // Viewable
-    var brief: NounPhrase?
-    var pose: VerbPhrase?
-    var description: String?
-    var icon: String?
-
-    // Matchable
-    var alts = [NounPhrase]()
-
+class Item: PhysicalEntity, Encodable {
     var size = Size.small
     var stackLimit = 1
     var count = 1
@@ -30,11 +21,6 @@ class Item: Entity, Viewable, Matchable, Encodable {
     }
 
     private static let accessors = [
-        "brief": accessor(\Item.brief),
-        "pose": accessor(\Item.pose),
-        "description": accessor(\Item.description),
-        "icon": accessor(\Item.icon),
-        "alts": accessor(\Item.alts),
         "size": accessor(\Item.size),
         "stack_limit": accessor(\Item.stackLimit),
         "count": accessor(\Item.count),

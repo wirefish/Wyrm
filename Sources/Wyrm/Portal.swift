@@ -13,16 +13,7 @@ protocol Traversable {
     var isLocked: Bool { get }
 }
 
-class Portal: Entity, Viewable, Matchable, Traversable {
-    // Viewable
-    var brief: NounPhrase?
-    var pose: VerbPhrase? { nil }
-    var description: String?
-    var icon: String? { nil }
-
-    // Matchable
-    var alts = [NounPhrase]()
-
+class Portal: PhysicalEntity, Traversable {
     // Traversable
     var size = Size.large
     var isCloseable = false
@@ -39,7 +30,6 @@ class Portal: Entity, Viewable, Matchable, Traversable {
     }
 
     static let accessors = [
-        "brief": accessor(\Portal.brief),
         "is_closeable": accessor(\Portal.isCloseable),
         "is_closed": accessor(\Portal.isClosed),
     ]

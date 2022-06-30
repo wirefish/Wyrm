@@ -5,18 +5,18 @@
 //  Created by Craig Becker on 6/30/22.
 //
 
-class Fixture: Entity, Viewable, Matchable, Container {
-    // Viewable
-    var brief: NounPhrase?
-    var pose: VerbPhrase?
-    var description: String?
-    var icon: String?
-
-    // Matchable
-    var alts = [NounPhrase]()
-
+class Fixture: PhysicalEntity, Container {
     // Container
-    let size = Size.large
-    let capacity = 0
+    var size = Size.large
+    var capacity = 0
     var contents = [Entity]()
+
+    init(withPrototype prototype: Fixture?) {
+        if let prototype = prototype {
+            size = prototype.size
+            capacity = prototype.capacity
+            contents = prototype.contents
+        }
+        super.init(withPrototype: prototype)
+    }
 }

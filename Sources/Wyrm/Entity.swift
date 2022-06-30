@@ -49,3 +49,43 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
         }
     }
 }
+
+class PhysicalEntity: Entity, Viewable, Matchable {
+    // Viewable
+    var brief: NounPhrase?
+    var pose: VerbPhrase?
+    var description: String?
+    var icon: String?
+
+    // Matchable
+    var alts = [NounPhrase]()
+
+    init(withPrototype prototype: PhysicalEntity?) {
+        if let prototype = prototype {
+            brief = prototype.brief
+            pose = prototype.pose
+            description = prototype.description
+            icon = prototype.icon
+        }
+        super.init(withPrototype: prototype)
+    }
+
+    private static let accessors = [
+        "brief": accessor(\Item.brief),
+        "pose": accessor(\Item.pose),
+        "description": accessor(\Item.description),
+        "icon": accessor(\Item.icon),
+        "alts": accessor(\Item.alts),
+    ]
+
+    override subscript(member: String) -> Value? {
+        get { return PhysicalEntity.accessors[member]?.get(self) ?? super[member] }
+        set {
+            if let acc = PhysicalEntity.accessors[member] {
+                acc.set(self, newValue!)
+            } else {
+                super[member] = newValue
+            }
+        }
+    }
+}
