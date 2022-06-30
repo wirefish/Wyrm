@@ -104,3 +104,8 @@ func match(_ tokens: [String], against subjects: [Entity]) -> (MatchQuality, Mat
 
     return matchEntities.isEmpty ? nil : (matchQuality, matchQuantity, matchEntities)
 }
+
+func match(_ tokens: [String], against subjects: [Entity], where fn: (Entity) -> Bool)
+-> (MatchQuality, MatchQuantity, [Entity])? {
+    return match(tokens, against: subjects.filter(fn))
+}
