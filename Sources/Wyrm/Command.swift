@@ -185,6 +185,6 @@ let lookCommand = Command(["look"],
                           [.phrase(["at"], "target"),
                            .phrase(["with", "using", "through"], "tool")]) {
     actor, verb, clauses in
-    print("wow")
+    print("look", actor, verb, clauses)
 }
 

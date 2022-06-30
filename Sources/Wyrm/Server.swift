@@ -244,7 +244,6 @@ class Server {
 
         // group.next().scheduleTask(in: .seconds(3), { logger.fatal("oopsie") })
 
-        // This will never unblock as we don't close the ServerChannel
         try! channel.closeFuture.wait()
 
         logger.info("server stopped")

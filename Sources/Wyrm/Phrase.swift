@@ -73,12 +73,12 @@ enum Article {
     case none, indefinite, definite
 }
 
-struct NounPhrase: Codable {
+public struct NounPhrase: Codable {
     let article: String?
     let singular: String
     let plural: String
 
-    init(_ rawPhrase: String) {
+    public init(_ rawPhrase: String) {
         var phrase = trimmed(rawPhrase)
         if phrase.isEmpty {
             (article, singular, plural) = (nil, "", "")
