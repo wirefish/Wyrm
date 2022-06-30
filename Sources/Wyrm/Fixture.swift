@@ -15,7 +15,7 @@ class Fixture: PhysicalEntity, Container {
         let other = other as! Fixture
         size = other.size
         capacity = other.capacity
-        contents = other.contents
+        contents = other.contents.map { $0.copy() }
         super.copyProperties(from: other)
     }
 }

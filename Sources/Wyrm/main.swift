@@ -52,3 +52,9 @@ print("thing1 is \(thing1)")
 print(Fixture.combine(thing1, into: thing2))
 
 print("thing3 is \(thing1.copy())")
+
+let fixture = Fixture(withPrototype: nil)
+fixture.contents = [thing1, thing2]
+
+let f1 = fixture.copy()
+print(f1.contents)

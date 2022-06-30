@@ -48,5 +48,47 @@ extension Container {
         return true
     }
 
-    // TODO: func remove(_ item: Item, quantity: Int) -> Item?
+    @discardableResult
+    func remove(_ item: Item, count: Int) -> Item? {
+        guard let prototype = item.prototype else {
+            return nil
+        }
+
+        let candidates: [Item] = contents.compactMap({
+            if let item = $0 as? Item, item.prototype === prototype {
+                return item
+            } else {
+                return nil
+            }
+        }).sorted { $0.count < $1.count }
+
+        var result: Item?
+        var countRemaining = count
+        var itemsToRemove = [Item]()
+        for other in candidates {
+            if other.count <= countRemaining {
+                itemsToRemove.append(other)
+                if result != nil {
+                    result!.count += other.count
+                } else {
+                    result = other
+                }
+                countRemaining -= other.count
+                if countRemaining == 0 {
+                    break
+                }
+            } else {
+                result = result ?? other.copy()
+                result!.count = countRemaining
+                other.count -= countRemaining
+                break
+            }
+        }
+
+        contents = contents.filter {
+            entity in itemsToRemove.first(where: { $0 === entity }) == nil
+        }
+
+        return result
+    }
 }
