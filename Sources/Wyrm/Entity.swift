@@ -22,15 +22,13 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
         extraMembers = other.extraMembers
     }
 
-    func copy() -> Self {
-        let entity = Self.init(withPrototype: self.prototype)
-        entity.copyProperties(from: self)
-        return entity
-    }
-
-    func extend() -> Self {
-        assert(self.ref != nil, "cannot extend anonymous entity")
-        let entity = Self.init(withPrototype: self)
+    // Creates a new entity of the same type with a copy of this entity's properties.
+    // If this is a "named" entity (i.e. one defined at the top level of a script file
+    // and therefore with a non-nil ref), then the new entity uses this entity as its
+    // prototype. Otherwise, the new entity shares a prototype with this entity.
+    final func clone() -> Self {
+        let prototype = self.ref == nil ? self.prototype : self
+        let entity = Self.init(withPrototype: prototype)
         entity.copyProperties(from: self)
         return entity
     }

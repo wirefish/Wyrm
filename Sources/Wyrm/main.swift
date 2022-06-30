@@ -39,22 +39,23 @@ server.run()
 let item = Item(withPrototype: nil)
 item.ref = .absolute("__BUILTIN__", "item")
 
-let thing = item.extend()
+let thing = item.clone()
 thing.ref = .absolute("testy", "thing")
 thing.stackLimit = 10
 print("thing is \(thing)")
 
-let thing1 = thing.extend()
-let thing2 = thing.extend()
+let thing1 = thing.clone()
+let thing2 = thing.clone()
 
 print("thing1 is \(thing1)")
 
 print(Fixture.combine(thing1, into: thing2))
+print("thing2 is \(thing2) with count \(thing2.count)")
 
-print("thing3 is \(thing1.copy())")
+print("thing3 is \(thing1.clone())")
 
 let fixture = Fixture(withPrototype: nil)
 fixture.contents = [thing1, thing2]
 
-let f1 = fixture.copy()
+let f1 = fixture.clone()
 print(f1.contents)

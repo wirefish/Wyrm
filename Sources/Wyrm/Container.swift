@@ -78,7 +78,7 @@ extension Container {
                     break
                 }
             } else {
-                result = result ?? other.copy()
+                result = result ?? other.clone()
                 result!.count = countRemaining
                 other.count -= countRemaining
                 break
