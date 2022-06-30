@@ -71,11 +71,11 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     }
 
     private static let accessors = [
-        "brief": accessor(\Item.brief),
-        "pose": accessor(\Item.pose),
-        "description": accessor(\Item.description),
-        "icon": accessor(\Item.icon),
-        "alts": accessor(\Item.alts),
+        "brief": accessor(\PhysicalEntity.brief),
+        "pose": accessor(\PhysicalEntity.pose),
+        "description": accessor(\PhysicalEntity.description),
+        "icon": accessor(\PhysicalEntity.icon),
+        "alts": accessor(\PhysicalEntity.alts),
     ]
 
     override subscript(member: String) -> Value? {

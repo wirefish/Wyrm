@@ -31,5 +31,17 @@ if case let .list(contents) = (e.asEntity)?["contents"] {
 let av = Avatar(withPrototype: nil)
 print(Command.processInput(actor: av, input: "look star through telescope") ?? "")
 
+#if false
 let server = Server()
 server.run()
+#endif
+
+let item = Item(withPrototype: nil)
+
+let thing = Item(withPrototype: item)
+thing.stackLimit = 10
+
+let thing1 = Item(withPrototype: thing)
+let thing2 = Item(withPrototype: thing)
+
+print(Fixture.combine(thing1, into: thing2))

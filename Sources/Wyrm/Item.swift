@@ -13,6 +13,13 @@ class Item: PhysicalEntity, Encodable {
     var useVerbs = [String]()
 
     init(withPrototype prototype: Item?) {
+        if let prototype = prototype {
+            size = prototype.size
+            stackLimit = prototype.stackLimit
+            count = prototype.count
+            level = prototype.level
+            useVerbs = prototype.useVerbs
+        }
         super.init(withPrototype: prototype)
     }
 

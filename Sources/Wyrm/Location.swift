@@ -72,7 +72,7 @@ struct Exit: ValueRepresentable {
 class Location: Entity, Container {
     var size = Size.huge
     var capacity = Int.max
-    var contents = [Entity]()
+    var contents = [PhysicalEntity]()
     var exits = [Exit]()
     var tutorial: String?
 

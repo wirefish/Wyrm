@@ -9,7 +9,7 @@ class Fixture: PhysicalEntity, Container {
     // Container
     var size = Size.large
     var capacity = 0
-    var contents = [Entity]()
+    var contents = [PhysicalEntity]()
 
     init(withPrototype prototype: Fixture?) {
         if let prototype = prototype {
