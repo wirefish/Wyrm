@@ -175,6 +175,13 @@ extension ValueDictionary {
     }
 
     static func accessor<T: ValueDictionary, V: ReferenceValueRepresentable>
+    (_ keyPath: ReferenceWritableKeyPath<T, V?>) -> Accessor {
+        return Accessor(
+            get: { ($0 as! T)[keyPath: keyPath]?.toValue() ?? .nil },
+            set: { ($0 as! T)[keyPath: keyPath] = V.fromValue($1) as? V })
+    }
+
+    static func accessor<T: ValueDictionary, V: ReferenceValueRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
         return Accessor(
             get: { .list(ValueList(($0 as! T)[keyPath: keyPath])) },
