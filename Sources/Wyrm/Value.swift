@@ -203,15 +203,6 @@ protocol ValueRepresentable {
     func toValue() -> Value
 }
 
-extension ValueRepresentable {
-    static func enumCase<T>(fromValue value: Value, names: [String:T]) -> T? {
-        guard case let .symbol(name) = value else {
-            return nil
-        }
-        return names[name]
-    }
-}
-
 extension Bool: ValueRepresentable {
     init?(fromValue value: Value) {
         guard case let .boolean(b) = value else {
@@ -287,6 +278,28 @@ extension VerbPhrase: ValueRepresentable {
 
     func toValue() -> Value {
         return .string(singular)
+    }
+}
+
+// MARK: - representing enums
+
+protocol ValueRepresentableEnum: CaseIterable, ValueRepresentable {
+    static var names: [String:Self] { get }
+}
+
+extension ValueRepresentableEnum {
+    init?(fromValue value: Value) {
+        guard case let .symbol(name) = value else {
+            return nil
+        }
+        guard let v = Self.names[name] else {
+            return nil
+        }
+        self = v
+    }
+
+    func toValue() -> Value {
+        return .symbol(String(describing: self))
     }
 }
 
