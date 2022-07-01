@@ -18,5 +18,3 @@
 - session management with websockets
 
 - figure out quest states and how npcs react based on them.
-
-- combat traits. trait is an enum of like .power (adds attack), .protection (adds defence) .precision, .ferocity, and various affinities that increase attack and defense against attacks of a certain damage type, e.g. a specific element or physical type.
