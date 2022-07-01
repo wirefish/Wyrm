@@ -393,16 +393,16 @@ extension World {
             guard let portal = eval(portal, context: context) else {
                 break
             }
-            guard case let .entity(portalPrototype) = portal else {
-                print("exit portal must be an entity")
+            guard case let .entity(portalPrototype) = portal,
+                  let portalPrototype = portalPrototype as? Portal else {
+                print("invalid exit portal")
                 break
             }
             guard let destRef = asValueRef(dest) else {
-                print("exit destination must be an entity reference")
+                print("exit destination must be a reference")
                 break
             }
-            return .exit(Exit(portal: Entity(withPrototype: portalPrototype),
-                              direction: dir, destination: destRef))
+            return .exit(Exit(portal: portalPrototype.clone(), direction: dir, destination: destRef))
 
         case let .clone(lhs):
             guard let lhs = eval(lhs, context: context) else {
@@ -678,10 +678,11 @@ extension World {
             case .makeExit:
                 guard case let .entity(destination) = stack.removeLast(),
                       let direction = Direction(fromValue: stack.removeLast()),
-                      case let .entity(portal) = stack.removeLast() else {
+                      case let .entity(portal) = stack.removeLast(),
+                      let portal = portal as? Portal else {
                     throw ExecError.typeMismatch
                 }
-                stack.append(.exit(Exit(portal: Entity(withPrototype: portal), direction: direction,
+                stack.append(.exit(Exit(portal: portal.clone(), direction: direction,
                                         destination: destination.ref!)))
 
             case .call:
