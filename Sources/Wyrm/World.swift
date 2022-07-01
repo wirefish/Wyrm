@@ -209,7 +209,7 @@ extension World {
         }
         let entity = prototype.clone()
         entity.ref = .absolute(module.name, name)
-        initializeObject(entity, members: members, handlers: handlers, module: module)
+        initializeObserver(entity, members: members, handlers: handlers, module: module)
         module.bindings[name] = .entity(entity)
 
         if startable {
@@ -223,19 +223,19 @@ extension World {
         }
 
         let quest = Quest(id: "\(module.name).\(name)")
-        initializeObject(quest, members: members, handlers: handlers, module: module)
+        initializeObserver(quest, members: members, handlers: handlers, module: module)
         module.bindings[name] = .quest(quest)
     }
 
-    private func initializeObject(_ object: ValueDictionary & Observer,
-                            members: [ParseNode.Member], handlers: [ParseNode.Handler],
-                            module: Module) {
-        let context: [ValueDictionary] = [object, module]
+    private func initializeObserver(_ observer: Observer,
+                                    members: [ParseNode.Member], handlers: [ParseNode.Handler],
+                                    module: Module) {
+        let context: [ValueDictionary] = [observer, module]
 
         // Initialize the members.
         for (name, initialValue) in members {
             if let value = eval(initialValue, context: context) {
-                object[name] = value
+                observer[name] = value
             }
         }
 
@@ -244,7 +244,7 @@ extension World {
         for (phase, name, parameters, body) in handlers {
             let parameters = [Parameter(name: "self", constraint: nil)] + parameters
             if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-                object.addHandler((phase, name, fn))
+                observer.addHandler((phase, name, fn))
             }
         }
     }
