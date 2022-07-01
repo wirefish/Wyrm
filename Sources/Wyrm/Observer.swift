@@ -41,36 +41,26 @@ extension Observer {
     // A function to help classes implement the protocol's matchHandlers() method.
     func matchHandlers(handlers: [EventHandler], observer: Observer, phase: EventPhase,
                        event: String, args: [Value]) -> [EventHandler] {
+        let observer = observer.toValue()
         return handlers.compactMap { handler in
-            guard handler.phase == phase && handler.event == event else {
+            guard handler.phase == phase && handler.event == event,
+                  args.count == handler.fn.parameters.count else {
                 return nil
             }
-            guard args.count == handler.fn.parameters.count else {
-                return nil
-            }
-            let match = zip(args, handler.fn.parameters).allSatisfy { arg, parameter in
-                if parameter.constraint == nil {
+            return zip(args, handler.fn.parameters).allSatisfy { arg, param in
+                switch param.constraint {
+                case nil:
                     return true
-                } else if parameter.constraint == Parameter.selfConstraint {
-                    if case let a = arg.asObserver, a === observer {
-                        return true
-                    } else {
+                case Parameter.selfConstraint:
+                    return arg == observer
+                default:
+                    guard let def = World.instance.lookup(param.constraint!, in: handler.fn.module) else {
+                        logger.warning("undefined constraint \(param.constraint!)")
                         return false
                     }
-                } else {
-                    guard case let .entity(c) = World.instance.lookup(parameter.constraint!,
-                                                                      in: handler.fn.module) else {
-                        logger.warning("cannot find entity for constraint \(parameter.constraint!)")
-                        return false
-                    }
-                    if case let .entity(a) = arg, a === c {
-                        return true
-                    } else {
-                        return false
-                    }
+                    return arg == def
                 }
-            }
-            return match ? handler : nil
+            } ? handler : nil
         }
     }
 }

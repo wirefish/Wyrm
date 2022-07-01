@@ -44,22 +44,20 @@ enum Value: Equatable {
         }
     }
 
-    // NOTE: This is a very specific notion of equality -- any cases that contain
-    // reference types (directly or indirectly) will never compare equal.
+    // NOTE: This is only implemented for required cases. Some values will never
+    // compare equal.
     static func == (lhs: Value, rhs: Value) -> Bool {
-        if case .nil = lhs, case .nil = rhs {
-            return true
-        } else if case let .boolean(a) = lhs, case let .boolean(b) = rhs {
-            return a == b
-        } else if case let .number(a) = lhs, case let .number(b) = rhs {
-            return a == b
-        } else if case let .string(a) = lhs, case let .string(b) = rhs {
-            return a == b
-        } else if case let .symbol(a) = lhs, case let .symbol(b) = rhs {
-            return a == b
-       } else {
-            return false
+        switch lhs {
+        case .nil: if case .nil = rhs { return true }
+        case let .boolean(a): if case let .boolean(b) = rhs { return a == b }
+        case let .number(a): if case let .number(b) = rhs { return a == b }
+        case let .string(a): if case let .string(b) = rhs { return a == b }
+        case let .symbol(a): if case let .symbol(b) = rhs { return a == b }
+        case let .entity(a): if case let .entity(b) = rhs { return a === b }
+        case let .quest(a): if case let .quest(b) = rhs { return a === b }
+        default: break
         }
+        return false
     }
 }
 
