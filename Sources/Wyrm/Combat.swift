@@ -23,11 +23,39 @@ enum CombatTrait: ValueRepresentableEnum {
     case precision  // increases chance of critical hit
     case ferocity  // increases damage of critical hit
     case vitality  // increases maximum health
-    // FIXME: case affinity(DamageType)  // increases attack and defense for one damage type
+    case affinity(DamageType)  // increases attack and defense for one damage type
+
+    // NOTE: Because affinity has an associated value, it is handled differently and
+    
+    static var allCases: [CombatTrait] = [
+        .power, .protection, .precision, .ferocity, .vitality
+    ]
 
     static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
         (String(describing: $0), $0)
     })
+
+    init?(fromValue value: Value) {
+        guard case let .symbol(name) = value else {
+            return nil
+        }
+        if let damageType = DamageType.names[name] {
+            self = .affinity(damageType)
+        } else if let c = Self.names[name] {
+            self = c
+        } else {
+            return nil
+        }
+    }
+
+    func toValue() -> Value {
+        switch self {
+        case let .affinity(damageType):
+            return damageType.toValue()
+        default:
+            return .symbol(String(describing: self))
+        }
+    }
 }
 
 protocol Attackable {

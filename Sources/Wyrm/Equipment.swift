@@ -28,6 +28,8 @@ class Equipment: Item {
     override func copyProperties(from other: Entity) {
         let other = other as! Equipment
         slot = other.slot
+        trait = other.trait
+        traitCoeff = other.traitCoeff
         super.copyProperties(from: other)
     }
 
