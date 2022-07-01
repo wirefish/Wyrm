@@ -26,6 +26,7 @@ class Portal: PhysicalEntity {
         isCloseable = other.isCloseable
         lockableWith = other.lockableWith
         state = other.state
+        twin = other.twin
         super.copyProperties(from: other)
     }
 
