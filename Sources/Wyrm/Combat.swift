@@ -5,6 +5,8 @@
 //  Created by Craig Becker on 6/30/22.
 //
 
+import Foundation
+
 enum DamageType: ValueRepresentableEnum {
     // Physical damage types.
     case crushing, piercing, slashing
@@ -58,10 +60,36 @@ enum CombatTrait: ValueRepresentableEnum {
     }
 }
 
+struct ScaledTrait {
+    let trait: CombatTrait
+    let coeff: Double
+
+    init?(fromValue value: Value) {
+        guard case let .list(spec) = value,
+              spec.values.count == 2,
+              let trait = CombatTrait(fromValue: spec.values[0]),
+              let coeff = Double(fromValue: spec.values[1]) else {
+            return nil
+        }
+        self.trait = trait
+        self.coeff = coeff
+    }
+
+    func toValue() -> Value {
+        .list(ValueList([trait.toValue(), coeff.toValue()]))
+    }
+}
+
 protocol Attackable {
     var level: Int { get }
     var currentHealth: Int { get set }
     var maxHealth: Int { get }
 
     func defenseAgainst(damageType: DamageType) -> Int
+}
+
+fileprivate let healthBase = pow(2.5, 0.1)
+
+func computeMaxHealth(level: Int, healthCoeff: Double = 1.0) -> Int {
+    Int(100.0 * (0.25 * Double(level) + pow(healthBase, Double(level - 1))) * healthCoeff)
 }
