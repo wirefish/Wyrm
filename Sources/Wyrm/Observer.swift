@@ -11,7 +11,7 @@ enum EventPhase {
 
 typealias EventHandler = (phase: EventPhase, event: String, fn: ScriptFunction)
 
-protocol Observer: ValueDictionary {
+protocol Observer: ValueDictionary, ReferenceValueRepresentable {
     // Returns the event handlers that should be called to respond to an event in
     // the order they should be tried. A handler can use the "fallthrough" statement to pass
     // control to the next handler in the list. The observer is the first element of args.
@@ -20,8 +20,6 @@ protocol Observer: ValueDictionary {
     // Adds a handler that should be considered after all previously-added
     // handlers.
     func addHandler(_ handler: EventHandler)
-
-    func toValue() -> Value
 }
 
 extension Observer {
