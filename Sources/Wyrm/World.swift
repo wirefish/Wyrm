@@ -111,6 +111,24 @@ class World {
     }
 }
 
+// MARK: - starting and stopping
+
+extension World {
+
+    func start() {
+        for entity in startableEntities {
+            logger.debug("starting \(entity)")
+            entity.handleEvent(.when, "start_world", args: [])
+        }
+    }
+
+    func stop() {
+        for entity in startableEntities {
+            entity.handleEvent(.when, "stop_world", args: [])
+        }
+    }
+}
+
 // MARK: - loading files
 
 extension World {

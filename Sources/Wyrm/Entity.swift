@@ -38,10 +38,10 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
         set { extraMembers[memberName] = newValue }
     }
 
-    func matchHandlers(observer: Entity, phase: EventPhase, event: String, args: [Value]) -> [EventHandler] {
-        return matchHandlers(handlers: handlers, observer: observer, phase: phase,
+    func matchHandlers(phase: EventPhase, event: String, args: [Value]) -> [EventHandler] {
+        return matchHandlers(handlers: handlers, observer: self, phase: phase,
                              event: event, args: args) +
-            (prototype?.matchHandlers(observer: observer, phase: phase, event: event, args: args) ?? [])
+            (prototype?.matchHandlers(phase: phase, event: event, args: args) ?? [])
     }
 
     func addHandler(_ handler: EventHandler) {

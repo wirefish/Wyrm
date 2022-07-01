@@ -13,7 +13,4 @@ let world = World(rootPath: config.world.rootPath)
 world.load()
 
 let server = Server(config: config)
-// server.run()
-
-let av = Avatar(withPrototype: nil)
-let _ = Command.processInput(actor: av, input: "looK aT small Moon through telescope")
+server.run()

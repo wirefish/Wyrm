@@ -40,6 +40,10 @@ deflocation hilltop: isle_location {
         Head `south` to begin your adventure!
 
     exits = [gravel_path -> 'south to pavilion]
+
+    when start_world() {
+        log_debug(self, "it's happening!")
+    }
 }
 
 // pavilion

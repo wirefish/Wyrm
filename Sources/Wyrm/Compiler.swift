@@ -63,7 +63,7 @@ enum Opcode: UInt8 {
 
 class ScriptFunction: Callable {
     let parameters: [Parameter]
-    weak var module: Module?
+    weak var module: Module!
     var locals = [String]()
     var constants = [Value]()
     var bytecode = [UInt8]()
@@ -74,7 +74,7 @@ class ScriptFunction: Callable {
     }
 
     func call(_ args: [Value], context: [ValueDictionary]) throws -> Value? {
-        return nil
+        return try World.instance.exec(self, args: args, context: context + [module])
     }
 
     func emit(_ op: Opcode) {

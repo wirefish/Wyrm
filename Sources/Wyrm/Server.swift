@@ -244,7 +244,11 @@ class Server {
 
         // group.next().scheduleTask(in: .seconds(3), { logger.fatal("oopsie") })
 
+        World.instance.start()
+
         try! channel.closeFuture.wait()
+
+        World.instance.stop()
 
         logger.info("server stopped")
     }

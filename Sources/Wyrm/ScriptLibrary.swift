@@ -35,12 +35,18 @@ struct ScriptLibrary {
         return .number(x.rounded(.towardZero))
     }
 
+    static func logDebug(_ args: [Value]) throws -> Value {
+        logger.debug(args.map({ String(describing: $0) }).joined(separator: " "))
+        return .nil
+    }
+
     static func show(_ args: [Value]) throws -> Value {
         // TODO:
         return .nil
     }
 
     static let functions = [
+        ("log_debug", logDebug),
         ("trunc", trunc),
         ("show", show),
     ]

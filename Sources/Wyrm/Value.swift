@@ -28,6 +28,14 @@ enum Value: Equatable {
         }
     }
 
+    var asObserver: Observer? {
+        switch self {
+        case let .entity(e): return e
+        case let .quest(q): return q
+        default: return nil
+        }
+    }
+
     var asValueDictionary: ValueDictionary? {
         switch self {
         case let .entity(e): return e

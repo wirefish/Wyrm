@@ -27,8 +27,8 @@ class Quest: Observer, ValueDictionaryObject, CustomDebugStringConvertible {
 
     var handlers = [EventHandler]()
 
-    func matchHandlers(observer: Entity, phase: EventPhase, event: String, args: [Value]) -> [EventHandler] {
-        return matchHandlers(handlers: handlers, observer: observer, phase: phase,
+    func matchHandlers(phase: EventPhase, event: String, args: [Value]) -> [EventHandler] {
+        return matchHandlers(handlers: handlers, observer: self, phase: phase,
                              event: event, args: args)
     }
 
