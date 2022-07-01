@@ -62,7 +62,7 @@ class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
 class PhysicalEntity: Entity, Viewable, Matchable {
     // Viewable
     var brief: NounPhrase?
-    var pose: VerbPhrase?
+    var pose: String?
     var description: String?
     var icon: String?
 

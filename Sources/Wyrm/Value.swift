@@ -274,19 +274,6 @@ extension NounPhrase: ValueRepresentable {
     }
 }
 
-extension VerbPhrase: ValueRepresentable {
-    init?(fromValue value: Value) {
-        guard case let .string(s) = value else {
-            return nil
-        }
-        self.init(s)
-    }
-
-    func toValue() -> Value {
-        return .string(singular)
-    }
-}
-
 // MARK: - representing enums
 
 protocol ValueRepresentableEnum: CaseIterable, ValueRepresentable {

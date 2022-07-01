@@ -73,12 +73,12 @@ enum Article {
     case none, indefinite, definite
 }
 
-public struct NounPhrase: Codable {
+struct NounPhrase: Codable {
     let article: String?
     let singular: String
     let plural: String
 
-    public init(_ rawPhrase: String) {
+    init(_ rawPhrase: String) {
         var phrase = trimmed(rawPhrase)
         if phrase.isEmpty {
             (article, singular, plural) = (nil, "", "")
@@ -107,33 +107,6 @@ public struct NounPhrase: Codable {
             out += " "
             out += singular
             return capitalize ? capitalized(out) : out
-        }
-    }
-}
-
-func guessPluralVerb(_ s: Substring) -> String {
-    if s == "is" {
-        return "are";
-    } else if s.hasSuffix("ies") {
-        return String(s.dropLast(3)) + "y"
-    } else if s.hasSuffix("s") {
-        return String(s.dropLast())
-    } else {
-        return String(s);
-    }
-}
-
-struct VerbPhrase: Codable {
-    let singular: String
-    let plural: String
-
-    // FIXME: this is wrong, plural need to consider the first word not the last.
-    init(_ rawPhrase: String) {
-        let phrase = trimmed(rawPhrase)
-        if phrase.isEmpty {
-            (singular, plural) = ("", "")
-        } else {
-            (singular, plural) = applyPluralRule(phrase)
         }
     }
 }

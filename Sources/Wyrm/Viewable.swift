@@ -7,7 +7,7 @@
 
 protocol Viewable {
     var brief: NounPhrase? { get }
-    var pose: VerbPhrase? { get }
+    var pose: String? { get }
     var description: String? { get }
     var icon: String? { get }
 }
