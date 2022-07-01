@@ -462,17 +462,13 @@ extension World {
 
     func asValueRef(_ node: ParseNode) -> ValueRef? {
         switch node {
-        case let .binaryExpr(lhs, op, rhs):
-            guard op == .dot,
-                  case let .identifier(moduleName) = lhs,
-                  case let .identifier(name) = rhs else {
+        case let .dot(lhs, name):
+            guard case let .identifier(module) = lhs else {
                 return nil
             }
-            return .absolute(moduleName, name)
-
+            return .absolute(module, name)
         case let .identifier(name):
             return .relative(name)
-
         default:
             return nil
         }
