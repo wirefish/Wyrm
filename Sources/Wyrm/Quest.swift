@@ -58,3 +58,17 @@ class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
         return false
     }
 }
+
+extension Entity {
+    func advancesQuest(_ quest: Quest, phase: String) -> Bool {
+        return handlers.contains {
+            $0.fn.parameters.contains {
+                if case let .quest(r, p) = $0.constraint {
+                    return quest.ref == r && phase == p
+                } else {
+                    return false
+                }
+            }
+        }
+    }
+}
