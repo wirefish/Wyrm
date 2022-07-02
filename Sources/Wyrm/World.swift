@@ -6,8 +6,6 @@
 //
 
 import CoreFoundation
-import NIOCore
-import NIOPosix
 
 class Module: ValueDictionary {
     let name: String
