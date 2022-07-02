@@ -44,7 +44,7 @@ enum WorldError: Error {
     case invalidModuleSpec(String)
 }
 
-enum ValueRef: Equatable, Codable {
+enum ValueRef: Hashable, Codable {
     case absolute(String, String)
     case relative(String)
 }
@@ -222,7 +222,7 @@ extension World {
             fatalError("invalid call to loadQuest")
         }
 
-        let quest = Quest(id: "\(module.name).\(name)")
+        let quest = Quest(ref: .absolute(module.name, name))
         let context: [ValueDictionary] = [quest, module]
 
         // Initialize the members.

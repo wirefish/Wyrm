@@ -33,8 +33,8 @@ class Avatar: Entity {
     var equipped = [EquippedSlot:Item?]()
 
     // A mapping from identifiers of active quests to their current state.
-    var activeQuests = [String:QuestState]()
+    var activeQuests = [ValueRef:QuestState]()
 
     // A mapping from identifiers of completed quests to the time of completion.
-    var completedQuests = [String:CFAbsoluteTime]()
+    var completedQuests = [ValueRef:CFAbsoluteTime]()
 }

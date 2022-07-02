@@ -26,14 +26,14 @@ class QuestPhase: ValueDictionaryObject {
 }
 
 class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
-    let id: String
+    let ref: ValueRef
     var name = ""
     var summary = ""
     var level = 1
     var phases = [QuestPhase]()
 
-    init(id: String) {
-        self.id = id
+    init(ref: ValueRef) {
+        self.ref = ref
     }
 
     static let accessors = [
@@ -44,13 +44,13 @@ class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
 
     var handlers = [EventHandler]()
 
-    var debugDescription: String { "<Quest \(id)>" }
+    var debugDescription: String { "<Quest \(ref)>" }
 
     func acceptableBy(_ avatar: Avatar) -> Bool {
         // TODO: call out to quest method
         return (avatar.level >= level
-                && avatar.activeQuests[id] == nil
-                && avatar.completedQuests[id] == nil)
+                && avatar.activeQuests[ref] == nil
+                && avatar.completedQuests[ref] == nil)
     }
 
     func completeableBy(_ avatar: Avatar) -> Bool {
