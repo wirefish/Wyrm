@@ -19,10 +19,6 @@ class Module: ValueDictionary {
         get { bindings[member] }
         set { bindings[member] = newValue }
     }
-
-    static func == (lhs: Module, rhs: Module) -> Bool {
-        return lhs === rhs
-    }
 }
 
 enum WorldError: Error {
