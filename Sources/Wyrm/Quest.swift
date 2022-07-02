@@ -7,13 +7,26 @@
 
 protocol Interactable {
     var offers_quests: [Quest] { get }
+    // TODO: interaction_verbs that are like implied commands, if the user enters an unknown
+    // command it parses the rest of the input and matches it against entities at the current
+    // location, then if they have a matching verb it generates events for that verb.
 }
 
-class Quest: Observer, ValueDictionaryObject, CustomDebugStringConvertible {
+class QuestPhase: ValueDictionaryObject {
+    var summary = ""
+    var handlers = [EventHandler]()
+
+    static let accessors = [
+        "summary": accessor(\QuestPhase.summary),
+    ]
+}
+
+class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
     let id: String
     var name = ""
     var summary = ""
     var level = 1
+    var phases = [QuestPhase]()
 
     init(id: String) {
         self.id = id
@@ -26,19 +39,6 @@ class Quest: Observer, ValueDictionaryObject, CustomDebugStringConvertible {
     ]
 
     var handlers = [EventHandler]()
-
-    func matchHandlers(phase: EventPhase, event: String, args: [Value]) -> [EventHandler] {
-        return matchHandlers(handlers: handlers, observer: self, phase: phase,
-                             event: event, args: args)
-    }
-
-    func findHandler(phase: EventPhase, event: String) -> ScriptFunction? {
-        handlers.firstMap { $0.phase == phase && $0.event == event ? $0.fn : nil }
-    }
-
-    func addHandler(_ handler: EventHandler) {
-        handlers.append(handler)
-    }
 
     var debugDescription: String { "<Quest \(id)>" }
 

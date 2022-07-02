@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-class Entity: Observer, ValueDictionary, CustomDebugStringConvertible {
+class Entity: Observer, CustomDebugStringConvertible {
     static var idIterator = (1...).makeIterator()
 
     let id = idIterator.next()!

@@ -218,12 +218,22 @@ extension World {
     }
 
     private func loadQuest(_ node: ParseNode, into module: Module) {
-        guard case let .quest(name, members, handlers) = node else {
+        guard case let .quest(name, members) = node else {
             fatalError("invalid call to loadQuest")
         }
 
         let quest = Quest(id: "\(module.name).\(name)")
-        initializeObserver(quest, members: members, handlers: handlers, module: module)
+        let context: [ValueDictionary] = [quest, module]
+
+        // Initialize the members.
+        for (name, initialValue) in members {
+            if let value = eval(initialValue, context: context) {
+                quest[name] = value
+            }
+        }
+
+        // FIXME: Initialize the phases.
+
         module.bindings[name] = .quest(quest)
     }
 
@@ -242,7 +252,7 @@ extension World {
         // Compile the event handlers.
         let compiler = Compiler()
         for (phase, name, parameters, body) in handlers {
-            let parameters = [Parameter(name: "self", constraint: nil)] + parameters
+            let parameters = [Parameter(name: "self", constraint: .none)] + parameters
             if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
                 observer.addHandler((phase, name, fn))
             }
@@ -398,7 +408,7 @@ extension World {
                 print("invalid exit portal")
                 break
             }
-            guard let destRef = asValueRef(dest) else {
+            guard let destRef = dest.asValueRef else {
                 print("exit destination must be a reference")
                 break
             }
@@ -458,20 +468,6 @@ extension World {
         }
 
         return nil
-    }
-
-    func asValueRef(_ node: ParseNode) -> ValueRef? {
-        switch node {
-        case let .dot(lhs, name):
-            guard case let .identifier(module) = lhs else {
-                return nil
-            }
-            return .absolute(module, name)
-        case let .identifier(name):
-            return .relative(name)
-        default:
-            return nil
-        }
     }
 }
 

@@ -47,16 +47,18 @@ extension Observer {
             }
             return zip(args, handler.fn.parameters).allSatisfy { arg, param in
                 switch param.constraint {
-                case nil:
+                case .none:
                     return true
-                case Parameter.selfConstraint:
+                case .self:
                     return arg == observer
-                default:
-                    guard let def = World.instance.lookup(param.constraint!, in: handler.fn.module) else {
-                        logger.warning("undefined constraint \(param.constraint!)")
+                case let .prototype(ref):
+                    guard let def = World.instance.lookup(ref, in: handler.fn.module) else {
+                        logger.warning("undefined constraint prototype \(ref)")
                         return false
                     }
                     return arg == def
+                default:
+                    fatalError("inimplemented constraint type")
                 }
             } ? handler : nil
         }

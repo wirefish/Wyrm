@@ -18,6 +18,11 @@ enum EquippedSlot: Hashable {
     case ears, neck, wrists, leftFinger, rightFinger
 }
 
+struct QuestState {
+    let phase: String
+    var state: Value
+}
+
 class Avatar: Entity {
     var level = 0
 
@@ -27,8 +32,8 @@ class Avatar: Entity {
     // Equipped items.
     var equipped = [EquippedSlot:Item?]()
 
-    // A mapping from identifiers of active quests to the current quest state.
-    var activeQuests = [String:Value]()
+    // A mapping from identifiers of active quests to their current state.
+    var activeQuests = [String:QuestState]()
 
     // A mapping from identifiers of completed quests to the time of completion.
     var completedQuests = [String:CFAbsoluteTime]()

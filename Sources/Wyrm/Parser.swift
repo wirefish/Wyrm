@@ -5,11 +5,27 @@
 //  Created by Craig Becker on 6/23/22.
 //
 
-struct Parameter {
-    static let selfConstraint = ValueRef.relative("self")
+// A constraint on the argument value that can match a parameter when calling a
+// function.
+enum Constraint: Equatable {
+    // Any argument matches.
+    case none
 
+    // The argument must be the entity on which the function or handler is defined.
+    case `self`
+
+    // The argument must be an entity that has the specified entity in its prototype chain.
+    case prototype(ValueRef)
+
+    // The argument must be an avatar that is currently at the specified phase of the
+    // specified quest. The meta-phase "available" means the quest can be accepted; the
+    // meta-phase "complete" means the quest has been completed.
+    case quest(ValueRef, String)
+}
+
+struct Parameter {
     let name: String
-    let constraint: ValueRef?
+    let constraint: Constraint
 }
 
 indirect enum ParseNode {
@@ -48,7 +64,7 @@ indirect enum ParseNode {
     // Top-level definitions.
     case entity(name: String, prototype: ValueRef, members: [Member],
                 handlers: [Handler], startable: Bool)
-    case quest(name: String, members: [Member], handlers: [Handler])
+    case quest(name: String, members: [Member])
 
     // True if this node can syntactically be on the left side of an assignment.
     var isAssignable: Bool {
@@ -57,6 +73,20 @@ indirect enum ParseNode {
         case .dot(_, _): return true
         case .subscript(_, _): return true
         default: return false
+        }
+    }
+
+    var asValueRef: ValueRef? {
+        switch self {
+        case let .dot(lhs, name):
+            guard case let .identifier(module) = lhs else {
+                return nil
+            }
+            return .absolute(module, name)
+        case let .identifier(name):
+            return .relative(name)
+        default:
+            return nil
         }
     }
 }
@@ -213,38 +243,32 @@ class Parser {
             return nil
         }
 
-        guard case .lparen = consume() else {
-            error("expected ( after event handler name")
-            return nil
-        }
-
-        var params = [Parameter]()
-        while !match(.rparen) {
+        var anonymousCount = 0
+        guard let params = parseSequence(from: .lparen, to: .rparen, using: { () -> Parameter? in
             guard case var .identifier(name) = consume() else {
                 error("parameter name must be an identifier")
                 return nil
             }
 
-            guard var constraint = parsePrototype() else {
+            guard var constraint = parseConstraint() else {
                 return nil
             }
 
             // As a special case, a parameter named self is just an anonymous parameter with
             // a self constraint.
             if name == "self" {
-                if constraint == nil {
-                    constraint = Parameter.selfConstraint
-                    name = "$\(params.count + 1)"
+                if constraint == .none {
+                    constraint = .self
+                    name = "$\(anonymousCount)"
+                    anonymousCount += 1
                 } else {
                     error("parameter named self cannot have a constraint")
                 }
             }
 
-            params.append(Parameter(name: name, constraint: constraint))
-
-            if currentToken != .rparen && !match(.comma) {
-                error("expected , between function parameters")
-            }
+            return Parameter(name: name, constraint: constraint)
+        }) else {
+            return nil
         }
 
         if let block = parseBlock() {
@@ -252,6 +276,55 @@ class Parser {
         } else {
             return nil
         }
+    }
+
+    private func parseValueRef() -> ValueRef? {
+        guard case let .identifier(prefix) = consume() else {
+            error("identifier expected")
+            return nil
+        }
+        if match(.dot) {
+            guard case let .identifier(name) = consume() else {
+                error("expected identifier after . in reference")
+                return nil
+            }
+            return .absolute(prefix, name)
+        } else {
+            return .relative(prefix)
+        }
+    }
+
+    private func parseConstraint() -> Constraint? {
+        if !match(.colon) {
+            return Constraint.none
+        } else if match(.dot) {
+            guard case let .identifier(constraintType) = consume() else {
+                error("expected identifier after . in constraint")
+                return nil
+            }
+            switch constraintType {
+            case "quest":
+                return parseQuestConstraint()
+            default:
+                error("invalid constraint type \(constraintType)")
+                return nil
+            }
+        } else if let ref = parseValueRef() {
+            return .prototype(ref)
+        } else {
+            return nil
+        }
+    }
+
+    private func parseQuestConstraint() -> Constraint? {
+        guard let params = parseSequence(from: .lparen, to: .rparen, using: { parseExpr() }),
+              params.count == 2,
+              let questRef = params[0].asValueRef,
+              case let .identifier(phase) = params[1] else {
+            error("invalid quest constraint")
+            return nil
+        }
+        return .quest(questRef, phase)
     }
 
     // MARK: - parsing entities
@@ -279,21 +352,8 @@ class Parser {
     private func parsePrototype() -> ValueRef?? {
         if !match(.colon) {
             return .some(nil)
-        }
-
-        guard case let .identifier(prefix) = consume() else {
-            error("expected identifier")
-            return nil
-        }
-
-        if match(.dot) {
-            guard case let .identifier(name) = consume() else {
-                error("expected identifier")
-                return nil
-            }
-            return .absolute(prefix, name)
         } else {
-            return .relative(prefix)
+            return parseValueRef()
         }
     }
 
@@ -305,9 +365,10 @@ class Parser {
             return nil
         }
 
-        let (members, handlers) = parseObserverBody("entity")
+        // FIXME: no handlers, need phases
+        let (members, _) = parseObserverBody("entity")
 
-        return .quest(name: name, members: members, handlers: handlers)
+        return .quest(name: name, members: members)
     }
 
     // MARK: - parsing statements
@@ -516,19 +577,10 @@ class Parser {
     }
 
     private func parseList() -> ParseNode? {
-        assert(match(.lsquare))
-
-        var elements = [ParseNode]()
-        while !match(.rsquare) {
-            if let expr = parseExpr() {
-                elements.append(expr)
-            }
-            if currentToken != .rsquare && !match(.comma) {
-                error("expected , between list elements")
-            }
+        guard let list = parseSequence(from: .lsquare, to: .rsquare, using: { parseExpr() }) else {
+            return nil
         }
-
-        return .list(elements)
+        return .list(list)
     }
 
     private func parseClone(lhs: ParseNode) -> ParseNode? {
@@ -635,6 +687,30 @@ class Parser {
         }
 
         return .exit(lhs, dir, rhs)
+    }
+
+    private func parseSequence<T>(from start: Token, to end: Token,
+                                  using fn: () -> T?) -> [T]? {
+        if !match(start) {
+            error("expected \(start) at \(currentToken)")
+            return nil
+        }
+
+        var list = [T]()
+        while !match(end) {
+            if !list.isEmpty {
+                guard match(.comma) else {
+                    error("expected , at \(currentToken)")
+                    return nil
+                }
+            }
+            guard let element = fn() else {
+                return nil
+            }
+            list.append(element)
+        }
+
+        return list
     }
 
     // MARK: - consuming tokens

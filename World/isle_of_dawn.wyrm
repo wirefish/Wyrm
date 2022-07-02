@@ -158,6 +158,11 @@ def officious_kobold: item {  // FIXME: lib.npc
         hair, and knobbly gray skin. It is, however, impeccably groomed.
     offers_quests = [choose_a_race]
 
+    when talk(actor: .quest(choose_a_race, available), self, topic) {
+        tell(self, actor) |
+            Hey! I have a quest for you!
+    }
+
     when talk(actor, self, topic) {
         tell(self, actor) |
             Good to see you again! You might have heard that some of my kind have

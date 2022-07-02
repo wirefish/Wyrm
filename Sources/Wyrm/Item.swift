@@ -11,6 +11,7 @@ class Item: PhysicalEntity, Encodable {
     var count = 1
     var level = 0
     var useVerbs = [String]()
+    var questId: String?  // FIXME: questRef: ValueRef
 
     override func copyProperties(from other: Entity) {
         let other = other as! Item

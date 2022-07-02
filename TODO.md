@@ -18,3 +18,8 @@
 - session management with websockets
 
 - figure out quest states and how npcs react based on them.
+
+- change containers to only allow one stack of something stackable. the stack limit for typical things can be large, and this allows for things like quest items where you can only carry so many at once.
+
+- use ValueRef instead of string quest id
+
