@@ -48,7 +48,7 @@ deflocation hilltop: isle_location {
 
 // pavilion
 
-def spirit_warden: item {  // FIXME: lib.npc
+def spirit_warden: lib.npc {
     brief = "the spirit warden"
     pose = "stands nearby, smiling amiably."
     description = |
@@ -110,7 +110,7 @@ defquest choose_a_race {
     }
 }
 
-def officious_kobold: item {  // FIXME: lib.npc
+def officious_kobold: lib.npc {
     brief =  "an officious kobold"
     pose = "sits at a low table in the shade of a large umbrella."
     description = |
@@ -200,7 +200,7 @@ deflocation wildflower_field: isle_location {
 
 // human_shrine
 
-def human_caretaker: item {  // FIXME: lib.npc
+def human_caretaker: lib.npc {
     brief = "the human caretaker"
     pose = "stands nearby with a welcoming expression."
     description = |
