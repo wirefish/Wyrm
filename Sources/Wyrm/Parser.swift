@@ -31,6 +31,7 @@ struct Parameter {
 indirect enum ParseNode {
     typealias Member = (name: String, initialValue: ParseNode)
     typealias Handler = (EventPhase, String, [Parameter], ParseNode)
+    typealias QuestPhase = (String, [Member])
 
     // Literal values.
     case boolean(Bool)
@@ -64,7 +65,7 @@ indirect enum ParseNode {
     // Top-level definitions.
     case entity(name: String, prototype: ValueRef, members: [Member],
                 handlers: [Handler], startable: Bool)
-    case quest(name: String, members: [Member])
+    case quest(name: String, members: [Member], phases: [QuestPhase])
 
     // True if this node can syntactically be on the left side of an assignment.
     var isAssignable: Bool {
@@ -357,18 +358,72 @@ class Parser {
         }
     }
 
+    // MARK: - parsing quests
+    
     private func parseQuest() -> ParseNode? {
-        let _ = consume()
+        advance()
 
         guard case let .identifier(name) = consume() else {
             error("expected identifier after defquest")
             return nil
         }
 
-        // FIXME: no handlers, need phases
-        let (members, _) = parseObserverBody("entity")
+        guard match(.lbrace) else {
+            error("expected { at start of quest body")
+            return nil
+        }
 
-        return .quest(name: name, members: members)
+        var members = [ParseNode.Member]()
+        var phases = [ParseNode.QuestPhase]()
+        while !(match(.rbrace)) {
+            switch currentToken {
+            case .identifier:
+                if let member = parseMember() {
+                    members.append(member)
+                }
+            case .phase:
+                if let phase = parseQuestPhase() {
+                    phases.append(phase)
+                }
+                break
+            default:
+                error("unexpected token \(currentToken) in quest body")
+                advance()
+                break
+            }
+        }
+
+        return .quest(name: name, members: members, phases: phases)
+    }
+
+    private func parseQuestPhase() -> ParseNode.QuestPhase? {
+        advance()
+
+        guard case let .identifier(name) = consume() else {
+            error("expected identifier as name of quest phase")
+            return nil
+        }
+
+        guard match(.lbrace) else {
+            error("expected { at start of quest phase body")
+            return nil
+        }
+
+        var members = [ParseNode.Member]()
+        while !(match(.rbrace)) {
+            switch currentToken {
+            case .identifier:
+                if let member = parseMember() {
+                    members.append(member)
+                }
+            default:
+                error("unexpected token \(currentToken) in quest phase body")
+                advance()
+                break
+            }
+        }
+
+        return (name, members)
     }
 
     // MARK: - parsing statements

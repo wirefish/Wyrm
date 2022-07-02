@@ -218,7 +218,7 @@ extension World {
     }
 
     private func loadQuest(_ node: ParseNode, into module: Module) {
-        guard case let .quest(name, members) = node else {
+        guard case let .quest(name, members, phases) = node else {
             fatalError("invalid call to loadQuest")
         }
 
@@ -232,7 +232,15 @@ extension World {
             }
         }
 
-        // FIXME: Initialize the phases.
+        for (phaseName, members) in phases {
+            let phase = QuestPhase(phaseName)
+            for (name, initialValue) in members {
+                if let value = eval(initialValue, context: context) {
+                    phase[name] = value
+                }
+            }
+            quest.phases.append(phase)
+        }
 
         module.bindings[name] = .quest(quest)
     }

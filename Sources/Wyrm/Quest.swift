@@ -13,8 +13,12 @@ protocol Interactable {
 }
 
 class QuestPhase: ValueDictionaryObject {
+    let name: String
     var summary = ""
-    var handlers = [EventHandler]()
+
+    init(_ name: String) {
+        self.name = name
+    }
 
     static let accessors = [
         "summary": accessor(\QuestPhase.summary),
