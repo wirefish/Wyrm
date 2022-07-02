@@ -176,24 +176,34 @@ class Parser {
         }
     }
 
-    // MARK: - parsing observers
+    // MARK: - parsing entities
 
-    private func parseObserverBody(_ type: String) -> ([ParseNode.Member], [ParseNode.Handler]) {
-        guard case .lbrace = consume() else {
-            error("expected { at start of \(type) body")
-            return ([], [])
+    private func parseEntity() -> ParseNode? {
+        let def = consume()
+
+        guard case let .identifier(name) = consume() else {
+            error("expected identifier after \(def)")
+            return nil
+        }
+
+        guard match(.colon) else {
+            error("prototype required for entity definition")
+            return nil
+        }
+
+        guard let prototype = parseValueRef() else {
+            return nil
+        }
+
+        guard match(.lbrace) else {
+            error("expected { at start of entity body")
+            return nil
         }
 
         var members = [ParseNode.Member]()
         var handlers = [ParseNode.Handler]()
-        loop: while true {
+        while !match(.rbrace) {
             switch currentToken {
-            case .endOfInput:
-                error("unterminated \(type) body")
-                break loop
-            case .rbrace:
-                advance()
-                break loop
             case .identifier:
                 if let member = parseMember() {
                     members.append(member)
@@ -203,13 +213,15 @@ class Parser {
                     handlers.append(handler)
                 }
             default:
-                error("invalid token \(currentToken) at top level within \(type) body")
+                error("invalid token \(currentToken) within entity body")
                 advance()
                 break
             }
         }
 
-        return (members, handlers)
+        let startable = def == .deflocation
+        return .entity(name: name, prototype: prototype, members: members,
+                       handlers: handlers, startable: startable)
     }
 
     private func parseMember() -> ParseNode.Member? {
@@ -222,11 +234,11 @@ class Parser {
             return nil
         }
 
-        if let initializer = parseExpr() {
-            return (name, initializer)
-        } else {
+        guard let initializer = parseExpr() else {
             return nil
         }
+
+        return (name, initializer)
     }
 
     private func parseHandler() -> ParseNode.Handler? {
@@ -272,27 +284,11 @@ class Parser {
             return nil
         }
 
-        if let block = parseBlock() {
-            return (phase, event, params, block)
-        } else {
+        guard let block = parseBlock() else {
             return nil
         }
-    }
 
-    private func parseValueRef() -> ValueRef? {
-        guard case let .identifier(prefix) = consume() else {
-            error("identifier expected")
-            return nil
-        }
-        if match(.dot) {
-            guard case let .identifier(name) = consume() else {
-                error("expected identifier after . in reference")
-                return nil
-            }
-            return .absolute(prefix, name)
-        } else {
-            return .relative(prefix)
-        }
+        return (phase, event, params, block)
     }
 
     private func parseConstraint() -> Constraint? {
@@ -328,33 +324,19 @@ class Parser {
         return .quest(questRef, phase)
     }
 
-    // MARK: - parsing entities
-
-    private func parseEntity() -> ParseNode? {
-        let def = consume()
-
-        guard case let .identifier(name) = consume() else {
-            error("expected identifier after \(def)")
+    private func parseValueRef() -> ValueRef? {
+        guard case let .identifier(prefix) = consume() else {
+            error("identifier expected")
             return nil
         }
-
-        guard case let prototype?? = parsePrototype() else {
-            error("prototype required for entity definition")
-            return nil
-        }
-
-        let (members, handlers) = parseObserverBody("entity")
-
-        let startable = def == .deflocation
-        return .entity(name: name, prototype: prototype, members: members,
-                       handlers: handlers, startable: startable)
-    }
-
-    private func parsePrototype() -> ValueRef?? {
-        if !match(.colon) {
-            return .some(nil)
+        if match(.dot) {
+            guard case let .identifier(name) = consume() else {
+                error("expected identifier after . in reference")
+                return nil
+            }
+            return .absolute(prefix, name)
         } else {
-            return parseValueRef()
+            return .relative(prefix)
         }
     }
 
