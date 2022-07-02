@@ -144,7 +144,7 @@ class Parser {
         .or: (method: parseOr, prec: .or),
     ]
 
-    let scanner: Scanner
+    var scanner: Scanner
     var currentToken: Token = .endOfInput
 
     init(scanner: Scanner) {
@@ -307,7 +307,7 @@ class Parser {
                 return nil
             }
         } else if let ref = parseValueRef() {
-            return .prototype(ref)
+            return ref == .relative("self") ? .self : .prototype(ref)
         } else {
             return nil
         }
@@ -667,6 +667,7 @@ class Parser {
         // Allow for a trailing string/text literal as the final argument.
         if case let .string(s) = currentToken {
             args.append(.string(s))
+            print(parseText(s))
             advance()
         }
 
@@ -750,6 +751,48 @@ class Parser {
         return list
     }
 
+    private func parseText(_ s: String) -> Text? {
+        let parts = s.split(separator: "{", maxSplits: Int.max, omittingEmptySubsequences: false)
+
+        var segments = [Text.Segment]()
+        for part in parts.dropFirst() {
+            let subparts = part.split(separator: "}")
+            guard subparts.count == 2 else {
+                error("malformed text")
+                return nil
+            }
+
+            let state = pushScanner(Scanner(String(subparts[0])))
+            defer { restoreScanner(state) }
+
+            guard let expr = parseExpr() else {
+                return nil
+            }
+
+            var format: Text.Format
+            if match(.colon) {
+                guard case let .identifier(spec) = consume() else {
+                    error("malformed format specification")
+                    return nil
+                }
+                switch spec {
+                case "i", "I": format = Text.Format(capitalized: spec == "I", article: .indefinite)
+                case "d", "D": format = Text.Format(capitalized: spec == "D", article: .definite)
+                case "n", "N": format = Text.Format(capitalized: spec == "N", article: .none)
+                default:
+                    error("invalid format specification")
+                    return nil
+                }
+            } else {
+                format = Text.Format(capitalized: false, article: .indefinite)
+            }
+
+            segments.append(Text.Segment(expr: expr, format: format, suffix: String(subparts[1])))
+        }
+
+        return Text(prefix: String(parts[0]), segments: segments)
+    }
+
     // MARK: - consuming tokens
 
     private func advance() {
@@ -776,6 +819,19 @@ class Parser {
         } else {
             return false
         }
+    }
+
+    private func pushScanner(_ newScanner: Scanner) -> (Scanner, Token) {
+        let prevScanner = scanner
+        let prevToken = currentToken
+        scanner = newScanner
+        advance()
+        return (prevScanner, prevToken)
+    }
+
+    private func restoreScanner(_ state: (Scanner, Token)) {
+        scanner = state.0
+        currentToken = state.1
     }
 
     // MARK: - generating error messages

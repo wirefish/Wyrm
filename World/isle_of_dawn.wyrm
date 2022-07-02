@@ -162,7 +162,7 @@ def officious_kobold: lib.npc {
     when talk(actor: .quest(choose_a_race, done), self, npc) {
         tell(npc, actor) |
             A fine choice! I had no doubt you would choose to become
-            {avatar.race}. I am something of an expert in these matters, after
+            {actor.race}. I am something of an expert in these matters, after
             all.
 
             I can't help but notice that your new body, while quite lovely, is

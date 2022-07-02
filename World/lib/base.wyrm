@@ -3,6 +3,6 @@
 def npc: creature {
     when talk(actor, self, topic) {
         tell(self, actor) |
-            {self} has nothing to say to you.
+            {self:D} has nothing to say to you.
     }
 }
