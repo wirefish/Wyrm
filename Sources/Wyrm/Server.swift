@@ -56,9 +56,11 @@ private final class HTTPHandler: ChannelInboundHandler, RemovableChannelHandler 
         }
 
         guard case .GET = head.method else {
-            self.respond405(context: context)
+            self.respondWithStatus(.methodNotAllowed, context: context)
             return
         }
+
+        logger.info(head.uri)
 
         var headers = HTTPHeaders()
         headers.add(name: "Content-Type", value: "text/html")
@@ -75,13 +77,11 @@ private final class HTTPHandler: ChannelInboundHandler, RemovableChannelHandler 
         context.flush()
     }
 
-    private func respond405(context: ChannelHandlerContext) {
+    private func respondWithStatus(_ status: HTTPResponseStatus, context: ChannelHandlerContext) {
         var headers = HTTPHeaders()
         headers.add(name: "Connection", value: "close")
         headers.add(name: "Content-Length", value: "0")
-        let head = HTTPResponseHead(version: .http1_1,
-                                    status: .methodNotAllowed,
-                                    headers: headers)
+        let head = HTTPResponseHead(version: .http1_1, status: status, headers: headers)
         context.write(self.wrapOutboundOut(.head(head)), promise: nil)
         context.write(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
             context.close(promise: nil)
@@ -146,15 +146,17 @@ private final class WebSocketTimeHandler: ChannelInboundHandler {
     }
 
     private func receivedClose(context: ChannelHandlerContext, frame: WebSocketFrame) {
-        // Handle a received close frame. In websockets, we're just going to send the close
-        // frame and then close, unless we already sent our own close frame.
+        // Handle a received close frame. In websockets, we're just going to
+        // send the close frame and then close, unless we already sent our own
+        // close frame.
         if awaitingClose {
             // Cool, we started the close and were waiting for the user. We're done.
             context.close(promise: nil)
         } else {
-            // This is an unsolicited close. We're going to send a response frame and
-            // then, when we've sent it, close up shop. We should send back the close code the remote
-            // peer sent us, unless they didn't send one at all.
+            // This is an unsolicited close. We're going to send a response
+            // frame and then, when we've sent it, close up shop. We should send
+            // back the close code the remote peer sent us, unless they didn't
+            // send one at all.
             var data = frame.unmaskedData
             let closeDataCode = data.readSlice(length: 2) ?? ByteBuffer()
             let closeFrame = WebSocketFrame(fin: true, opcode: .connectionClose, data: closeDataCode)
@@ -177,8 +179,8 @@ private final class WebSocketTimeHandler: ChannelInboundHandler {
     }
 
     private func closeOnError(context: ChannelHandlerContext) {
-        // We have hit an error, we want to close. We do that by sending a close frame and then
-        // shutting down the write side of the connection.
+        // We have hit an error, we want to close. We do that by sending a close
+        // frame and then shutting down the write side of the connection.
         var data = context.channel.allocator.buffer(capacity: 2)
         data.write(webSocketErrorCode: .protocolError)
         let frame = WebSocketFrame(fin: true, opcode: .connectionClose, data: data)
