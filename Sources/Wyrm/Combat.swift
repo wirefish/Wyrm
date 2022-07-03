@@ -37,14 +37,14 @@ enum CombatTrait: ValueRepresentableEnum {
         (String(describing: $0), $0)
     })
 
-    init?(fromValue value: Value) {
+    static func fromValue(_ value: Value) -> CombatTrait? {
         guard case let .symbol(name) = value else {
             return nil
         }
         if let damageType = DamageType.names[name] {
-            self = .affinity(damageType)
+            return .affinity(damageType)
         } else if let c = Self.names[name] {
-            self = c
+            return c
         } else {
             return nil
         }
@@ -60,19 +60,18 @@ enum CombatTrait: ValueRepresentableEnum {
     }
 }
 
-struct ScaledTrait {
+struct ScaledTrait: ValueRepresentable {
     let trait: CombatTrait
     let coeff: Double
 
-    init?(fromValue value: Value) {
+    static func fromValue(_ value: Value) -> ScaledTrait? {
         guard case let .list(spec) = value,
               spec.values.count == 2,
-              let trait = CombatTrait(fromValue: spec.values[0]),
+              let trait = CombatTrait.fromValue(spec.values[0]),
               let coeff = Double.fromValue(spec.values[1]) else {
             return nil
         }
-        self.trait = trait
-        self.coeff = coeff
+        return ScaledTrait(trait: trait, coeff: coeff)
     }
 
     func toValue() -> Value {
