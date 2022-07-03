@@ -54,6 +54,13 @@ enum Opcode: UInt8 {
     // The next byte is the number of arguments.
     case call
 
+    // Convert the value at the top of the stack into a string. The following byte describes
+    // the desired format.
+    case stringify
+
+    // The next byte is the number of strings on the stack. Merge them into a single string.
+    case joinStrings
+
     // Await the result of a promise.
     case await
 
@@ -145,6 +152,9 @@ class ScriptFunction: Callable {
                 var count: UInt16 = UInt16(iter.next()!)
                 count |= UInt16(iter.next()!) << 8
                 print(String(format: "  %@ %5d", opname, count))
+            case .stringify, .joinStrings:
+                let i = iter.next()!
+                print(String(format: "  %@ %5d", opname, i))
             default:
                 print(String(format: "  %@", opname))
             }
@@ -177,8 +187,13 @@ class Compiler {
             if let s = text.asLiteral {
                  block.emit(.pushConstant, block.addConstant(.string(s)))
             } else {
-                logger.warning("compiling interpolated string not yet implemented")
-                block.emit(.pushFalse)
+                block.emit(.pushConstant, block.addConstant(.string(text.prefix)))
+                for segment in text.segments {
+                    compile(segment.expr, &block)
+                    block.emit(.stringify, segment.format)
+                    block.emit(.pushConstant, block.addConstant(.string(segment.suffix)))
+                }
+                block.emit(.joinStrings, UInt8(1 + 2 * text.segments.count))
             }
 
         case let .symbol(s):

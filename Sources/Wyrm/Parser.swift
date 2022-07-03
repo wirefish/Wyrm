@@ -773,22 +773,18 @@ class Parser {
                 return nil
             }
 
-            var format: Text.Format
+            var format = UInt8(0)
             if match(.colon) {
-                guard case let .identifier(spec) = consume() else {
+                guard case let .identifier(id) = consume(), id.count == 1, let spec = id.first else {
                     error("malformed format specification")
                     return nil
                 }
                 switch spec {
-                case "i", "I": format = Text.Format(capitalized: spec == "I", article: .indefinite)
-                case "d", "D": format = Text.Format(capitalized: spec == "D", article: .definite)
-                case "n", "N": format = Text.Format(capitalized: spec == "N", article: .none)
+                case "i", "I", "d", "D", "n", "N": format = spec.asciiValue!
                 default:
                     error("invalid format specification")
                     return nil
                 }
-            } else {
-                format = Text.Format(capitalized: false, article: .indefinite)
             }
 
             segments.append(Text.Segment(expr: expr, format: format, suffix: String(subparts[1])))

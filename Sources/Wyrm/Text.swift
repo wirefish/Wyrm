@@ -4,14 +4,9 @@
 //
 
 struct Text {
-    struct Format {
-        let capitalized: Bool
-        let article: Article
-    }
-
     struct Segment {
         let expr: ParseNode
-        let format: Format
+        let format: UInt8
         let suffix: String
     }
 
