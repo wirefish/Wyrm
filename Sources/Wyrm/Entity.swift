@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-class Entity: Observer, CustomDebugStringConvertible {
+class Entity: ValueDictionary {
     static var idIterator = (1...).makeIterator()
 
     let id = idIterator.next()!
@@ -33,21 +33,17 @@ class Entity: Observer, CustomDebugStringConvertible {
         return entity
     }
 
+    final func extends(_ ref: ValueRef) -> Bool {
+        return ref == self.ref || (prototype?.extends(ref) ?? false)
+    }
+
     subscript(memberName: String) -> Value? {
         get { return extraMembers[memberName] }
         set { extraMembers[memberName] = newValue }
     }
+}
 
-    func matchHandlers(phase: EventPhase, event: String, args: [Value]) -> [EventHandler] {
-        return matchHandlers(handlers: handlers, observer: self, phase: phase,
-                             event: event, args: args) +
-            (prototype?.matchHandlers(phase: phase, event: event, args: args) ?? [])
-    }
-
-    func addHandler(_ handler: EventHandler) {
-        handlers.append(handler)
-    }
-
+extension Entity: CustomDebugStringConvertible {
     var debugDescription: String {
         if let ref = ref {
             return "<\(type(of: self)) ref=\(ref)>"
@@ -55,6 +51,28 @@ class Entity: Observer, CustomDebugStringConvertible {
             return "<\(type(of: self)) id=\(id) proto=\(protoRef)>"
         } else {
             return "<\(type(of: self)) id=\(id) proto=??>"
+        }
+    }
+}
+
+extension Entity {
+    final func handleEvent(_ event: Event, args: [Value]) {
+        var observer: Entity! = self
+        while observer != nil {
+            let args = [.entity(observer)] + args
+            let handlers = observer.handlers.keep {
+                $0.appliesTo(event: event, observer: self, args: args)
+            }
+            // FIXME: handle fallthrough
+            if let handler = handlers.first {
+                do {
+                    let _ = try handler.fn.call(args, context: [observer])
+                } catch {
+                    logger.error("error executing event handler: \(error)")
+                }
+                return
+            }
+            observer = observer.prototype
         }
     }
 }
@@ -87,11 +105,9 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     ]
 
     override subscript(member: String) -> Value? {
-        get { return PhysicalEntity.accessors[member]?.get(self) ?? super[member] }
+        get { Self.accessors[member]?.get(self) ?? super[member] }
         set {
-            if let acc = PhysicalEntity.accessors[member] {
-                acc.set(self, newValue!)
-            } else {
+            if Self.accessors[member]?.set(self, newValue!) == nil {
                 super[member] = newValue
             }
         }

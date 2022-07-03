@@ -99,13 +99,13 @@ extension World {
     func start() {
         for entity in startableEntities {
             logger.debug("starting \(entity)")
-            entity.handleEvent(.when, "start_world", args: [])
+            entity.handleEvent(Event(.when, "start_world"), args: [])
         }
     }
 
     func stop() {
         for entity in startableEntities {
-            entity.handleEvent(.when, "stop_world", args: [])
+            entity.handleEvent(Event(.when, "stop_world"), args: [])
         }
     }
 }
@@ -190,7 +190,7 @@ extension World {
         }
         let entity = prototype.clone()
         entity.ref = .absolute(module.name, name)
-        initializeObserver(entity, members: members, handlers: handlers, module: module)
+        initializeEntity(entity, members: members, handlers: handlers, module: module)
         module.bindings[name] = .entity(entity)
 
         if startable {
@@ -226,15 +226,15 @@ extension World {
         module.bindings[name] = .quest(quest)
     }
 
-    private func initializeObserver(_ observer: Observer,
-                                    members: [ParseNode.Member], handlers: [ParseNode.Handler],
-                                    module: Module) {
-        let context: [ValueDictionary] = [observer, module]
+    private func initializeEntity(_ entity: Entity,
+                                  members: [ParseNode.Member], handlers: [ParseNode.Handler],
+                                  module: Module) {
+        let context: [ValueDictionary] = [entity, module]
 
         // Initialize the members.
         for (name, initialValue) in members {
             if let value = eval(initialValue, context: context) {
-                observer[name] = value
+                entity[name] = value
             }
         }
 
@@ -243,7 +243,7 @@ extension World {
         for (phase, name, parameters, body) in handlers {
             let parameters = [Parameter(name: "self", constraint: .none)] + parameters
             if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-                observer.addHandler((phase, name, fn))
+                entity.handlers.append(EventHandler(event: Event(phase, name), fn: fn))
             }
         }
     }

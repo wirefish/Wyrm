@@ -28,13 +28,6 @@ enum Value: Equatable {
         }
     }
 
-    var asObserver: Observer? {
-        switch self {
-        case let .entity(e): return e
-        default: return nil
-        }
-    }
-
     var asValueDictionary: ValueDictionary? {
         switch self {
         case let .entity(e): return e
@@ -315,12 +308,15 @@ extension ValueRepresentableEnum {
 // MARK: - representing reference types
 
 protocol ReferenceValueRepresentable {
-    static func fromValue(_ value: Value) -> ReferenceValueRepresentable?
+    associatedtype Object
+    static func fromValue(_ value: Value) -> Object?
     func toValue() -> Value
 }
 
 extension Entity: ReferenceValueRepresentable {
-    static func fromValue(_ value: Value) -> ReferenceValueRepresentable? {
+    typealias Object = Entity
+
+    static func fromValue(_ value: Value) -> Entity? {
         guard case let .entity(entity) = value else {
             return nil
         }
@@ -333,7 +329,9 @@ extension Entity: ReferenceValueRepresentable {
 }
 
 extension Quest: ReferenceValueRepresentable {
-    static func fromValue(_ value: Value) -> ReferenceValueRepresentable? {
+    typealias Object = Quest
+
+    static func fromValue(_ value: Value) -> Quest? {
         guard case let .quest(quest) = value else {
             return nil
         }

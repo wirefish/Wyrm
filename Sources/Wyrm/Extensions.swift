@@ -16,4 +16,8 @@ extension Array {
         }
         return nil
     }
+
+    func keep(where pred: (Element) -> Bool) -> [Element] {
+        compactMap { pred($0) ? $0 : nil }
+    }
 }
