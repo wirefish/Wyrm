@@ -10,6 +10,7 @@ protocol Viewable {
     var pose: String? { get }
     var description: String? { get }
     var icon: String? { get }
+    var isObvious: Bool { get }
 }
 
 fileprivate let defaultBrief = NounPhrase("an entity")

@@ -85,6 +85,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     var pose: String?
     var description: String?
     var icon: String?
+    var isObvious = true
 
     // Matchable
     var alts = [NounPhrase]()
@@ -103,6 +104,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
         "pose": accessor(\PhysicalEntity.pose),
         "description": accessor(\PhysicalEntity.description),
         "icon": accessor(\PhysicalEntity.icon),
+        "is_obvious": accessor(\PhysicalEntity.isObvious),
         "alts": accessor(\PhysicalEntity.alts),
     ]
 
