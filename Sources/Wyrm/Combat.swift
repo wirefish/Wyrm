@@ -28,6 +28,7 @@ enum CombatTrait: ValueRepresentableEnum {
     case affinity(DamageType)  // increases attack and defense for one damage type
 
     // NOTE: Because affinity has an associated value, it is handled differently and
+    // not included in allCases by design.
     
     static var allCases: [CombatTrait] = [
         .power, .protection, .precision, .ferocity, .vitality
