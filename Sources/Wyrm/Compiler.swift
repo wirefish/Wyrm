@@ -190,7 +190,7 @@ class Compiler {
                 block.emit(.pushConstant, block.addConstant(.string(text.prefix)))
                 for segment in text.segments {
                     compile(segment.expr, &block)
-                    block.emit(.stringify, segment.format)
+                    block.emit(.stringify, segment.format.rawValue)
                     block.emit(.pushConstant, block.addConstant(.string(segment.suffix)))
                 }
                 block.emit(.joinStrings, UInt8(1 + 2 * text.segments.count))

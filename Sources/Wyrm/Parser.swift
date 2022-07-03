@@ -773,14 +773,19 @@ class Parser {
                 return nil
             }
 
-            var format = UInt8(0)
+            var format = Text.Format()
             if match(.colon) {
                 guard case let .identifier(id) = consume(), id.count == 1, let spec = id.first else {
                     error("malformed format specification")
                     return nil
                 }
                 switch spec {
-                case "i", "I", "d", "D", "n", "N": format = spec.asciiValue!
+                case "i": format = [.indefinite]
+                case "I": format = [.indefinite, .capitalized]
+                case "d": format = [.definite]
+                case "D": format = [.definite, .capitalized]
+                case "n": format = []
+                case "N": format = [.capitalized]
                 default:
                     error("invalid format specification")
                     return nil

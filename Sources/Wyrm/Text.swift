@@ -4,9 +4,17 @@
 //
 
 struct Text {
+    struct Format: OptionSet {
+        let rawValue: UInt8
+
+        static let capitalized = Format(rawValue: 1 << 0)
+        static let indefinite = Format(rawValue: 1 << 1)
+        static let definite = Format(rawValue: 1 << 2)
+    }
+
     struct Segment {
         let expr: ParseNode
-        let format: UInt8
+        let format: Format
         let suffix: String
     }
 
