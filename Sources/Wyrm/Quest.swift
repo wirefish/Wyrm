@@ -80,13 +80,9 @@ extension Entity {
 
 // Avatar methods related to managing quests.
 extension Avatar {
-    func acceptQuest(_ quest: Quest) -> Bool {
-        guard let phase = quest.phases.first else {
-            logger.warning("cannot accept quest \(quest.name) with no phases")
-            return false
-        }
+    func acceptQuest(_ quest: Quest) {
+        let phase = quest.phases.first!
         activeQuests[quest.ref] = QuestState(phase: phase.label, state: phase.initialState)
-        return true
     }
 
     func advanceQuest(_ quest: Quest, to phaseLabel: String) -> Bool {
@@ -124,10 +120,7 @@ struct QuestScriptFunctions: ScriptProvider {
     ]
 
     static func acceptQuest(_ args: [Value]) throws -> Value {
-        let (actor, quest, npc) = try unpack(args, Entity.self, Quest.self, Entity.self)
-        guard let avatar = actor as? Avatar else {
-            throw ScriptError.invalidArgument
-        }
+        let (avatar, quest, npc) = try unpack(args, Avatar.self, Quest.self, Entity.self)
         avatar.acceptQuest(quest)
         // fire event: after accept_quest(avatar, quest, noc)
         return .nil

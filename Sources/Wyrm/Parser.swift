@@ -146,12 +146,13 @@ class Parser {
 
     var scanner: Scanner
     var currentToken: Token = .endOfInput
+    var errorCount = 0
 
     init(scanner: Scanner) {
         self.scanner = scanner
     }
 
-    func parse() -> [ParseNode] {
+    func parse() -> [ParseNode]? {
         advance()
 
         var defs = [ParseNode]()
@@ -160,6 +161,12 @@ class Parser {
                 defs.append(def)
             }
         }
+
+        guard errorCount == 0 else {
+            print("parsing failed with \(errorCount) errors")
+            return nil
+        }
+
         return defs
     }
     
@@ -373,6 +380,11 @@ class Parser {
                 advance()
                 break
             }
+        }
+
+        guard !phases.isEmpty else {
+            error("quest \(name) does not define any phases")
+            return nil
         }
 
         return .quest(name: name, members: members, phases: phases)
@@ -843,5 +855,6 @@ class Parser {
 
     private func error(_ message: String) {
         print("\(scanner.currentLine): \(message)")
+        errorCount += 1
     }
 }

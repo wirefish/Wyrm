@@ -164,16 +164,19 @@ extension World {
 
         let source = try! String(contentsOfFile: rootPath + relativePath, encoding: .utf8)
         let parser = Parser(scanner: Scanner(source))
-        for node in parser.parse() {
-            switch node {
+        guard let defs = parser.parse() else {
+            return
+        }
+        for def in defs {
+            switch def {
             case .entity:
-                loadEntity(node, into: module)
+                loadEntity(def, into: module)
 
             case .quest:
-                loadQuest(node, into: module)
+                loadQuest(def, into: module)
 
             default:
-                fatalError("unexpected node at top level")
+                fatalError("unexpected definition at top level")
             }
         }
     }
