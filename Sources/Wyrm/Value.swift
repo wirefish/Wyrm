@@ -280,6 +280,16 @@ extension NounPhrase: ValueRepresentable {
     }
 }
 
+extension Value: ValueRepresentable {
+    init?(fromValue value: Value) {
+        self = value
+    }
+
+    func toValue() -> Value {
+        return self
+    }
+}
+
 // MARK: - representing enums
 
 protocol ValueRepresentableEnum: CaseIterable, ValueRepresentable {

@@ -24,7 +24,7 @@ struct QuestState {
 }
 
 class Avatar: Entity {
-    var level = 0
+    var level = 1
 
     // Current location.
     weak var location: Location?

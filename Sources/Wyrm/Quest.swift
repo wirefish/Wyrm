@@ -13,15 +13,17 @@ protocol Interactable {
 }
 
 class QuestPhase: ValueDictionaryObject {
-    let name: String
+    let label: String
     var summary = ""
+    var initialState = Value.nil
 
-    init(_ name: String) {
-        self.name = name
+    init(_ label: String) {
+        self.label = label
     }
 
     static let accessors = [
         "summary": accessor(\QuestPhase.summary),
+        "initial_state": accessor(\QuestPhase.initialState),
     ]
 }
 
@@ -60,6 +62,9 @@ class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
 }
 
 extension Entity {
+    // Returns true if this entity has an event handler constrained to a
+    // specific quest and phase, indicating that it is involved in advancing the
+    // quest. This is used to mark entities on the map, etc.
     func advancesQuest(_ quest: Quest, phase: String) -> Bool {
         return handlers.contains {
             $0.fn.parameters.contains {
@@ -70,5 +75,63 @@ extension Entity {
                 }
             }
         }
+    }
+}
+
+// Avatar methods related to managing quests.
+extension Avatar {
+    func acceptQuest(_ quest: Quest) -> Bool {
+        guard let phase = quest.phases.first else {
+            logger.warning("cannot accept quest \(quest.name) with no phases")
+            return false
+        }
+        activeQuests[quest.ref] = QuestState(phase: phase.label, state: phase.initialState)
+        return true
+    }
+
+    func advanceQuest(_ quest: Quest, to phaseLabel: String) -> Bool {
+        guard let phase = quest.phases.first(where: { $0.label == phaseLabel }) else {
+            logger.warning("cannot advance quest \(quest.name) to unknown phase \(phaseLabel)")
+            return false
+        }
+        activeQuests.updateValue(QuestState(phase: phaseLabel, state: phase.initialState),
+                                 forKey: quest.ref)
+        return true
+    }
+
+    func dropQuest(_ quest: Quest) -> Bool {
+        guard activeQuests.removeValue(forKey: quest.ref) != nil else {
+            logger.warning("cannot drop quest \(quest.name) that is not active")
+            return false
+        }
+        // TODO: remove quest items
+        return true
+    }
+
+    func completeQuest(_ quest: Quest) -> Bool {
+        // TODO:
+        return false
+    }
+
+    func didCompleteQuest(_ quest: Quest) -> Bool {
+        return completedQuests[quest.ref] != nil
+    }
+}
+
+struct QuestScriptFunctions: ScriptProvider {
+    static let functions = [
+        ("accept_quest", acceptQuest),
+    ]
+
+    static func acceptQuest(_ args: [Value]) throws -> Value {
+        /* FIXME:
+        let (actor, quest, npc) = try unpack(args, Entity.self, Quest.self, Entity.self)
+        guard let avatar = actor as? Avatar else {
+            throw ScriptError.invalidArgument
+        }
+        avatar.acceptQuest(quest)
+        // fire event: after accept_quest(avatar, quest, noc)
+         */
+        return .nil
     }
 }

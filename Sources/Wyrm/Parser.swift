@@ -381,7 +381,7 @@ class Parser {
     private func parseQuestPhase() -> ParseNode.QuestPhase? {
         advance()
 
-        guard case let .identifier(name) = consume() else {
+        guard case let .identifier(label) = consume() else {
             error("expected identifier as name of quest phase")
             return nil
         }
@@ -405,7 +405,7 @@ class Parser {
             }
         }
 
-        return (name, members)
+        return (label, members)
     }
 
     // MARK: - parsing statements
