@@ -37,6 +37,8 @@ class Entity: ValueDictionary {
         return ref == self.ref || (prototype?.extends(ref) ?? false)
     }
 
+    // This will be overridden by subclasses which must always call their superclass
+    // method if they don't define the member themselves.
     subscript(memberName: String) -> Value? {
         get { return extraMembers[memberName] }
         set { extraMembers[memberName] = newValue }
