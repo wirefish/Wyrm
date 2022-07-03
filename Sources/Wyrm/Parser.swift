@@ -36,7 +36,7 @@ indirect enum ParseNode {
     // Literal values.
     case boolean(Bool)
     case number(Double)
-    case string(String)
+    case string(Text)
     case symbol(String)
 
     // Expressions.
@@ -555,7 +555,9 @@ class Parser {
             node = .number(n)
             advance()
         case let .string(s):
-            node = .string(s)
+            if let text = parseText(s) {
+                node = .string(text)
+            }
             advance()
         case let .symbol(s):
             node = .symbol(s)
@@ -666,9 +668,11 @@ class Parser {
 
         // Allow for a trailing string/text literal as the final argument.
         if case let .string(s) = currentToken {
-            args.append(.string(s))
-            print(parseText(s))
             advance()
+            guard let text = parseText(s) else {
+                return nil
+            }
+            args.append(.string(text))
         }
 
         return .call(lhs, args)
@@ -756,9 +760,9 @@ class Parser {
 
         var segments = [Text.Segment]()
         for part in parts.dropFirst() {
-            let subparts = part.split(separator: "}")
+            let subparts = part.split(separator: "}", maxSplits: Int.max, omittingEmptySubsequences: false)
             guard subparts.count == 2 else {
-                error("malformed text")
+                error("malformed text: \"\(s)\"")
                 return nil
             }
 

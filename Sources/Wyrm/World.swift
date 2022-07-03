@@ -269,7 +269,10 @@ extension World {
         case let .number(n):
             return .number(n)
 
-        case let .string(s):
+        case let .string(text):
+            guard let s = text.asLiteral else {
+                fatalError("interpolated string not allowed in this context")
+            }
             return .string(s)
 
         case let .symbol(s):

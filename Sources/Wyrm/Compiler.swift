@@ -173,8 +173,13 @@ class Compiler {
                 block.emit(.pushConstant, block.addConstant(.number(n)))
             }
 
-        case let .string(s):
-            block.emit(.pushConstant, block.addConstant(.string(s)))
+        case let .string(text):
+            if let s = text.asLiteral {
+                 block.emit(.pushConstant, block.addConstant(.string(s)))
+            } else {
+                logger.warning("compiling interpolated string not yet implemented")
+                block.emit(.pushFalse)
+            }
 
         case let .symbol(s):
             block.emit(.pushConstant, block.addConstant(.symbol(s)))

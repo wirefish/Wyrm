@@ -18,5 +18,5 @@ struct Text {
     let prefix: String
     let segments: [Segment]
 
-    var isLiteral: Bool { segments.isEmpty }
+    var asLiteral: String? { segments.isEmpty ? prefix : nil }
 }
