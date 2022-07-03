@@ -14,5 +14,13 @@ world.load()
 
 let db = Database("/var/wyrm/wyrm.db")!
 
+let stmt = Database.Statement(
+    db: db,
+    sql: "insert into accounts (username, password_key, salt) values (?, ?, ?)")!
+
+for user in ["ann2", "cook2"] {
+    stmt.execute(.string(user), .string("wakka_key"), .string("hadhfsdf"))
+}
+
 let server = Server(config: config)
 server.run()
