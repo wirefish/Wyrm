@@ -231,10 +231,8 @@ extension World {
                 ip += 1
 
             case .stringify:
-                let format = code.bytecode[ip]
-                guard let s = stringify(value: stack.removeLast(), format: format) else {
-                    throw ExecError.typeMismatch
-                }
+                let format = Text.Format(rawValue: code.bytecode[ip])
+                let s = stringify(value: stack.removeLast(), format: format)
                 stack.append(.string(s))
                 ip += 1
 
@@ -261,8 +259,10 @@ extension World {
         return stack.last ?? .nil
     }
 
-    private func stringify(value: Value, format: UInt8) -> String? {
+    private func stringify(value: Value, format: Text.Format) -> String {
         switch value {
+        case .nil:
+            return "nil"
         case let .boolean(b):
             return b ? "true" : "false"
         case let .number(n):
@@ -271,8 +271,14 @@ extension World {
             return s
         case let .symbol(s):
             return "'\(s)"
+        case let .entity(e):
+            if let v = e as? Viewable {
+                return v.describeBriefly(format)
+            } else {
+                return String(describing: e)
+            }
         default:
-            return nil
+            return String(describing: value)
         }
     }
 }

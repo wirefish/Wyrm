@@ -12,3 +12,12 @@ protocol Viewable {
     var icon: String? { get }
 }
 
+fileprivate let defaultBrief = NounPhrase("an entity")
+
+extension Viewable {
+    func describeBriefly(_ format: Text.Format) -> String {
+        (brief ?? defaultBrief).format(quantity: 1, capitalize: format.contains(.capitalized),
+                                       article: format.article)
+    }
+}
+

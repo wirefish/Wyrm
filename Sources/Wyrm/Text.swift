@@ -10,6 +10,10 @@ struct Text {
         static let capitalized = Format(rawValue: 1 << 0)
         static let indefinite = Format(rawValue: 1 << 1)
         static let definite = Format(rawValue: 1 << 2)
+
+        var article: Article {
+            contains(.definite) ? .definite : (contains(.indefinite) ? .indefinite : .none)
+        }
     }
 
     struct Segment {
