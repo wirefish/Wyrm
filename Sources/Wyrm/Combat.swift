@@ -68,7 +68,7 @@ struct ScaledTrait {
         guard case let .list(spec) = value,
               spec.values.count == 2,
               let trait = CombatTrait(fromValue: spec.values[0]),
-              let coeff = Double(fromValue: spec.values[1]) else {
+              let coeff = Double.fromValue(spec.values[1]) else {
             return nil
         }
         self.trait = trait

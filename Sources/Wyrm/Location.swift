@@ -34,7 +34,7 @@ enum Direction: ValueRepresentableEnum {
 
 // Note that an exit is not an entity or facet itself, but refers to a shared portal
 // entity.
-struct Exit: ValueRepresentable {
+struct Exit {
     let portal: Portal
     let direction: Direction
     let destination: ValueRef
@@ -43,17 +43,6 @@ struct Exit: ValueRepresentable {
         self.portal = portal
         self.direction = direction
         self.destination = destination
-    }
-
-    init?(fromValue value: Value) {
-        guard case let .exit(exit) = value else {
-            return nil
-        }
-        self = exit
-    }
-
-    func toValue() -> Value {
-        return .exit(self)
     }
 }
 

@@ -712,7 +712,7 @@ class Parser {
             return nil
         }
 
-        guard let dir = Direction(fromValue: .symbol(name)) else {
+        guard let dir = Direction.fromValue(.symbol(name)) else {
             error("invalid direction \(name) after ->")
             return nil
         }

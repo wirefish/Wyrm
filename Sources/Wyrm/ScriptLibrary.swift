@@ -30,7 +30,7 @@ extension ScriptProvider {
         guard args.count == 1 else {
             throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 1)
         }
-        guard let v1 = T1.init(fromValue: args[0]) else {
+        guard let v1 = T1.fromValue(args[0]) else {
             throw ScriptError.invalidArgument
         }
         return v1
@@ -41,8 +41,8 @@ extension ScriptProvider {
         guard args.count == 2 else {
             throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 2)
         }
-        guard let v1 = T1.init(fromValue: args[0]),
-              let v2 = T2.init(fromValue: args[1]) else {
+        guard let v1 = T1.fromValue(args[0]),
+              let v2 = T2.fromValue(args[1]) else {
             throw ScriptError.invalidArgument
         }
         return (v1, v2)
@@ -53,9 +53,9 @@ extension ScriptProvider {
         guard args.count == 3 else {
             throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 3)
         }
-        guard let v1 = T1.init(fromValue: args[0]),
-              let v2 = T2.init(fromValue: args[1]),
-              let v3 = T3.init(fromValue: args[2]) else {
+        guard let v1 = T1.fromValue(args[0]),
+              let v2 = T2.fromValue(args[1]),
+              let v3 = T3.fromValue(args[2]) else {
             throw ScriptError.invalidArgument
         }
         return (v1, v2, v3)

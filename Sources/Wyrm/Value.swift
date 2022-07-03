@@ -62,10 +62,6 @@ class ValueList: CustomDebugStringConvertible {
         values = elements.map { $0.toValue() }
     }
 
-    init<S>(_ elements: S) where S: Sequence, S.Element: ReferenceValueRepresentable {
-        values = elements.map { $0.toValue() }
-    }
-
     init<S>(_ elements: S) where S: Sequence, S.Element == Value {
         values = [Value].init(elements)
     }
@@ -106,7 +102,7 @@ extension ValueDictionary {
                 return ($0 as! T)[keyPath: keyPath].toValue()
             },
             set: {
-                if let value = V.init(fromValue: $1) {
+                if let value = V.fromValue($1) {
                     ($0 as! T)[keyPath: keyPath] = value
                 }
             })
@@ -119,7 +115,7 @@ extension ValueDictionary {
                 return ($0 as! T)[keyPath: keyPath]?.toValue() ?? .nil
             },
             set: {
-                guard let value = V.init(fromValue: $1) else {
+                guard let value = V.fromValue($1) else {
                     print("cannot set property of type \(V?.self) from value \($1)")
                     return
                 }
@@ -135,10 +131,11 @@ extension ValueDictionary {
                 guard case let .list(list) = value else {
                     return
                 }
-                (object as! T)[keyPath: keyPath] = list.values.compactMap { V.init(fromValue: $0) }
+                (object as! T)[keyPath: keyPath] = list.values.compactMap { V.fromValue($0) }
             })
     }
 
+    // FIXME: get rid of this
     static func accessor<T: ValueDictionary, V: RawRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor where V.RawValue == String {
         return Accessor(
@@ -151,38 +148,6 @@ extension ValueDictionary {
                     if let v = V.init(rawValue: s) {
                         ($0 as! T)[keyPath: keyPath] = v
                     }
-                }
-            })
-    }
-
-    static func accessor<T: ValueDictionary, V: ReferenceValueRepresentable>
-    (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
-        return Accessor(
-            get: { ($0 as! T)[keyPath: keyPath].toValue() },
-            set: {
-                if let value = V.fromValue($1) as? V {
-                    ($0 as! T)[keyPath: keyPath] = value
-                }
-            })
-    }
-
-    static func accessor<T: ValueDictionary, V: ReferenceValueRepresentable>
-    (_ keyPath: ReferenceWritableKeyPath<T, V?>) -> Accessor {
-        return Accessor(
-            get: { ($0 as! T)[keyPath: keyPath]?.toValue() ?? .nil },
-            set: { ($0 as! T)[keyPath: keyPath] = V.fromValue($1) as? V })
-    }
-
-    static func accessor<T: ValueDictionary, V: ReferenceValueRepresentable>
-    (_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
-        return Accessor(
-            get: { .list(ValueList(($0 as! T)[keyPath: keyPath])) },
-            set: { (object, value) in
-                guard case let .list(list) = value else {
-                    return
-                }
-                (object as! T)[keyPath: keyPath] = list.values.compactMap {
-                    V.fromValue($0) as? V
                 }
             })
     }
@@ -204,16 +169,16 @@ extension ValueDictionaryObject {
 // MARK: - representing value types
 
 protocol ValueRepresentable {
-    init?(fromValue value: Value)
+    static func fromValue(_ value: Value) -> Self?
     func toValue() -> Value
 }
 
 extension Bool: ValueRepresentable {
-    init?(fromValue value: Value) {
+    static func fromValue(_ value: Value) -> Bool? {
         guard case let .boolean(b) = value else {
             return nil
         }
-        self.init(b)
+        return b
     }
 
     func toValue() -> Value {
@@ -222,11 +187,11 @@ extension Bool: ValueRepresentable {
 }
 
 extension Int: ValueRepresentable {
-    init?(fromValue value: Value) {
+    static func fromValue(_ value: Value) -> Int? {
         guard case let .number(n) = value else {
             return nil
         }
-        self.init(exactly: n)
+        return Int(exactly: n)
     }
 
     func toValue() -> Value {
@@ -235,11 +200,11 @@ extension Int: ValueRepresentable {
 }
 
 extension Double: ValueRepresentable {
-    init?(fromValue value: Value) {
+    static func fromValue(_ value: Value) -> Double? {
         guard case let .number(n) = value else {
             return nil
         }
-        self.init(n)
+        return n
     }
 
     func toValue() -> Value {
@@ -248,11 +213,11 @@ extension Double: ValueRepresentable {
 }
 
 extension String: ValueRepresentable {
-    init?(fromValue value: Value) {
+    static func fromValue(_ value: Value) -> String? {
         guard case let .string(s) = value else {
             return nil
         }
-        self.init(s)
+        return s
     }
 
     func toValue() -> Value {
@@ -261,21 +226,35 @@ extension String: ValueRepresentable {
 }
 
 extension NounPhrase: ValueRepresentable {
-    init?(fromValue value: Value) {
+    static func fromValue(_ value: Value) -> NounPhrase? {
         guard case let .string(s) = value else {
             return nil
         }
-        self.init(s)
+        return NounPhrase(s)
     }
 
     func toValue() -> Value {
+        // FIXME: This isn't right but it really doesn't matter.
         return .string(singular)
     }
 }
 
+extension Exit: ValueRepresentable {
+    static func fromValue(_ value: Value) -> Exit? {
+        guard case let .exit(exit) = value else {
+            return nil
+        }
+        return exit
+    }
+
+    func toValue() -> Value {
+        return .exit(self)
+    }
+}
+
 extension Value: ValueRepresentable {
-    init?(fromValue value: Value) {
-        self = value
+    static func fromValue(_ value: Value) -> Value? {
+        return value
     }
 
     func toValue() -> Value {
@@ -290,14 +269,14 @@ protocol ValueRepresentableEnum: CaseIterable, ValueRepresentable {
 }
 
 extension ValueRepresentableEnum {
-    init?(fromValue value: Value) {
+    static func fromValue(_ value: Value) -> Self? {
         guard case let .symbol(name) = value else {
             return nil
         }
         guard let v = Self.names[name] else {
             return nil
         }
-        self = v
+        return v
     }
 
     func toValue() -> Value {
@@ -305,22 +284,12 @@ extension ValueRepresentableEnum {
     }
 }
 
-// MARK: - representing reference types
-
-protocol ReferenceValueRepresentable {
-    associatedtype Object
-    static func fromValue(_ value: Value) -> Object?
-    func toValue() -> Value
-}
-
-extension Entity: ReferenceValueRepresentable {
-    typealias Object = Entity
-
-    static func fromValue(_ value: Value) -> Entity? {
+extension Entity: ValueRepresentable {
+    static func fromValue(_ value: Value) -> Self? {
         guard case let .entity(entity) = value else {
             return nil
         }
-        return entity
+        return entity as? Self
     }
 
     func toValue() -> Value {
@@ -328,9 +297,7 @@ extension Entity: ReferenceValueRepresentable {
     }
 }
 
-extension Quest: ReferenceValueRepresentable {
-    typealias Object = Quest
-
+extension Quest: ValueRepresentable {
     static func fromValue(_ value: Value) -> Quest? {
         guard case let .quest(quest) = value else {
             return nil

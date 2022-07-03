@@ -12,7 +12,7 @@ protocol Interactable {
     // location, then if they have a matching verb it generates events for that verb.
 }
 
-class QuestPhase: ValueDictionaryObject {
+final class QuestPhase: ValueDictionaryObject {
     let label: String
     var summary = ""
     var initialState = Value.nil
@@ -27,7 +27,7 @@ class QuestPhase: ValueDictionaryObject {
     ]
 }
 
-class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
+final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
     let ref: ValueRef
     var name = ""
     var summary = ""
@@ -124,14 +124,12 @@ struct QuestScriptFunctions: ScriptProvider {
     ]
 
     static func acceptQuest(_ args: [Value]) throws -> Value {
-        /* FIXME:
         let (actor, quest, npc) = try unpack(args, Entity.self, Quest.self, Entity.self)
         guard let avatar = actor as? Avatar else {
             throw ScriptError.invalidArgument
         }
         avatar.acceptQuest(quest)
         // fire event: after accept_quest(avatar, quest, noc)
-         */
         return .nil
     }
 }

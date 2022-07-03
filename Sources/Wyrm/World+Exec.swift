@@ -178,7 +178,7 @@ extension World {
                 ip += 2
 
             case .subscript:
-                guard let index = Int(fromValue: stack.removeLast()) else {
+                guard let index = Int.fromValue(stack.removeLast()) else {
                     throw ExecError.typeMismatch
                 }
                 guard case let .list(list) = stack.removeLast() else {
@@ -188,7 +188,7 @@ extension World {
 
             case .assignSubscript:
                 let rhs = stack.removeLast()
-                guard let index = Int.init(fromValue: stack.removeLast()) else {
+                guard let index = Int.fromValue(stack.removeLast()) else {
                     throw ExecError.typeMismatch
                 }
                 guard case let .list(list) = stack.removeLast() else {
@@ -205,7 +205,7 @@ extension World {
 
             case .makeExit:
                 guard case let .entity(destination) = stack.removeLast(),
-                      let direction = Direction(fromValue: stack.removeLast()),
+                      let direction = Direction.fromValue(stack.removeLast()),
                       case let .entity(portal) = stack.removeLast(),
                       let portal = portal as? Portal else {
                     throw ExecError.typeMismatch

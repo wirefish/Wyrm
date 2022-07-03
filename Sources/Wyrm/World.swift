@@ -449,7 +449,7 @@ extension World {
                 print("cannot apply [] operator to non-list")
                 break
             }
-            guard let index = Int(fromValue: rhs) else {
+            guard let index = Int.fromValue(rhs) else {
                 print("subscript index must be an integer")
                 break
             }
