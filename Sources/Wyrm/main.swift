@@ -13,7 +13,7 @@ let world = World(rootPath: config.world.rootPath)
 world.load()
 
 let db = Database()
-guard case .success = db.open("/var/wyrm/wyrm.db") else {
+guard db.open("/var/wyrm/wyrm.db") else {
     fatalError("cannot open database")
 }
 

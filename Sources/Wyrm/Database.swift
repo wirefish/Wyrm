@@ -7,9 +7,11 @@ import CommonCrypto
 import Security
 
 struct DatabaseError: Error, CustomStringConvertible {
-    let message: String
+    let description: String
 
-    var description: String { message }
+    init(_ description: String) {
+        self.description = description
+    }
 }
 
 class Database {
@@ -22,7 +24,7 @@ class Database {
     private var loadAvatarStmt: SQLiteStatement!
     private var saveAvatarStmt: SQLiteStatement!
 
-    func open(_ path: String) -> Result<Void, DatabaseError> {
+    func open(_ path: String) -> Bool {
         do {
             conn = try SQLiteConnection(path)
             createAccountStmt = try SQLiteStatement(conn, Self.createAccountSQL)
@@ -30,11 +32,10 @@ class Database {
             getCredentialsStmt = try SQLiteStatement(conn, Self.getCredentialsSQL)
             loadAvatarStmt = try SQLiteStatement(conn, Self.loadAvatarSQL)
             saveAvatarStmt = try SQLiteStatement(conn, Self.saveAvatarSQL)
-           return .success(())
-        } catch let error as SQLiteError {
-            return .failure(DatabaseError(message: error.message))
+            return true
         } catch {
-            return .failure(DatabaseError(message: "unexpected error: \(error)"))
+            logger.error("cannot open database at \(path): \(error)")
+            return false
         }
     }
 
@@ -47,16 +48,14 @@ class Database {
         conn?.close()
     }
 
-    func createAccount(username: String, password: String, avatar: Avatar)
-    -> Result<AccountID, DatabaseError> {
-        if let error = validateUsername(username) ?? validatePassword(password) {
-            return .failure(error)
+    func createAccount(username: String, password: String, avatar: Avatar) -> AccountID? {
+        guard validateUsername(username) && validatePassword(password) else {
+            return nil
         }
-        guard let salt = randomBytes(16) else {
-            return .failure(DatabaseError(message: "cannot create password salt"))
-        }
-        guard let passwordKey = derivePasswordKey(password, salt) else {
-            return .failure(DatabaseError(message: "cannot derive password key"))
+
+        guard let salt = getRandomBytes(16),
+              let passwordKey = derivePasswordKey(password, salt) else {
+            return nil
         }
 
         // TODO: serialize avatar
@@ -64,16 +63,15 @@ class Database {
         let location = "location"
 
         do {
-            return .success(try conn.inTransaction { () -> AccountID in
+            return try conn.inTransaction { () -> AccountID in
                 try createAccountStmt.execute(username, passwordKey, salt)
                 let accountID = conn.lastInsertedRowID
                 try createAvatarStmt.execute(accountID, location, avatarData)
                 return accountID
-            })
-        } catch let e as SQLiteError {
-            return .failure(DatabaseError(message: e.message))
+            }
         } catch {
-            return .failure(DatabaseError(message: "unexpected error: \(error)"))
+            logger.error("cannot create account for user \(username): \(error)")
+            return nil
         }
     }
 
@@ -86,7 +84,7 @@ class Database {
             guard let accountID = row.getInt64(0),
                   let passwordKey = row.getBlob(1),
                   let salt = row.getBlob(2) else {
-                logger.error("internal error getting authentication data")
+                logger.error("cannot get authentication data for user \(username)")
                 return nil
             }
             return derivePasswordKey(password, salt) == passwordKey ? accountID : nil
@@ -110,32 +108,22 @@ class Database {
         }
     }
 
-    private func validateUsername(_ username: String) -> DatabaseError? {
-        if username.count < 3 {
-            return DatabaseError(message: "username must be at least 3 characters long")
-        } else if username.count > 20 {
-            return DatabaseError(message: "username must be no more than 20 characters long")
-        } else if !username.allSatisfy({ $0.isLetter || $0.isWholeNumber || $0 == "_" }) {
-            return DatabaseError(message: "username must contain only letters or numbers")
-        }
-        return nil
+    private func validateUsername(_ username: String) -> Bool {
+        return (username.count >= 3 &&
+                username.count <= 20 &&
+                username.allSatisfy { $0.isLetter || $0.isWholeNumber || $0 == "_" })
     }
 
-    private func validatePassword(_ password: String) -> DatabaseError? {
-        if password.count < 8 {
-            return DatabaseError(message: "password must be at least 8 characters long")
-        } else if password.count > 40 {
-            return DatabaseError(message: "password must be no more than 40 characters long")
-        } else if !password.allSatisfy({
-            $0.isLetter || $0.isPunctuation || $0.isWholeNumber ||
-            ($0.isWhitespace && !$0.isNewline) }) {
-            return DatabaseError(
-                message: "password must contain only letters, punctuation, numbers, or whitespace")
-        }
-        return nil
+    private func validatePassword(_ password: String) -> Bool {
+        return (password.count >= 8 &&
+                password.count <= 40 &&
+                password.allSatisfy {
+                    $0.isLetter || $0.isPunctuation || $0.isWholeNumber ||
+                    ($0.isWhitespace && !$0.isNewline)
+                })
     }
 
-    private func randomBytes(_ count: Int) -> [UInt8]? {
+    private func getRandomBytes(_ count: Int) -> [UInt8]? {
         var bytes = [UInt8](repeating: 0, count: count)
         return bytes.withUnsafeMutableBytes({
             SecRandomCopyBytes(kSecRandomDefault, $0.count, $0.baseAddress!)
