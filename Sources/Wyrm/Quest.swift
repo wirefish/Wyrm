@@ -12,10 +12,41 @@ protocol Interactable {
     // location, then if they have a matching verb it generates events for that verb.
 }
 
+struct QuestState: Encodable {
+    enum State: ValueRepresentable, Encodable {
+        case `nil`
+        case number(Double)
+        case numbers([Double])
+
+        static func fromValue(_ value: Value) -> State? {
+            switch value {
+            case let .number(n):
+                return .number(n)
+            case let .list(list):
+                let ns = list.values.map { Double.fromValue($0) }
+                return ns.allSatisfy({ $0 != nil }) ? .numbers(ns.map { $0! }) : nil
+            default:
+                return nil
+            }
+        }
+
+        func toValue() -> Value {
+            switch self {
+            case .nil: return .nil
+            case let .number(n): return .number(n)
+            case let .numbers(ns): return .list(ValueList(ns))
+            }
+        }
+    }
+
+    let phase: String
+    var state: State
+}
+
 final class QuestPhase: ValueDictionaryObject {
     let label: String
     var summary = ""
-    var initialState = Value.nil
+    var initialState = QuestState.State.nil
 
     init(_ label: String) {
         self.label = label
@@ -26,6 +57,7 @@ final class QuestPhase: ValueDictionaryObject {
         "initial_state": accessor(\QuestPhase.initialState),
     ]
 }
+
 
 final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
     let ref: ValueRef

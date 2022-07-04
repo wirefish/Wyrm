@@ -18,11 +18,6 @@ enum EquippedSlot: String, CodingKeyRepresentable, Hashable, Encodable {
     case ears, neck, wrists, leftFinger, rightFinger
 }
 
-struct QuestState {
-    let phase: String
-    var state: Value
-}
-
 class Avatar: Entity {
     var level = 1
 
@@ -52,7 +47,7 @@ extension Avatar: Encodable {
         try container.encode(level, forKey: .level)
         try container.encode(location?.ref, forKey: .location)
         try container.encode(equipped, forKey: .equipped)
-        // try container.encode(activeQuests, forKey: .activeQuests)
+        try container.encode(activeQuests, forKey: .activeQuests)
         try container.encode(completedQuests, forKey: .completedQuests)
         try container.encode(skills, forKey: .skills)
     }

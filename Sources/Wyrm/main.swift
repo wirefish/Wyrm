@@ -27,6 +27,8 @@ if let accountID = db.authenticate(username: "ookie", password: "terrible_passwo
 
     avatar.equipped[.head] = itemProto.clone()
 
+    avatar.activeQuests[.absolute("sample", "quest")] = QuestState(phase: "active", state: .number(49))
+
     let encoder = JSONEncoder()
     encoder.outputFormatting = .prettyPrinted
     let data = try! encoder.encode(avatar)
