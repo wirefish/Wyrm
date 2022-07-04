@@ -34,6 +34,10 @@ struct SQLiteConnection {
     func close() {
         sqlite3_close(db)
     }
+
+    var lastInsertedRowID: Int64 {
+        return sqlite3_last_insert_rowid(db)
+    }
 }
 
 struct SQLiteStatement {
@@ -85,6 +89,11 @@ struct SQLiteStatement {
                 if sqlite3_bind_text(stmt, Int32(index + 1), s, -1, SQLITE_TRANSIENT) != SQLITE_OK {
                     throw SQLiteError("bind", "cannot bind string at index \(index)")
                 }
+            } else if let a = binding as? [UInt8] {
+                if sqlite3_bind_blob(stmt, Int32(index + 1), a, Int32(a.count), SQLITE_TRANSIENT) != SQLITE_OK {
+                    throw SQLiteError("bind", "cannot bind blob at index \(index)")
+                }
+
             } else {
                 throw SQLiteError("bind", "cannot bind value of unsupported type")
             }
