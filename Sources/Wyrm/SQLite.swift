@@ -92,7 +92,7 @@ struct SQLiteStatement {
     }
 }
 
-struct SQLiteRowSequence: IteratorProtocol {
+struct SQLiteRowSequence: Sequence, IteratorProtocol {
     let stmt: SQLiteStatement
 
     mutating func next() -> SQLiteRow? {

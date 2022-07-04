@@ -17,10 +17,10 @@ do {
 
     let stmt = try SQLiteStatement(
         db,
-        "insert into accounts (username, password_key, salt) values (?, ?, ?)")
+        "select username from accounts")
 
-    for user in ["ann5", "cook4"] {
-        try stmt.execute(user, "wakka_key", "hadhfsdf")
+    for row in try stmt.query() {
+        print(row.getString(column: 0))
     }
 
     stmt.finalize()
