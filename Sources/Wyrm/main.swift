@@ -12,14 +12,21 @@ let logger = Logger(level: .debug)  // FIXME:
 let world = World(rootPath: config.world.rootPath)
 world.load()
 
-let db = Database("/var/wyrm/wyrm.db")!
+do {
+    let db = try SQLiteConnection("/var/wyrm/wyrm.db")
 
-let stmt = Database.Statement(
-    db: db,
-    sql: "insert into accounts (username, password_key, salt) values (?, ?, ?)")!
+    let stmt = try SQLiteStatement(
+        db,
+        "insert into accounts (username, password_key, salt) values (?, ?, ?)")
 
-for user in ["ann2", "cook2"] {
-    stmt.execute(.string(user), .string("wakka_key"), .string("hadhfsdf"))
+    for user in ["ann5", "cook4"] {
+        try stmt.execute(user, "wakka_key", "hadhfsdf")
+    }
+
+    stmt.finalize()
+    db.close()
+} catch let e as SQLiteError {
+    logger.error(e.message)
 }
 
 let server = Server(config: config)
