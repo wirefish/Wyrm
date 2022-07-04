@@ -6,8 +6,10 @@
 import CommonCrypto
 import Security
 
-struct DatabaseError: Error {
+struct DatabaseError: Error, CustomStringConvertible {
     let message: String
+
+    var description: String { message }
 }
 
 class Database {
@@ -15,12 +17,20 @@ class Database {
 
     private var conn: SQLiteConnection!
     private var createAccountStmt: SQLiteStatement!
+    private var createAvatarStmt: SQLiteStatement!
+    private var getCredentialsStmt: SQLiteStatement!
+    private var loadAvatarStmt: SQLiteStatement!
+    private var saveAvatarStmt: SQLiteStatement!
 
     func open(_ path: String) -> Result<Void, DatabaseError> {
         do {
             conn = try SQLiteConnection(path)
             createAccountStmt = try SQLiteStatement(conn, Self.createAccountSQL)
-            return .success(())
+            createAvatarStmt = try SQLiteStatement(conn, Self.createAvatarSQL)
+            getCredentialsStmt = try SQLiteStatement(conn, Self.getCredentialsSQL)
+            loadAvatarStmt = try SQLiteStatement(conn, Self.loadAvatarSQL)
+            saveAvatarStmt = try SQLiteStatement(conn, Self.saveAvatarSQL)
+           return .success(())
         } catch let error as SQLiteError {
             return .failure(DatabaseError(message: error.message))
         } catch {
@@ -30,6 +40,10 @@ class Database {
 
     func close() {
         createAccountStmt?.finalize()
+        createAvatarStmt?.finalize()
+        getCredentialsStmt?.finalize()
+        loadAvatarStmt?.finalize()
+        saveAvatarStmt?.finalize()
         conn?.close()
     }
 
@@ -45,15 +59,54 @@ class Database {
             return .failure(DatabaseError(message: "cannot derive password key"))
         }
 
-        // TODO: serialize avatar. make transaction around inserting account and avatar.
+        // TODO: serialize avatar
+        let avatarData = "avatar"
+        let location = "location"
 
         do {
-            try createAccountStmt.execute(username, passwordKey, salt)
-            return .success(conn.lastInsertedRowID)
+            return .success(try conn.inTransaction { () -> AccountID in
+                try createAccountStmt.execute(username, passwordKey, salt)
+                let accountID = conn.lastInsertedRowID
+                try createAvatarStmt.execute(accountID, location, avatarData)
+                return accountID
+            })
         } catch let e as SQLiteError {
             return .failure(DatabaseError(message: e.message))
         } catch {
             return .failure(DatabaseError(message: "unexpected error: \(error)"))
+        }
+    }
+
+    func authenticate(username: String, password: String) -> AccountID? {
+        do {
+            var results = try getCredentialsStmt.query(username)
+            guard let row = results.next() else {
+                return nil
+            }
+            guard let accountID = row.getInt64(0),
+                  let passwordKey = row.getBlob(1),
+                  let salt = row.getBlob(2) else {
+                logger.error("internal error getting authentication data")
+                return nil
+            }
+            return derivePasswordKey(password, salt) == passwordKey ? accountID : nil
+        } catch {
+            logger.error("error authenticating user \(username): \(error)")
+            return nil
+        }
+    }
+
+    func loadAvatar(accountID: AccountID) -> Avatar? {
+        do {
+            var results = try loadAvatarStmt.query(accountID)
+            guard let row = results.next() else {
+                return nil
+            }
+            let location = row.getString(0)
+            let avatarData = row.getString(1)
+            return nil
+        } catch {
+            return nil
         }
     }
 

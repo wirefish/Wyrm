@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/29/22.
 //
 
-class Item: PhysicalEntity, Encodable {
+class Item: PhysicalEntity {
     var size = Size.small
     var stackLimit = 1
     var count = 1
@@ -41,7 +41,9 @@ class Item: PhysicalEntity, Encodable {
             }
         }
     }
+}
 
+extension Item: Encodable {
     enum CodingKeys: CodingKey {
         case prototype, count
     }

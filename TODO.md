@@ -16,3 +16,5 @@
 - session management with websockets
 
 - change containers to only allow one stack of something stackable. the stack limit for typical things can be large, and this allows for things like quest items where you can only carry so many at once.
+
+- make quest state codable. maybe it shouldn't be a fully-general value?

@@ -7,7 +7,7 @@
 
 import CoreFoundation
 
-enum EquippedSlot: Hashable {
+enum EquippedSlot: String, CodingKeyRepresentable, Hashable, Encodable {
     // Weapons and tools.
     case mainHand, offHand
 
@@ -37,4 +37,18 @@ class Avatar: Entity {
 
     // A mapping from identifiers of completed quests to the time of completion.
     var completedQuests = [ValueRef:CFAbsoluteTime]()
+}
+
+extension Avatar: Encodable {
+    enum CodingKeys: CodingKey {
+        case level, location, equipped, activeQuests
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(level, forKey: .level)
+        try container.encode(location?.ref, forKey: .location)
+        try container.encode(equipped, forKey: .equipped)
+        // try container.encode(activeQuests, forKey: .activeQuests)
+    }
 }

@@ -38,6 +38,25 @@ struct SQLiteConnection {
     var lastInsertedRowID: Int64 {
         return sqlite3_last_insert_rowid(db)
     }
+
+    func execute(_ sql: String) throws {
+        let status = sqlite3_exec(db, sql, nil, nil, nil)
+        guard status == SQLITE_OK else {
+            throw SQLiteError("exec", status)
+        }
+    }
+
+    func inTransaction<T>(_ fn: () throws -> T) throws -> T {
+        try execute("BEGIN")
+        do {
+            let result = try fn()
+            try execute("COMMIT")
+            return result
+        } catch {
+            try? execute("ROLLBACK")
+            throw error
+        }
+    }
 }
 
 struct SQLiteStatement {
@@ -83,6 +102,10 @@ struct SQLiteStatement {
         for (index, binding) in bindings.enumerated() {
             if let i = binding as? Int {
                 if sqlite3_bind_int64(stmt, Int32(index + 1), Int64(i)) != SQLITE_OK {
+                    throw SQLiteError("bind", "cannot bind int at index \(index)")
+                }
+            } else if let i = binding as? Int64 {
+                if sqlite3_bind_int64(stmt, Int32(index + 1), i) != SQLITE_OK {
                     throw SQLiteError("bind", "cannot bind int64 at index \(index)")
                 }
             } else if let s = binding as? String {
@@ -117,15 +140,28 @@ struct SQLiteRowSequence: Sequence, IteratorProtocol {
 struct SQLiteRow {
     let stmt: SQLiteStatement
 
-    func getInt(column: Int) -> Int? {
+    func getInt(_ column: Int) -> Int? {
         return Int(sqlite3_column_int64(stmt.stmt, Int32(column)))
     }
 
-    func getString(column: Int) -> String? {
+    func getInt64(_ column: Int) -> Int64? {
+        return sqlite3_column_int64(stmt.stmt, Int32(column))
+    }
+
+    func getString(_ column: Int) -> String? {
         guard let ptr = UnsafeRawPointer(sqlite3_column_text(stmt.stmt, Int32(column))) else {
             return nil
         }
         let uptr = ptr.bindMemory(to: CChar.self, capacity: 0)
         return String(validatingUTF8: uptr)
+    }
+
+    func getBlob(_ column: Int) -> [UInt8]? {
+        guard let ptr = UnsafeRawPointer(sqlite3_column_blob(stmt.stmt, Int32(column))) else {
+            return nil
+        }
+        let count = Int(sqlite3_column_bytes(stmt.stmt, Int32(column)))
+        let uptr = ptr.bindMemory(to: UInt8.self, capacity: count)
+        return Array(UnsafeBufferPointer(start: uptr, count: count))
     }
 }
