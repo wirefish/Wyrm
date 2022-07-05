@@ -58,6 +58,7 @@ indirect enum ParseNode {
     case `for`(String, ParseNode, ParseNode)
     case await(ParseNode)
     case `return`(ParseNode)
+    case `fallthrough`
     case block([ParseNode])
     case assignment(ParseNode, Token, ParseNode)
     case ignoredValue(ParseNode)
@@ -434,6 +435,8 @@ class Parser {
             return parseAwait()
         case .return:
             return parseReturn()
+        case .fallthrough:
+            return parseFallthrough()
         default:
             guard let expr = parseExpr(.assign) else {
                 return nil
@@ -541,6 +544,11 @@ class Parser {
             return nil
         }
         return .return(rhs)
+    }
+
+    private func parseFallthrough() -> ParseNode {
+        assert(match(.fallthrough))
+        return .fallthrough
     }
 
     private func parseAssignment(lhs: ParseNode) -> ParseNode? {

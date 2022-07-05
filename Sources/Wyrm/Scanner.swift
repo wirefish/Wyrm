@@ -19,7 +19,7 @@ enum Token: Hashable {
 
     case def, deflocation, defquest
     case allow, before, when, after, phase
-    case `if`, `else`, `for`, `in`, `let`, `var`, await, `return`
+    case `if`, `else`, `for`, `in`, `let`, `var`, await, `return`, `fallthrough`
     case leads, oneway, to
 
     case boolean(Bool)
@@ -240,6 +240,7 @@ class Scanner {
         "var": .var,
         "await": .await,
         "return": .return,
+        "fallthrough": .fallthrough,
         "oneway": .oneway,
         "to": .to,
     ]

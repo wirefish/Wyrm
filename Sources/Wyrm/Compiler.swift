@@ -66,6 +66,9 @@ enum Opcode: UInt8 {
 
     // Return the value at the top of the stack.
     case `return`
+
+    // Return no value and indicate that the next matching event handler should be run.
+    case `fallthrough`
 }
 
 class ScriptFunction: Callable {
@@ -305,6 +308,9 @@ class Compiler {
         case let .return(rhs):
             compile(rhs, &block)
             block.emit(.return)
+
+        case .fallthrough:
+            block.emit(.fallthrough)
 
         case let .block(nodes):
             nodes.forEach { compile($0, &block) }

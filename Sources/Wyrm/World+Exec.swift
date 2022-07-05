@@ -253,6 +253,9 @@ extension World {
 
             case .return:
                 break loop
+
+            case .fallthrough:
+                fatalError("fallthrough not yet implemented")
             }
         }
 
