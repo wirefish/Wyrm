@@ -3,6 +3,7 @@
 //  Wyrm
 //
 
+import Foundation
 import CommonCrypto
 import Security
 
@@ -23,6 +24,8 @@ class Database {
     private var getCredentialsStmt: SQLiteStatement!
     private var loadAvatarStmt: SQLiteStatement!
     private var saveAvatarStmt: SQLiteStatement!
+
+    // MARK: - public methods
 
     func open(_ path: String) -> Bool {
         do {
@@ -58,15 +61,11 @@ class Database {
             return nil
         }
 
-        // TODO: serialize avatar
-        let avatarData = "avatar"
-        let location = "location"
-
         do {
             return try conn.inTransaction { () -> AccountID in
                 try createAccountStmt.execute(username, passwordKey, salt)
                 let accountID = conn.lastInsertedRowID
-                try createAvatarStmt.execute(accountID, location, avatarData)
+                try createAvatarStmt.execute(accountID, encodeAvatar(avatar))
                 return accountID
             }
         } catch {
@@ -100,13 +99,24 @@ class Database {
             guard let row = results.next() else {
                 return nil
             }
-            let location = row.getString(0)
-            let avatarData = row.getString(1)
+            let encodedAvatar = row.getString(0)
             return nil
         } catch {
             return nil
         }
     }
+
+    func saveAvatar(accountID: AccountID, avatar: Avatar) -> Bool {
+        do {
+            try saveAvatarStmt.execute(encodeAvatar(avatar), accountID)
+            return true
+        } catch {
+            logger.error("error saving avatar for account \(accountID): \(error)")
+            return false
+        }
+    }
+
+    // MARK: - private methods
 
     private func validateUsername(_ username: String) -> Bool {
         return (username.count >= 3 &&
@@ -147,12 +157,18 @@ class Database {
         return success ? derivedKey : nil
     }
 
+    private func encodeAvatar(_ avatar: Avatar) -> String {
+        let encoder = JSONEncoder()
+        let data = try! encoder.encode(avatar)
+        return String(data: data, encoding: .utf8)!
+    }
+
     private static let createAccountSQL = """
     insert into accounts (username, password_key, salt) values (?, ?, ?)
     """
 
     private static let createAvatarSQL = """
-    insert into avatars (account_id, location, avatar) values (?, ?, ?)
+    insert into avatars (account_id, avatar) values (?, ?)
     """
 
     private static let getCredentialsSQL = """
@@ -164,10 +180,10 @@ class Database {
     """
 
     private static let loadAvatarSQL = """
-    select location, avatar from avatars where account_id = ?
+    select avatar from avatars where account_id = ?
     """
 
     private static let saveAvatarSQL = """
-       update avatars set location = ?, avatar = ? where account_id = ?
+       update avatars set avatar = ? where account_id = ?
     """
 }

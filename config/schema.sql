@@ -11,7 +11,6 @@ create unique index accounts_username on accounts(username);
 create table avatars (
        avatar_id integer primary key,
        account_id integer not null,
-       location text not null,
        avatar blob not null,
        aliases blob default null,
        settings blob default null,
