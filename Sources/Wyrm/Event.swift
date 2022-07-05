@@ -43,6 +43,31 @@ struct EventHandler {
             }
         }
     }
-
 }
 
+@discardableResult
+func triggerEvent(_ name: String, in location: Location, participants: [Entity],
+                  args: [ValueRepresentable], body: () -> Void) -> Bool {
+    let args = args.map { $0.toValue() }
+    let observers = participants + (location.contents + location.exits.map { $0.portal }).filter {
+        !participants.contains($0)
+    }
+
+    let allow = Event(.allow, name)
+    guard observers.allSatisfy({ $0.allowEvent(allow, args: args) }) else {
+        return false
+    }
+
+    let before = Event(.before, name)
+    observers.forEach { $0.handleEvent(before, args: args) }
+
+    body()
+
+    let when = Event(.when, name)
+    participants.forEach { $0.handleEvent(when, args: args) }
+
+    let after = Event(.after, name)
+    observers.forEach { $0.handleEvent(after, args: args) }
+
+    return true
+}

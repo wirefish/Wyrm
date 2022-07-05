@@ -58,7 +58,6 @@ final class QuestPhase: ValueDictionaryObject {
     ]
 }
 
-
 final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
     let ref: ValueRef
     var name = ""
@@ -81,7 +80,7 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
     var debugDescription: String { "<Quest \(ref)>" }
 
     func acceptableBy(_ avatar: Avatar) -> Bool {
-        // TODO: call out to quest method
+        // TODO: other requirements
         return (avatar.level >= level
                 && avatar.activeQuests[ref] == nil
                 && avatar.completedQuests[ref] == nil)
@@ -153,8 +152,18 @@ struct QuestScriptFunctions: ScriptProvider {
 
     static func acceptQuest(_ args: [Value]) throws -> Value {
         let (avatar, quest, npc) = try unpack(args, Avatar.self, Quest.self, Entity.self)
-        avatar.acceptQuest(quest)
-        // fire event: after accept_quest(avatar, quest, noc)
-        return .nil
+
+        guard quest.acceptableBy(avatar) else {
+            // avatar.notify("You can no longer accept the quest \(quest.name).")
+            return .boolean(false)
+        }
+
+        let b = triggerEvent("accept_quest", in: avatar.location, participants: [avatar, npc],
+                             args: [avatar, quest, npc]) {
+            avatar.acceptQuest(quest)
+            // avatar.notify("You have accepted the quest \(quest.name).")
+        }
+
+        return .boolean(b)
     }
 }

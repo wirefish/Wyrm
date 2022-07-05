@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-class Entity: ValueDictionary {
+class Entity: ValueDictionary, Equatable {
     static var idIterator = (1...).makeIterator()
 
     let id = idIterator.next()!
@@ -43,6 +43,10 @@ class Entity: ValueDictionary {
         get { return extraMembers[memberName] }
         set { extraMembers[memberName] = newValue }
     }
+
+    static func == (_ lhs: Entity, _ rhs: Entity) -> Bool {
+        return lhs === rhs
+    }
 }
 
 extension Entity: CustomDebugStringConvertible {
@@ -58,7 +62,8 @@ extension Entity: CustomDebugStringConvertible {
 }
 
 extension Entity {
-    final func handleEvent(_ event: Event, args: [Value]) {
+    @discardableResult
+    final func handleEvent(_ event: Event, args: [Value]) -> Value {
         var observer: Entity! = self
         while observer != nil {
             let args = [.entity(observer)] + args
@@ -68,14 +73,19 @@ extension Entity {
             // FIXME: handle fallthrough
             if let handler = handlers.first {
                 do {
-                    let _ = try handler.fn.call(args, context: [observer])
+                    return try handler.fn.call(args, context: [observer]) ?? .nil
                 } catch {
                     logger.error("error executing event handler: \(error)")
+                    return .nil
                 }
-                return
             }
             observer = observer.prototype
         }
+        return .nil
+    }
+
+    final func allowEvent(_ event: Event, args: [Value]) -> Bool {
+        return handleEvent(event, args: args) == .boolean(true)
     }
 }
 

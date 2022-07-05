@@ -22,7 +22,7 @@ class Avatar: Entity {
     var level = 1
 
     // Current location.
-    weak var location: Location?
+    weak var location: Location!
 
     // Equipped items.
     var equipped = [EquippedSlot:Item?]()
