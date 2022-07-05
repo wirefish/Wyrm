@@ -5,47 +5,127 @@
 //  Created by Craig Becker on 6/28/22.
 //
 
-import Dispatch
+import Foundation
 import NIOCore
 import NIOPosix
 import NIOHTTP1
 import NIOWebSocket
 
-let websocketResponse = """
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Swift NIO WebSocket Test Page</title>
-    <script>
-        var wsconnection = new WebSocket("ws://localhost:8000/websocket");
-        wsconnection.onmessage = function (msg) {
-            var element = document.createElement("p");
-            element.innerHTML = msg.data;
-            var textDiv = document.getElementById("websocket-stream");
-            textDiv.insertBefore(element, null);
-        };
-    </script>
-  </head>
-  <body>
-    <h1>WebSocket Stream</h1>
-    <div id="websocket-stream"></div>
-  </body>
-</html>
-"""
+fileprivate let signingKey = getRandomBytes(32)!
+
+fileprivate let authCookieName = "WyrmAuth"
+
+struct AuthToken {
+    let accountID: Database.AccountID
+    let username: String
+
+    init(accountID: Database.AccountID, username: String) {
+        self.accountID = accountID
+        self.username = username
+    }
+
+    init?(base64Encoded string: String) {
+        guard let data = Data(base64Encoded: string),
+              let token = String(data: data, encoding: .utf8),
+              let sep = token.lastIndex(of: "|") else {
+            return nil
+        }
+
+        let suffix = String(token.suffix(from: token.index(after: sep)))
+        guard let signature = Data(base64Encoded: suffix) else {
+            return nil
+        }
+
+        let prefix = token.prefix(through: sep)
+        guard computeDigest(prefix.data(using: .utf8)! + signingKey) == signature else {
+            return nil
+        }
+
+        let parts = token.prefix(upTo: sep).split(separator: "|")
+        self.accountID = Int64(parts[0])!
+        self.username = String(parts[1])
+    }
+
+    func base64EncodedString() -> String {
+        var token = "\(accountID)|\(username)|"
+        token += computeDigest(token.data(using: .utf8)! + signingKey).base64EncodedString()
+        return token.data(using: .utf8)!.base64EncodedString()
+    }
+}
 
 private final class HTTPHandler: ChannelInboundHandler, RemovableChannelHandler {
     typealias InboundIn = HTTPServerRequestPart
     typealias OutboundOut = HTTPServerResponsePart
 
-    private var responseBody: ByteBuffer!
-
     func handlerAdded(context: ChannelHandlerContext) {
-        self.responseBody = context.channel.allocator.buffer(string: websocketResponse)
     }
 
     func handlerRemoved(context: ChannelHandlerContext) {
-        self.responseBody = nil
+    }
+
+    static let endpoints = [
+        "/game/login": handleLoginRequest,
+        "/game/auth": handleAuthRequest,
+    ]
+
+    func handleLoginRequest(_ context: ChannelHandlerContext, _ request: HTTPRequestHead) {
+        let auth = request.headers[canonicalForm: "Authorization"]
+        guard auth.count == 1 else {
+            respondWithStatus(.badRequest, context: context)
+            return
+        }
+
+        let parts = auth[0].split(separator: " ")
+        guard parts.count == 2 && parts[0] == "Basic",
+              let data = Data(base64Encoded: String(parts[1])),
+              let credentials = String(data: data, encoding: .utf8) else {
+            respondWithStatus(.badRequest, context: context)
+            return
+        }
+
+        let credParts = credentials.split(separator: ":", maxSplits: 1)
+        guard credParts.count == 2 else {
+            respondWithStatus(.badRequest, context: context)
+            return
+        }
+
+        let username = String(credParts[0])
+        let password = String(credParts[1])
+        guard let accountID = World.instance.db.authenticate(username: username, password: password) else {
+            respondWithStatus(.unauthorized, context: context)
+            return
+        }
+
+        let token = AuthToken(accountID: accountID, username: username)
+        respondWithStatus(
+            .ok,
+            extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
+            context: context)
+    }
+
+    func checkAuthToken(_ request: HTTPRequestHead) -> AuthToken? {
+        let cookies = request.headers[canonicalForm: "Cookie"]
+        guard let cookieValue = cookies.firstMap({ cookie -> String? in
+            let parts = cookie.split(separator: "=", maxSplits: 1)
+            guard parts.count == 2 && parts[0] == authCookieName else {
+                return nil
+            }
+            return String(parts[1])
+        }) else {
+            return nil
+        }
+        guard let authToken = AuthToken(base64Encoded: cookieValue) else {
+            return nil
+        }
+        return authToken
+    }
+
+    func handleAuthRequest(_ context: ChannelHandlerContext, _ request: HTTPRequestHead) {
+        if let token = checkAuthToken(request) {
+            respondWithStatus(.ok, body: token.username, context: context)
+        } else {
+            respondWithStatus(.unauthorized, context: context)
+        }
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -60,29 +140,50 @@ private final class HTTPHandler: ChannelInboundHandler, RemovableChannelHandler 
             return
         }
 
-        logger.info(head.uri)
+        if let endpointHandler = Self.endpoints[head.uri] {
+            endpointHandler(self)(context, head)
+        } else {
+            // TODO: handle static files
+            self.respondWithStatus(.notFound, context: context)
+        }
+    }
 
+    private func respondWithStatus(_ status: HTTPResponseStatus, context: ChannelHandlerContext) {
         var headers = HTTPHeaders()
-        headers.add(name: "Content-Type", value: "text/html")
-        headers.add(name: "Content-Length", value: String(self.responseBody.readableBytes))
-        headers.add(name: "Connection", value: "close")
-        let responseHead = HTTPResponseHead(version: .init(major: 1, minor: 1),
-                                            status: .ok,
-                                            headers: headers)
-        context.write(self.wrapOutboundOut(.head(responseHead)), promise: nil)
-        context.write(self.wrapOutboundOut(.body(.byteBuffer(self.responseBody))), promise: nil)
+        headers.add(name: "Content-Length", value: "0")
+        let head = HTTPResponseHead(version: .http1_1, status: status, headers: headers)
+        context.write(self.wrapOutboundOut(.head(head)), promise: nil)
         context.write(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
             context.close(promise: nil)
         }
         context.flush()
     }
 
-    private func respondWithStatus(_ status: HTTPResponseStatus, context: ChannelHandlerContext) {
+    private func respondWithStatus(_ status: HTTPResponseStatus, extraHeaders: [(String, String)],
+                                   context: ChannelHandlerContext) {
         var headers = HTTPHeaders()
-        headers.add(name: "Connection", value: "close")
+        for (name, value) in extraHeaders {
+            headers.add(name: name, value: value)
+        }
         headers.add(name: "Content-Length", value: "0")
         let head = HTTPResponseHead(version: .http1_1, status: status, headers: headers)
         context.write(self.wrapOutboundOut(.head(head)), promise: nil)
+        context.write(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
+            context.close(promise: nil)
+        }
+        context.flush()
+    }
+
+    private func respondWithStatus(_ status: HTTPResponseStatus, body: String,
+                                   context: ChannelHandlerContext) {
+        let responseBody = ByteBuffer(string: body)
+        var headers = HTTPHeaders()
+        headers.add(name: "Content-Type", value: "text/plain")
+        headers.add(name: "Content-Length", value: String(responseBody.readableBytes))
+        headers.add(name: "Connection", value: "close")
+        let responseHead = HTTPResponseHead(version: .http1_1, status: .ok, headers: headers)
+        context.write(self.wrapOutboundOut(.head(responseHead)), promise: nil)
+        context.write(self.wrapOutboundOut(.body(.byteBuffer(responseBody))), promise: nil)
         context.write(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
             context.close(promise: nil)
         }

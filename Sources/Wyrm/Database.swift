@@ -4,8 +4,6 @@
 //
 
 import Foundation
-import CommonCrypto
-import Security
 
 struct DatabaseError: Error, CustomStringConvertible {
     let description: String
@@ -131,30 +129,6 @@ class Database {
                     $0.isLetter || $0.isPunctuation || $0.isWholeNumber ||
                     ($0.isWhitespace && !$0.isNewline)
                 })
-    }
-
-    private func getRandomBytes(_ count: Int) -> [UInt8]? {
-        var bytes = [UInt8](repeating: 0, count: count)
-        return bytes.withUnsafeMutableBytes({
-            SecRandomCopyBytes(kSecRandomDefault, $0.count, $0.baseAddress!)
-        }) == errSecSuccess ? bytes : nil
-    }
-
-    private func derivePasswordKey(_ password: String, _ salt: [UInt8]) -> [UInt8]? {
-        let passwordData = password.data(using: .utf8)!
-        var derivedKey = [UInt8](repeating: 0, count: 32)
-        let success = derivedKey.withUnsafeMutableBytes { derivedKeyBytes in
-            salt.withUnsafeBytes { saltBytes in
-                CCKeyDerivationPBKDF(
-                    CCPBKDFAlgorithm(kCCPBKDF2),
-                    password, passwordData.count,
-                    saltBytes.baseAddress, saltBytes.count,
-                    CCPBKDFAlgorithm(kCCPRFHmacAlgSHA1),
-                    UInt32(1 << 12),
-                    derivedKeyBytes.baseAddress, derivedKeyBytes.count) == kCCSuccess
-            }
-        }
-        return success ? derivedKey : nil
     }
 
     private func encodeAvatar(_ avatar: Avatar) -> String {

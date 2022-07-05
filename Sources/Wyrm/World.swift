@@ -37,10 +37,16 @@ class World {
     var modules = [String:Module]()
     let builtins = Module("__BUILTINS__")
     var startableEntities = [Entity]()
+    let db = Database()
 
-    init(rootPath: String) {
+    init(config: Config) {
         assert(World.instance == nil)
 
+        guard db.open(config.world.databasePath) else {
+            fatalError("cannot open database \(config.world.databasePath)")
+        }
+
+        let rootPath = config.world.rootPath
         self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
         
         for (name, fn) in ScriptLibrary.functions {

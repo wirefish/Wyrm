@@ -16,6 +16,7 @@ struct Config: Codable {
     struct World: Codable {
         let rootPath: String
         let avatarPrototype: String
+        let databasePath: String
     }
 
     let server: Server
