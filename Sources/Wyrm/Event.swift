@@ -29,8 +29,13 @@ struct EventHandler {
                     return false
                 }
                 return entity.extends(ref)
-            default:
-                fatalError("inimplemented constraint type")
+            case let .quest(ref, phase):
+                guard case let .entity(entity) = arg,
+                      let avatar = entity as? Avatar,
+                      let state = avatar.activeQuests[ref] else {
+                    return false
+                }
+                return state.phase == phase
             }
         }
     }
