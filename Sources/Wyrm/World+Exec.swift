@@ -39,7 +39,7 @@ extension World {
                 ip += 1
 
             case .pushConstant:
-                let index = UInt16(code.bytecode[ip]) | (UInt16(code.bytecode[ip + 1]) << 8)
+                let index = code.getUInt16(at: ip)
                 stack.append(code.constants[Int(index)])
                 ip += 2
 
@@ -126,7 +126,7 @@ extension World {
                 }
 
             case .jump:
-                let offset = UInt16(code.bytecode[ip]) | (UInt16(code.bytecode[ip + 1]) << 8)
+                let offset = code.getUInt16(at: ip)
                 ip += 2 + Int(offset)
 
             case .jumpIf:
@@ -134,7 +134,7 @@ extension World {
                     throw ExecError.typeMismatch
                 }
                 if (b) {
-                    let offset = UInt16(code.bytecode[ip]) | (UInt16(code.bytecode[ip + 1]) << 8)
+                    let offset = code.getUInt16(at: ip)
                     ip += 2 + Int(offset)
                 } else {
                     ip += 2
@@ -145,7 +145,7 @@ extension World {
                     throw ExecError.typeMismatch
                 }
                 if (!b) {
-                    let offset = UInt16(code.bytecode[ip]) | (UInt16(code.bytecode[ip + 1]) << 8)
+                    let offset = code.getUInt16(at: ip)
                     ip += 2 + Int(offset)
                 } else {
                     ip += 2
