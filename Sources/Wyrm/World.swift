@@ -99,13 +99,13 @@ extension World {
     func start() {
         for entity in startableEntities {
             logger.debug("starting \(entity)")
-            entity.handleEvent(Event(.when, "start_world"), args: [])
+            entity.handleEvent(.when, "start_world", args: [])
         }
     }
 
     func stop() {
         for entity in startableEntities {
-            entity.handleEvent(Event(.when, "stop_world"), args: [])
+            entity.handleEvent(.when, "stop_world", args: [])
         }
     }
 }
@@ -243,10 +243,10 @@ extension World {
 
         // Compile the event handlers.
         let compiler = Compiler()
-        for (phase, name, parameters, body) in handlers {
+        for (phase, event, parameters, body) in handlers {
             let parameters = [Parameter(name: "self", constraint: .none)] + parameters
             if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-                entity.handlers.append(EventHandler(event: Event(phase, name), fn: fn))
+                entity.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
             }
         }
     }

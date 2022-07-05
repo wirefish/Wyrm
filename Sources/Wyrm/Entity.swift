@@ -63,12 +63,12 @@ extension Entity: CustomDebugStringConvertible {
 
 extension Entity {
     @discardableResult
-    final func handleEvent(_ event: Event, args: [Value]) -> Value {
+    final func handleEvent(_ phase: EventPhase, _ event: String, args: [Value]) -> Value {
         var observer: Entity! = self
         while observer != nil {
             let args = [.entity(observer)] + args
             let handlers = observer.handlers.keep {
-                $0.appliesTo(event: event, observer: self, args: args)
+                $0.appliesTo(phase: phase, event: event, observer: self, args: args)
             }
             // FIXME: handle fallthrough
             if let handler = handlers.first {
@@ -84,8 +84,8 @@ extension Entity {
         return .nil
     }
 
-    final func allowEvent(_ event: Event, args: [Value]) -> Bool {
-        return handleEvent(event, args: args) == .boolean(true)
+    final func allowEvent(_ event: String, args: [Value]) -> Bool {
+        return handleEvent(.allow, event, args: args) == .boolean(true)
     }
 }
 

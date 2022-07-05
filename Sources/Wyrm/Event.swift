@@ -7,22 +7,13 @@ enum EventPhase {
     case allow, before, when, after
 }
 
-struct Event: Equatable {
-    let phase: EventPhase
-    let name: String
-
-    init(_ phase: EventPhase, _ name: String) {
-        self.phase = phase
-        self.name = name
-    }
-}
-
 struct EventHandler {
-    let event: Event
+    let phase: EventPhase
+    let event: String
     let fn: ScriptFunction
 
-    func appliesTo(event: Event, observer: Entity, args: [Value]) -> Bool {
-        guard event == self.event && args.count == fn.parameters.count else {
+    func appliesTo(phase: EventPhase, event: String, observer: Entity, args: [Value]) -> Bool {
+        guard phase == self.phase && event == self.event && args.count == fn.parameters.count else {
             return false
         }
 
@@ -46,28 +37,24 @@ struct EventHandler {
 }
 
 @discardableResult
-func triggerEvent(_ name: String, in location: Location, participants: [Entity],
+func triggerEvent(_ event: String, in location: Location, participants: [Entity],
                   args: [ValueRepresentable], body: () -> Void) -> Bool {
     let args = args.map { $0.toValue() }
     let observers = participants + (location.contents + location.exits.map { $0.portal }).filter {
         !participants.contains($0)
     }
 
-    let allow = Event(.allow, name)
-    guard observers.allSatisfy({ $0.allowEvent(allow, args: args) }) else {
+    guard observers.allSatisfy({ $0.allowEvent(event, args: args) }) else {
         return false
     }
 
-    let before = Event(.before, name)
-    observers.forEach { $0.handleEvent(before, args: args) }
+    observers.forEach { $0.handleEvent(.before, event, args: args) }
 
     body()
 
-    let when = Event(.when, name)
-    participants.forEach { $0.handleEvent(when, args: args) }
+    participants.forEach { $0.handleEvent(.when, event, args: args) }
 
-    let after = Event(.after, name)
-    observers.forEach { $0.handleEvent(after, args: args) }
+    observers.forEach { $0.handleEvent(.after, event, args: args) }
 
     return true
 }
