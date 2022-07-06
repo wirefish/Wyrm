@@ -6,10 +6,6 @@
 //
 
 import Foundation
-import NIOCore
-import NIOPosix
-import NIOHTTP1
-import NIOWebSocket
 
 fileprivate let signingKey = getRandomBytes(32)!
 
@@ -63,26 +59,30 @@ struct AuthToken {
     }
 }
 
-private final class HTTPHandler: ChannelInboundHandler, RemovableChannelHandler {
-    typealias InboundIn = HTTPServerRequestPart
-    typealias OutboundOut = HTTPServerResponsePart
+class Server {
 
-    func handlerAdded(context: ChannelHandlerContext) {
+    let http: HTTPServer
+
+    init?(config: Config) {
+        guard let http = HTTPServer(port: UInt16(config.server.port)) else {
+            return nil
+        }
+        self.http = http
+
+        self.http.endpoints = [
+            "/game/createAccount": handleCreateAccountRequest,
+            "/game/login": handleLoginRequest,
+            "/game/logout": handleLogoutRequest,
+        ]
     }
 
-    func handlerRemoved(context: ChannelHandlerContext) {
+    func run() {
+        http.run()
     }
 
-    static let endpoints = [
-        "/game/createAccount": handleCreateAccountRequest,
-        "/game/login": handleLoginRequest,
-        "/game/logout": handleLogoutRequest,
-        "/game/auth": handleAuthRequest,
-    ]
-
-    func handleCreateAccountRequest(_ context: ChannelHandlerContext, _ request: HTTPRequestHead) {
+    func handleCreateAccountRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
         guard let (username, password) = parseCredentials(request) else {
-            respondWithStatus(.badRequest, context: context)
+            conn.respondWithStatus(.badRequest)
             return
         }
 
@@ -94,57 +94,22 @@ private final class HTTPHandler: ChannelInboundHandler, RemovableChannelHandler 
 
         guard let accountID = World.instance.db.createAccount(
             username: username, password: password, avatar: avatar) else {
-            respondWithStatus(.badRequest, context: context)
+            conn.respondWithStatus(.badRequest)
             return
         }
 
         let token = AuthToken(accountID: accountID, username: username)
-        respondWithStatus(
-            .ok,
-            extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
-            context: context)
-    }
-
-    func handleLoginRequest(_ context: ChannelHandlerContext, _ request: HTTPRequestHead) {
-        guard let (username, password) = parseCredentials(request) else {
-            respondWithStatus(.badRequest, context: context)
-            return
-        }
-
-        guard let accountID = World.instance.db.authenticate(username: username, password: password) else {
-            respondWithStatus(.unauthorized, context: context)
-            return
-        }
-
-        let token = AuthToken(accountID: accountID, username: username)
-        respondWithStatus(
-            .ok,
-            extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
-            context: context)
-    }
-
-    func handleLogoutRequest(_ context: ChannelHandlerContext, _ request: HTTPRequestHead) {
-        respondWithStatus(
-            .ok,
-            extraHeaders: [("Set-Cookie", "\(authCookieName)=invalid; Max-Age=0")],
-            context: context)
-    }
-
-    func handleAuthRequest(_ context: ChannelHandlerContext, _ request: HTTPRequestHead) {
-        if let token = checkAuthToken(request) {
-            respondWithStatus(.ok, body: token.username, context: context)
-        } else {
-            respondWithStatus(.unauthorized, context: context)
-        }
+        conn.respondWithStatus(
+                .ok,
+                extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")])
     }
 
     func parseCredentials(_ request: HTTPRequestHead) -> (username: String, password: String)? {
-        let auth = request.headers[canonicalForm: "Authorization"]
-        guard auth.count == 1 else {
+        guard let auth = request.getHeader("Authorization") else {
             return nil
         }
 
-        let parts = auth[0].split(separator: " ")
+        let parts = auth.split(separator: " ")
         guard parts.count == 2 && parts[0] == "Basic",
               let data = Data(base64Encoded: String(parts[1])),
               let credentials = String(data: data, encoding: .utf8) else {
@@ -159,91 +124,47 @@ private final class HTTPHandler: ChannelInboundHandler, RemovableChannelHandler 
         return (String(credParts[0]), String(credParts[1]))
     }
 
-    private func checkAuthToken(_ request: HTTPRequestHead) -> AuthToken? {
-        let cookies = request.headers[canonicalForm: "Cookie"]
-        guard let cookieValue = cookies.firstMap({ cookie -> String? in
-            let parts = cookie.split(separator: "=", maxSplits: 1)
-            guard parts.count == 2 && parts[0] == authCookieName else {
-                return nil
-            }
-            return String(parts[1])
-        }) else {
-            return nil
+    func handleLoginRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
+        guard let (username, password) = parseCredentials(request) else {
+            conn.respondWithStatus(.badRequest)
+            return
         }
-        guard let authToken = AuthToken(base64Encoded: cookieValue) else {
-            return nil
+
+        guard let accountID = World.instance.db.authenticate(username: username, password: password) else {
+            conn.respondWithStatus(.unauthorized)
+            return
         }
-        return authToken
+
+        let token = AuthToken(accountID: accountID, username: username)
+        conn.respondWithStatus(
+            .ok,
+            extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")])
     }
 
-    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        let requestPart = unwrapInboundIn(data)
+    func handleLogoutRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
+        conn.respondWithStatus(
+            .ok,
+            extraHeaders: [("Set-Cookie", "\(authCookieName)=invalid; Max-Age=0")])
+    }
 
-        guard case let .head(head) = requestPart else {
-            return
-        }
-
-        guard case .GET = head.method else {
-            self.respondWithStatus(.methodNotAllowed, context: context)
-            return
-        }
-
-        if let endpointHandler = Self.endpoints[head.uri] {
-            endpointHandler(self)(context, head)
-        } else if let filePath = head.uri.withoutPrefix("/static/") {
-            // TODO: handle static files
-            self.respondWithStatus(.notFound, context: context)
-        } else if head.uri == "/" {
-            // TODO: equivalent to /file/index.html
-            self.respondWithStatus(.notFound, context: context)
+    func handleAuthRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
+        if let token = checkAuthToken(request) {
+            conn.respondWithStatus(.ok, body: token.username.data(using: .utf8))
         } else {
-            self.respondWithStatus(.notFound, context: context)
+            conn.respondWithStatus(.unauthorized)
         }
     }
 
-    private func respondWithStatus(_ status: HTTPResponseStatus, context: ChannelHandlerContext) {
-        var headers = HTTPHeaders()
-        headers.add(name: "Content-Length", value: "0")
-        let head = HTTPResponseHead(version: .http1_1, status: status, headers: headers)
-        context.write(self.wrapOutboundOut(.head(head)), promise: nil)
-        context.write(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
-            context.close(promise: nil)
+    private func checkAuthToken(_ request: HTTPRequestHead) -> AuthToken? {
+        guard let cookie = request.getCookie(authCookieName),
+              let token = AuthToken(base64Encoded: cookie) else {
+            return nil
         }
-        context.flush()
-    }
-
-    private func respondWithStatus(_ status: HTTPResponseStatus, extraHeaders: [(String, String)],
-                                   context: ChannelHandlerContext) {
-        var headers = HTTPHeaders()
-        for (name, value) in extraHeaders {
-            headers.add(name: name, value: value)
-        }
-        headers.add(name: "Content-Length", value: "0")
-        let head = HTTPResponseHead(version: .http1_1, status: status, headers: headers)
-        context.write(self.wrapOutboundOut(.head(head)), promise: nil)
-        context.write(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
-            context.close(promise: nil)
-        }
-        context.flush()
-    }
-
-    private func respondWithStatus(_ status: HTTPResponseStatus, body: String,
-                                   context: ChannelHandlerContext) {
-        let responseBody = ByteBuffer(string: body)
-        var headers = HTTPHeaders()
-        headers.add(name: "Content-Type", value: "text/plain")
-        headers.add(name: "Content-Length", value: String(responseBody.readableBytes))
-        headers.add(name: "Connection", value: "close")
-        let responseHead = HTTPResponseHead(version: .http1_1, status: .ok, headers: headers)
-        context.write(self.wrapOutboundOut(.head(responseHead)), promise: nil)
-        context.write(self.wrapOutboundOut(.body(.byteBuffer(responseBody))), promise: nil)
-        context.write(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
-            context.close(promise: nil)
-        }
-        context.flush()
+        return token
     }
 }
 
+/*
 private final class WebSocketTimeHandler: ChannelInboundHandler {
     typealias InboundIn = WebSocketFrame
     typealias OutboundOut = WebSocketFrame
@@ -413,3 +334,4 @@ class Server {
         let _ = channel.close(mode: .all)
     }
 }
+*/

@@ -21,3 +21,14 @@ extension Array {
         compactMap { pred($0) ? $0 : nil }
     }
 }
+
+extension Substring {
+    func trimmed(_ pred: (Character) -> Bool) -> Substring {
+        if let first = firstIndex(where: { !pred($0) }),
+           let last = lastIndex(where: { !pred($0) }) {
+            return self[first...last]
+        } else {
+            return Substring()
+        }
+    }
+}
