@@ -15,6 +15,16 @@ fileprivate let signingKey = getRandomBytes(32)!
 
 fileprivate let authCookieName = "WyrmAuth"
 
+extension String {
+    func withoutPrefix(_ prefix: String) -> String? {
+        if starts(with: prefix) {
+            return String(suffix(from: index(startIndex, offsetBy: prefix.count)))
+        } else {
+            return nil
+        }
+    }
+}
+
 struct AuthToken {
     let accountID: Database.AccountID
     let username: String
@@ -180,8 +190,13 @@ private final class HTTPHandler: ChannelInboundHandler, RemovableChannelHandler 
 
         if let endpointHandler = Self.endpoints[head.uri] {
             endpointHandler(self)(context, head)
-        } else {
+        } else if let filePath = head.uri.withoutPrefix("/static/") {
             // TODO: handle static files
+            self.respondWithStatus(.notFound, context: context)
+        } else if head.uri == "/" {
+            // TODO: equivalent to /file/index.html
+            self.respondWithStatus(.notFound, context: context)
+        } else {
             self.respondWithStatus(.notFound, context: context)
         }
     }
