@@ -130,11 +130,15 @@ class HTTPConnection {
         switch state {
         case let .failed(error):
             logger.warning("connection failed: \(error)")
-            self.conn.stateUpdateHandler = nil
-            self.conn.forceCancel()
+            finish()
         default:
             logger.debug("connection state changed to \(state)")
       }
+    }
+
+    func finish() {
+        self.conn.stateUpdateHandler = nil
+        self.conn.cancel()
     }
 
     func readHeaders() {
@@ -153,9 +157,6 @@ class HTTPConnection {
         }
     }
 
-    func writeResponse(head: HTTPResponseHead, body: Data?) {
-    }
-
     func respondWithStatus(_ status: HTTPStatus, extraHeaders: [HTTPHeader] = [],
                            body: Data? = nil) {
         let length = body?.count ?? 0
@@ -167,7 +168,7 @@ class HTTPConnection {
         if let body = body {
             data += body
         }
-        
+
         conn.send(content: data, completion: .contentProcessed(onSendComplete))
     }
 
@@ -205,7 +206,7 @@ class HTTPServer {
     func onListenerStateChange(_ state: NWListener.State) {
         switch state {
         case .ready:
-            logger.info("listening")
+            logger.info("listening on port \(listener.port!)")
         case let .failed(error):
             fatalError("listener failed: \(error)")
         default:

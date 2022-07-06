@@ -31,8 +31,8 @@ func derivePasswordKey(_ password: String, _ salt: [UInt8]) -> [UInt8]? {
     return success ? derivedKey : nil
 }
 
-func computeDigest(_ data: Data) -> Data {
-    var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-    data.withUnsafeBytes { let _ = CC_SHA256($0.baseAddress!, CC_LONG($0.count), &digest) }
+func computeSHA1Digest(_ data: Data) -> Data {
+    var digest = [UInt8](repeating: 0, count: Int(CC_SHA1_DIGEST_LENGTH))
+    data.withUnsafeBytes { let _ = CC_SHA1($0.baseAddress!, CC_LONG($0.count), &digest) }
     return Data(digest)
 }

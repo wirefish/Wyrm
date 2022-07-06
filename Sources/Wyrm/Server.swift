@@ -43,7 +43,7 @@ struct AuthToken {
         }
 
         let prefix = token.prefix(through: sep)
-        guard computeDigest(prefix.data(using: .utf8)! + signingKey) == signature else {
+        guard computeSHA1Digest(prefix.data(using: .utf8)! + signingKey) == signature else {
             return nil
         }
 
@@ -54,7 +54,7 @@ struct AuthToken {
 
     func base64EncodedString() -> String {
         var token = "\(accountID)|\(username)|"
-        token += computeDigest(token.data(using: .utf8)! + signingKey).base64EncodedString()
+        token += computeSHA1Digest(token.data(using: .utf8)! + signingKey).base64EncodedString()
         return token.data(using: .utf8)!.base64EncodedString()
     }
 }
@@ -64,7 +64,7 @@ class Server {
     let http: HTTPServer
 
     init?(config: Config) {
-        guard let http = HTTPServer(port: UInt16(config.server.port)) else {
+        guard let http = HTTPServer(port: config.server.port) else {
             return nil
         }
         self.http = http

@@ -10,7 +10,7 @@ import TOMLDecoder
 struct Config: Codable {
     struct Server: Codable {
         let host: String
-        let port: Int
+        let port: UInt16
     }
 
     struct World: Codable {
