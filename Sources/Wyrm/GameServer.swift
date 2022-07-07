@@ -231,3 +231,19 @@ class GameHandler: HTTPHandler {
         return token
     }
 }
+
+class GameServer {
+    let tcpServer: TCPServer
+
+    init?(_ config: Config) {
+        guard let tcpServer = TCPServer(port: config.server.port,
+                                        handlerFactory: { GameHandler() }) else {
+            return nil
+        }
+        self.tcpServer = tcpServer
+    }
+
+    func run() {
+        tcpServer.run()
+    }
+}
