@@ -8,17 +8,21 @@ import Network
 
 protocol WebSocketDelegate: AnyObject {
     // Called just after the websocket handshake has successfully completed.
-    func onOpen(_ conn: WebSocketConnection)
+    func onOpen(_ handler: WebSocketHandler)
 
     // Called just before the underlying connection is closed.
-    func onClose(_ conn: WebSocketConnection)
+    func onClose(_ handler: WebSocketHandler)
 
     // Called when a new text message has been read.
-    func onReceiveMessage(_ conn: WebSocketConnection, _ message: String)
+    func onReceiveMessage(_ handler: WebSocketHandler, _ message: String)
 }
 
-class WebSocketConnection {
-    let conn: NWConnection
+class WebSocketHandler: HTTPHandler {
+    func processRequest(_ request: HTTPRequestHead, _ conn: HTTPConnection) {
+        // FIXME:
+    }
+
+    var conn: HTTPConnection?
     let delegate: WebSocketDelegate
     var buffer: Data
     var awaitingClose = false
@@ -26,8 +30,7 @@ class WebSocketConnection {
     // The maximum allowable size of a single frame.
     static let bufferSize = 1024
 
-    init(_ conn: NWConnection, delegate: WebSocketDelegate) {
-        self.conn = conn
+    init(delegate: WebSocketDelegate) {
         self.delegate = delegate
         self.buffer = Data(capacity: Self.bufferSize)
     }
@@ -43,9 +46,25 @@ class WebSocketConnection {
         case internalError = 1011
     }
 
+    func start(_ conn: HTTPConnection) {
+        self.conn = conn
+        conn.receive(maximumLength: Self.bufferSize, then: onRead)
+    }
+
+    func finish(_ conn: HTTPConnection) {
+        self.conn = nil
+    }
+
     // Called to close the session due to an error.
     func closeWithError(_ error: CloseReason) {
-
+        if !awaitingClose {
+            var payload = Data(repeating: 0, count: 2)
+            let value = error.rawValue
+            payload[0] = UInt8((value & 0xff) >> 8)
+            payload[1] = UInt8(value & 0xff)
+            sendMessage(.close, payload)
+            awaitingClose = true
+        }
     }
 
     // Called to send a text message.
@@ -55,17 +74,13 @@ class WebSocketConnection {
 
     private static let magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-    static func startUpgrade(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
-        // If the upgrade header is present, start the handshake and eventually make
-        // a WebSocket that takes over the underlying connection object.
-
+    static func startUpgrade(_ conn: HTTPConnection, _ request: HTTPRequestHead) -> Bool {
         guard let key = request.getHeader("Sec-WebSocket-Key"),
               request.getHeader("Connection") == "Upgrade",
               request.getHeader("Upgrade") == "websocket",
               request.getHeader("Sec-WebSocket-Version") == "13" else {
             conn.respondWithStatus(.badRequest)
-            // FIXME: need completion handler to close the connection
-            return
+            return false
         }
 
         let token = computeSHA1Digest((key + magic).data(using: .ascii)!).base64EncodedString()
@@ -73,38 +88,20 @@ class WebSocketConnection {
                                extraHeaders: [("Upgrade", "websocket"),
                                               ("Connection", "Upgrade"),
                                               ("Sec-WebSocket-Accept", token)])
+        return true
     }
 
-    func read() {
-        conn.receive(minimumIncompleteLength: 1, maximumLength: Self.bufferSize - buffer.count,
-                     completion: onRead)
-    }
-
-    func onRead(_ data: Data?, _ contentContext: NWConnection.ContentContext?,
-                _ isComplete: Bool, _ error: NWError?) {
-        guard let data = data else {
-            return
-        }
+    func onRead(_ data: Data, _ conn: HTTPConnection) {
         buffer += data
-
         if let error = readFrame() {
             closeWithError(error)
         } else {
-            read()
+            conn.receive(maximumLength: Self.bufferSize - buffer.count, then: onRead)
         }
     }
 
     func close() {
         delegate.onClose(self)
-        conn.stateUpdateHandler = nil  // to release its ref to self
-        conn.forceCancel()
-    }
-
-    func onStateChange(_ state: NWConnection.State) {
-        if case let .failed(error) = state {
-            logger.warning("connection failed: \(error)")
-            self.close()
-        }
     }
 
     enum Opcode: UInt8 {
@@ -224,9 +221,6 @@ class WebSocketConnection {
             fatalError("64-bit payload size not implemented")
         }
 
-        conn.batch {
-            conn.send(content: header, completion: .contentProcessed({ _ in }))
-            conn.send(content: payload, completion: .contentProcessed({ _ in }))
-        }
+        conn?.send([header, payload])
     }
 }

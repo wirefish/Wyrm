@@ -111,49 +111,95 @@ struct HTTPResponseHead {
     }
 }
 
-class HTTPConnection {
-    weak var server: HTTPServer!
-    var conn: NWConnection
+protocol HTTPHandler {
+    func start(_ conn: HTTPConnection)
+    func processRequest(_ request: HTTPRequestHead, _ conn: HTTPConnection)
+    func finish(_ conn: HTTPConnection)
+}
 
-    init(_ server: HTTPServer, _ conn: NWConnection) {
-        self.server = server
+class HTTPConnection {
+    private var conn: NWConnection
+    private var handler: HTTPHandler
+
+    init(_ conn: NWConnection, _ handler: HTTPHandler) {
         self.conn = conn
+        self.handler = handler
         self.conn.stateUpdateHandler = onStateChange
         self.conn.start(queue: DispatchQueue.main)
     }
 
     deinit {
-        print("bye")
+        logger.debug("HTTPConnection destroyed")
     }
 
-    func onStateChange(_ state: NWConnection.State) {
+    private func onStateChange(_ state: NWConnection.State) {
+        logger.debug("connection state changed to \(state)")
         switch state {
         case let .failed(error):
             logger.warning("connection failed: \(error)")
             finish()
+        case .ready:
+            self.handler.start(self)
+            readRequestHead()
         default:
-            logger.debug("connection state changed to \(state)")
+            break
       }
     }
 
-    func finish() {
+    private func finish() {
         self.conn.stateUpdateHandler = nil
         self.conn.cancel()
+        self.handler.finish(self)
     }
 
-    func readHeaders() {
-        conn.receive(minimumIncompleteLength: 1, maximumLength: 2048, completion: onReadHeaders)
+    func replaceHandler(_ newHandler: HTTPHandler) {
+        handler.finish(self)
+        handler = newHandler
+        handler.start(self)
     }
 
-    func onReadHeaders(_ data: Data?, _ contentContext: NWConnection.ContentContext?,
-                       _ isComplete: Bool, _ error: NWError?) {
-        guard let data = data, let head = HTTPRequestHead(from: data) else {
-            return
+    func receive(maximumLength: Int, then cb: @escaping (Data, HTTPConnection) -> Void) {
+        conn.receive(minimumIncompleteLength: 1, maximumLength: maximumLength) {
+            data, context, isComplete, error in
+            if let data = data {
+                cb(data, self)
+            } else {
+                self.finish()
+            }
         }
-        if let handler = server.endpoints[head.uri] {
-            handler(self, head)
-        } else {
-            respondWithStatus(.notFound)
+    }
+
+    func send(_ data: Data, then cb: @escaping (HTTPConnection) -> Void) {
+        conn.send(content: data, completion: .contentProcessed({ error in
+            if error != nil {
+                self.finish()
+            } else {
+                cb(self)
+            }
+        }))
+    }
+
+    func send(_ datagrams: [Data]) {
+        conn.batch {
+            for data in datagrams {
+                conn.send(content: data, completion: .contentProcessed({ error in
+                    if error != nil {
+                        self.finish()
+                    }
+                }))
+            }
+        }
+    }
+
+    func readRequestHead() {
+        conn.receive(minimumIncompleteLength: 1, maximumLength: 2048) {
+            data, context, isComplete, error in
+            if let data = data,
+               let request = HTTPRequestHead(from: data) {
+                self.handler.processRequest(request, self)
+            } else {
+                self.finish()
+            }
         }
     }
 
@@ -169,25 +215,22 @@ class HTTPConnection {
             data += body
         }
 
-        conn.send(content: data, completion: .contentProcessed(onSendComplete))
-    }
-
-    func onSendComplete(error: NWError?) {
-        if error != nil {
-            // Anything?
-        } else {
-            readHeaders()
-        }
+        conn.send(content: data, completion: .contentProcessed({ error in
+            if error != nil {
+                self.finish()
+            } else {
+                self.readRequestHead()
+            }
+        }))
     }
 }
 
 class HTTPServer {
-    typealias EndpointHandler = (HTTPConnection, HTTPRequestHead) -> Void
-
     let listener: NWListener
-    var endpoints = [String: EndpointHandler]()
+    let handlerFactory: () -> HTTPHandler
 
-    init?(port: UInt16) {
+    init?(port: UInt16, handlerFactory: @escaping () -> HTTPHandler) {
+        self.handlerFactory = handlerFactory
         do {
             listener = try NWListener(using: .tcp, on: NWEndpoint.Port(integerLiteral: port))
         } catch {
@@ -215,7 +258,7 @@ class HTTPServer {
     }
 
     func onNewConnection(_ connection: NWConnection) {
-        print("connection from \(connection.endpoint)")
-        HTTPConnection(self, connection).readHeaders()
+        logger.info("new connection from \(connection.endpoint)")
+        _ = HTTPConnection(connection, handlerFactory())
     }
 }
