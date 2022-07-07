@@ -3,10 +3,6 @@
 //  Wyrm
 //
 
-import Foundation
-import Network
-import Dispatch
-
 let config = try! Config(contentsOfFile: "/Users/craig/Projects/Wyrm/config/config.toml")
 
 let logger = Logger(level: .debug)  // FIXME:

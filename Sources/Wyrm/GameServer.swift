@@ -1,8 +1,6 @@
 //
-//  Server.swift
+//  GameServer.swift
 //  Wyrm
-//
-//  Created by Craig Becker on 6/28/22.
 //
 
 import Foundation
