@@ -74,8 +74,6 @@ class GameWebSocketDelegate: WebSocketDelegate {
 }
 
 class GameHandler: HTTPHandler {
-    func start(_ conn: HTTPConnection) {
-    }
 
     static let endpoints = [
         "/game/createAccout": handleCreateAccountRequest,
@@ -85,21 +83,21 @@ class GameHandler: HTTPHandler {
         "/game/session": handleSessionRequest,
     ]
 
-    func processRequest(_ request: HTTPRequestHead, _ conn: HTTPConnection) {
+    func processRequest(_ request: HTTPRequestHead, _ conn: TCPConnection) {
         if let fn = Self.endpoints[request.uri] {
             fn(self)(conn, request)
         } else {
-            conn.respondWithStatus(.notFound)
+            respondWithStatus(.notFound, conn)
         }
     }
 
-    func finish(_ conn: HTTPConnection) {
+    func finish(_ conn: TCPConnection) {
         // TODO:
     }
 
-    func handleCreateAccountRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
+    func handleCreateAccountRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
         guard let (username, password) = parseCredentials(request) else {
-            conn.respondWithStatus(.badRequest)
+            respondWithStatus(.badRequest, conn)
             return
         }
 
@@ -111,57 +109,60 @@ class GameHandler: HTTPHandler {
 
         guard let accountID = World.instance.db.createAccount(
             username: username, password: password, avatar: avatar) else {
-            conn.respondWithStatus(.badRequest)
+            respondWithStatus(.badRequest, conn)
             return
         }
 
         let token = AuthToken(accountID: accountID, username: username)
-        conn.respondWithStatus(
+        respondWithStatus(
                 .ok,
-                extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")])
+                extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
+                conn)
     }
 
-    func handleLoginRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
+    func handleLoginRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
         guard let (username, password) = parseCredentials(request) else {
-            conn.respondWithStatus(.badRequest)
+            respondWithStatus(.badRequest, conn)
             return
         }
 
         guard let accountID = World.instance.db.authenticate(username: username, password: password) else {
-            conn.respondWithStatus(.unauthorized)
+            respondWithStatus(.unauthorized, conn)
             return
         }
 
         let token = AuthToken(accountID: accountID, username: username)
-        conn.respondWithStatus(
+        respondWithStatus(
             .ok,
-            extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")])
+            extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
+            conn)
     }
 
-    func handleLogoutRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
-        conn.respondWithStatus(
+    func handleLogoutRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
+        respondWithStatus(
             .ok,
-            extraHeaders: [("Set-Cookie", "\(authCookieName)=invalid; Max-Age=0")])
+            extraHeaders: [("Set-Cookie", "\(authCookieName)=invalid; Max-Age=0")],
+            conn)
     }
 
-    func handleAuthRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
+    func handleAuthRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
         if let token = checkAuthToken(request) {
-            conn.respondWithStatus(.ok, body: token.username.data(using: .utf8))
+           respondWithStatus(.ok, body: token.username.data(using: .utf8), conn)
         } else {
-            conn.respondWithStatus(.unauthorized)
+           respondWithStatus(.unauthorized, conn)
         }
     }
 
-    func handleSessionRequest(_ conn: HTTPConnection, _ request: HTTPRequestHead) {
+    func handleSessionRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
         guard checkAuthToken(request) != nil else {
-            conn.respondWithStatus(.unauthorized)
+            respondWithStatus(.unauthorized, conn)
             return
         }
 
-        if WebSocketHandler.startUpgrade(conn, request) {
+        if WebSocketHandler.startUpgrade(self, request, conn) {
             conn.replaceHandler(WebSocketHandler(delegate: GameWebSocketDelegate()))
         } else {
-            conn.respondWithStatus(.badRequest)
+            respondWithStatus(.badRequest, conn)
         }
     }
 

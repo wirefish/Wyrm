@@ -17,12 +17,8 @@ protocol WebSocketDelegate: AnyObject {
     func onReceiveMessage(_ handler: WebSocketHandler, _ message: String)
 }
 
-class WebSocketHandler: HTTPHandler {
-    func processRequest(_ request: HTTPRequestHead, _ conn: HTTPConnection) {
-        // FIXME:
-    }
-
-    var conn: HTTPConnection?
+class WebSocketHandler: TCPHandler {
+    var conn: TCPConnection?
     let delegate: WebSocketDelegate
     var buffer: Data
     var awaitingClose = false
@@ -46,12 +42,12 @@ class WebSocketHandler: HTTPHandler {
         case internalError = 1011
     }
 
-    func start(_ conn: HTTPConnection) {
+    func start(_ conn: TCPConnection) {
         self.conn = conn
         conn.receive(maximumLength: Self.bufferSize, then: onRead)
     }
 
-    func finish(_ conn: HTTPConnection) {
+    func finish(_ conn: TCPConnection) {
         self.conn = nil
     }
 
@@ -74,24 +70,26 @@ class WebSocketHandler: HTTPHandler {
 
     private static let magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-    static func startUpgrade(_ conn: HTTPConnection, _ request: HTTPRequestHead) -> Bool {
+    static func startUpgrade(_ http: HTTPHandler, _ request: HTTPRequestHead,
+                             _ conn: TCPConnection) -> Bool {
         guard let key = request.getHeader("Sec-WebSocket-Key"),
               request.getHeader("Connection") == "Upgrade",
               request.getHeader("Upgrade") == "websocket",
               request.getHeader("Sec-WebSocket-Version") == "13" else {
-            conn.respondWithStatus(.badRequest)
+            http.respondWithStatus(.badRequest, conn)
             return false
         }
 
         let token = computeSHA1Digest((key + magic).data(using: .ascii)!).base64EncodedString()
-        conn.respondWithStatus(.switchingProtocols,
+        http.respondWithStatus(.switchingProtocols,
                                extraHeaders: [("Upgrade", "websocket"),
                                               ("Connection", "Upgrade"),
-                                              ("Sec-WebSocket-Accept", token)])
+                                              ("Sec-WebSocket-Accept", token)],
+                               conn)
         return true
     }
 
-    func onRead(_ data: Data, _ conn: HTTPConnection) {
+    func onRead(_ data: Data, _ conn: TCPConnection) {
         buffer += data
         if let error = readFrame() {
             closeWithError(error)
