@@ -141,9 +141,11 @@ extension HTTPHandler {
         if let body = body {
             data += body
         }
-
         conn.send(data)
-        readRequestHead(conn)
+        
+        if status != .switchingProtocols {
+            readRequestHead(conn)
+        }
     }
 }
 

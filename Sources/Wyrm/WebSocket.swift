@@ -173,7 +173,7 @@ class WebSocketHandler: TCPHandler {
         let payload = buffer[pos..<(pos + payloadLength)]
 
         // Make sure the frame will be consumed after it is processed.
-        defer { buffer.removeSubrange(0..<pos) }
+        defer { buffer.removeSubrange(0..<(pos + payloadLength)) }
 
         switch opcode {
         case .text:

@@ -11,16 +11,6 @@ fileprivate let signingKey = getRandomBytes(32)!
 
 fileprivate let authCookieName = "WyrmAuth"
 
-extension String {
-    func withoutPrefix(_ prefix: String) -> String? {
-        if starts(with: prefix) {
-            return String(suffix(from: index(startIndex, offsetBy: prefix.count)))
-        } else {
-            return nil
-        }
-    }
-}
-
 struct AuthToken {
     let accountID: Database.AccountID
     let username: String
@@ -59,6 +49,11 @@ struct AuthToken {
     }
 }
 
+struct ClientCall: Codable {
+    let fn: String
+    let args: [String]
+}
+
 class GameWebSocketDelegate: WebSocketDelegate {
     func onOpen(_ handler: WebSocketHandler) {
         // TODO:
@@ -69,7 +64,10 @@ class GameWebSocketDelegate: WebSocketDelegate {
     }
 
     func onReceiveMessage(_ handler: WebSocketHandler, _ message: String) {
-        // TODO:
+        let call = ClientCall(fn: "showNotice", args: [message])
+        let encoder = JSONEncoder()
+        let data = try! encoder.encode(call)
+        handler.sendTextMessage(String(data: data, encoding: .utf8)!)
     }
 }
 
@@ -133,10 +131,14 @@ class GameHandler: HTTPHandler {
             return
         }
 
+        let encoder = JSONEncoder()
+        let body = try! encoder.encode(["username": username])
+
         let token = AuthToken(accountID: accountID, username: username)
         respondWithStatus(
             .ok,
-            extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
+            extraHeaders: [("Set-Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
+            body: body,
             conn)
     }
 
@@ -149,7 +151,9 @@ class GameHandler: HTTPHandler {
 
     func handleAuthRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
         if let token = checkAuthToken(request) {
-           respondWithStatus(.ok, body: token.username.data(using: .utf8), conn)
+            let encoder = JSONEncoder()
+            let body = try! encoder.encode(["username": token.username])
+           respondWithStatus(.ok, body: body, conn)
         } else {
            respondWithStatus(.unauthorized, conn)
         }
@@ -162,6 +166,7 @@ class GameHandler: HTTPHandler {
         }
 
         if WebSocketHandler.startUpgrade(self, request, conn) {
+            logger.debug("upgraded to websocket")
             conn.replaceHandler(WebSocketHandler(delegate: GameWebSocketDelegate()))
         } else {
             respondWithStatus(.badRequest, conn)
