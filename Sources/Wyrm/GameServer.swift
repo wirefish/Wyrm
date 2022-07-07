@@ -47,11 +47,6 @@ struct AuthToken {
     }
 }
 
-struct ClientCall: Codable {
-    let fn: String
-    let args: [String]
-}
-
 class GameWebSocketDelegate: WebSocketDelegate {
     func onOpen(_ handler: WebSocketHandler) {
         // TODO:
@@ -62,7 +57,7 @@ class GameWebSocketDelegate: WebSocketDelegate {
     }
 
     func onReceiveMessage(_ handler: WebSocketHandler, _ message: String) {
-        let call = ClientCall(fn: "showNotice", args: [message])
+        let call = ClientCall(fn: "showNotice", args: [.string(message)])
         let encoder = JSONEncoder()
         let data = try! encoder.encode(call)
         handler.sendTextMessage(String(data: data, encoding: .utf8)!)
