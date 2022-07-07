@@ -167,10 +167,10 @@ class WebSocketHandler: TCPHandler {
         pos += 4
 
         // Apply the mask to the payload.
-        var payload = buffer[pos..<(pos + payloadLength)]
         for i in 0..<payloadLength {
-            payload[i] ^= mask[i % 4]
+            buffer[pos + i] ^= mask[mask.startIndex + i % 4]
         }
+        let payload = buffer[pos..<(pos + payloadLength)]
 
         // Make sure the frame will be consumed after it is processed.
         defer { buffer.removeSubrange(0..<pos) }
@@ -198,7 +198,7 @@ class WebSocketHandler: TCPHandler {
             }
 
         case .ping:
-            sendMessage(.pong, Data())
+            sendMessage(.pong, nil)
             return nil
 
         default:
@@ -206,19 +206,23 @@ class WebSocketHandler: TCPHandler {
         }
     }
 
-    func sendMessage(_ opcode: Opcode, _ payload: Data) {
+    func sendMessage(_ opcode: Opcode, _ payload: Data?) {
         var header = Data(capacity: 10)
         header.append(opcode.rawValue | Self.fin)
-        if payload.count <= 125 {
-            header.append(UInt8(payload.count))
-        } else if payload.count <= 65535 {
-            header.append(contentsOf: [UInt8(126),
-                                       UInt8((payload.count >> 8) & 0xff),
-                                       UInt8(payload.count & 0xff)])
+        if let payload = payload {
+            if payload.count <= 125 {
+                header.append(UInt8(payload.count))
+            } else if payload.count <= 65535 {
+                header.append(contentsOf: [UInt8(126),
+                                           UInt8((payload.count >> 8) & 0xff),
+                                           UInt8(payload.count & 0xff)])
+            } else {
+                fatalError("64-bit payload size not implemented")
+            }
+            conn?.send([header, payload])
         } else {
-            fatalError("64-bit payload size not implemented")
+            header.append(UInt8(0))
+            conn?.send(header)
         }
-
-        conn?.send([header, payload])
     }
 }

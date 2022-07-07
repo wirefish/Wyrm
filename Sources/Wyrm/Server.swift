@@ -86,8 +86,10 @@ class GameHandler: HTTPHandler {
     func processRequest(_ request: HTTPRequestHead, _ conn: TCPConnection) {
         if let fn = Self.endpoints[request.uri] {
             fn(self)(conn, request)
+        } else if request.uri == "/" {
+            handleStaticFileRequest(conn, "/index.html")
         } else {
-            respondWithStatus(.notFound, conn)
+            handleStaticFileRequest(conn, request.uri)
         }
     }
 
@@ -163,6 +165,36 @@ class GameHandler: HTTPHandler {
             conn.replaceHandler(WebSocketHandler(delegate: GameWebSocketDelegate()))
         } else {
             respondWithStatus(.badRequest, conn)
+        }
+    }
+
+    static let contentTypes = [
+        "css": "text/css",
+        "js": "application/javascript",
+        "html": "text/html",
+        "jpg": "image/jpeg",
+        "png": "image/png",
+        "woff": "font/woff",
+    ]
+
+    // FIXME:
+    static let base = "/Users/craig/Projects/Wyrm/.build/client"
+
+    func handleStaticFileRequest(_ conn: TCPConnection, _ uri: String) {
+        let url = URL(fileURLWithPath: Self.base + uri, isDirectory: false)
+        guard !url.pathComponents.contains("..") else {
+            respondWithStatus(.badRequest, conn)
+            return
+        }
+
+        let contentType = Self.contentTypes[url.pathExtension] ?? "text/plain"
+        if let data = try? Data(contentsOf: url, options: []) {
+            respondWithStatus(.ok,
+                              extraHeaders: [("Content-Type", contentType)],
+                              body: data,
+                              conn)
+        } else {
+            respondWithStatus(.notFound, conn)
         }
     }
 
