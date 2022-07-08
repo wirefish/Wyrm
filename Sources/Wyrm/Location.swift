@@ -47,6 +47,8 @@ struct Exit {
 }
 
 class Location: Entity, Container {
+    var name = ""
+    var description = ""
     var size = Size.huge
     var capacity = Int.max
     var contents = [PhysicalEntity]()
@@ -69,6 +71,8 @@ class Location: Entity, Container {
     }
 
     static let accessors = [
+        "name": accessor(\Location.name),
+        "description": accessor(\Location.description),
         "capacity": accessor(\Location.capacity),
         "contents": accessor(\Location.contents),
         "exits": accessor(\Location.exits),

@@ -193,7 +193,7 @@ class WebSocketHandler: TCPHandler {
             } else {
                 var reason = CloseReason.normal
                 if payload.count >= 2,
-                   let r = CloseReason(rawValue: (UInt16(payload[0]) << 8) | UInt16(payload[1])) {
+                   let r = CloseReason(rawValue: (UInt16(payload[pos]) << 8) | UInt16(payload[pos + 1])) {
                     reason = r
                 }
                 return reason

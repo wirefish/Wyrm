@@ -85,7 +85,7 @@ extension Entity {
     }
 
     final func allowEvent(_ event: String, args: [Value]) -> Bool {
-        return handleEvent(.allow, event, args: args) == .boolean(true)
+        return handleEvent(.allow, event, args: args) != .boolean(false)
     }
 }
 
@@ -106,6 +106,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
         pose = other.pose
         description = other.description
         icon = other.icon
+        isObvious = other.isObvious
         super.copyProperties(from: other)
     }
 
@@ -125,5 +126,13 @@ class PhysicalEntity: Entity, Viewable, Matchable {
                 super[member] = newValue
             }
         }
+    }
+
+    static let defaultBrief = NounPhrase("an entity")
+    static let defaultPose = "is here."
+
+    func describePose() -> String {
+        let brief = brief ?? Self.defaultBrief
+        return "\(brief.format(capitalize: true)) \(pose ?? Self.defaultPose)"
     }
 }

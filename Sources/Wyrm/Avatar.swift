@@ -18,7 +18,7 @@ enum EquippedSlot: String, CodingKeyRepresentable, Hashable, Encodable {
     case ears, neck, wrists, leftFinger, rightFinger
 }
 
-final class Avatar: Entity, Codable {
+final class Avatar: PhysicalEntity, Codable {
     var level = 1
 
     // Current location.
@@ -75,10 +75,27 @@ final class Avatar: Entity, Codable {
     }
 }
 
+// MARK: - as WebSocketDelegate
+
 extension Avatar: WebSocketDelegate {
     func onOpen(_ handler: WebSocketHandler) {
+        let reconnecting = self.handler != nil
         self.handler = handler
-        logger.debug("avatar engaged!")
+
+        if reconnecting {
+            sendMessage("showNotice", .string("Welcome back!"))
+            // TODO: update entire UI state.
+            describeLocation()
+        } else {
+            // FIXME: figure out a portal to use.
+            // TODO: update entire UI state.
+
+            triggerEvent("enter_location", in: location, participants: [self],
+                         args: [self, location]) {
+                location.contents.append(self)
+                describeLocation()
+            }
+        }
     }
 
     func onClose(_ handler: WebSocketHandler) {
@@ -87,9 +104,44 @@ extension Avatar: WebSocketDelegate {
 
     func onReceiveMessage(_ handler: WebSocketHandler, _ message: String) {
         // TODO:
-        let call = ClientCall(fn: "showNotice", args: [.string(message)])
-        let encoder = JSONEncoder()
-        let data = try! encoder.encode(call)
-        handler.sendTextMessage(String(data: data, encoding: .utf8)!)
+        showNotice(message)
+    }
+}
+
+// MARK: - sending client messages
+
+extension Avatar {
+
+    func sendMessage(_ fn: String, _ args: ClientValue...) {
+        if let handler = handler {
+            let encoder = JSONEncoder()
+            let data = try! encoder.encode(ClientCall(fn: fn, args: args))
+            handler.sendTextMessage(String(data: data, encoding: .utf8)!)
+        }
+    }
+
+    func show(_ message: String) {
+        sendMessage("showText", .string(message))
+    }
+
+    func showNotice(_ message: String) {
+        sendMessage("showNotice", .string(message))
+    }
+
+    func describeLocation() {
+        let exits = location.exits.map { ClientValue.string(String(describing: $0.direction)) }
+        let contents = location.contents.compactMap { entity -> ClientValue? in
+            guard entity != self && entity.isObvious else {
+                return nil
+            }
+            return ClientValue.list([.integer(entity.id),
+                                     .string(entity.describeBriefly([.capitalized, .indefinite])),
+                                     .string(entity.pose ?? "is here.")])
+        }
+        sendMessage("showLocation",
+                    .string(location.name),
+                    .string(location.description),
+                    .list(exits),
+                    .list(contents))
     }
 }
