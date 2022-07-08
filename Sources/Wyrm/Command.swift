@@ -236,7 +236,7 @@ class Command {
                 !$0.verb.hasPrefix(verb)
             }) ?? verbsToCommands.endIndex
             if end != index.advanced(by: 1) {
-                let alts = verbsToCommands[index..<end].map({ $0.verb }).joined(separator: ", ")
+                let alts = verbsToCommands[index..<end].map(\.verb).conjunction(using: "or")
                 actor.show("Ambiguous command \"\(verb)\". Did you mean \(alts)?")
             }
         }
