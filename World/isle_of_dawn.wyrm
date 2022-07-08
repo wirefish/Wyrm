@@ -99,7 +99,7 @@ deflocation pavilion: isle_location {
         their behalf. For example, type `talk warden` to talk to the spirit
         warden. He may have something interesting to say.
 
-    contents = [sprit_warden]
+    contents = [sprit_warden!]
     exits = [gravel_path -> 'north to hilltop, gravel_path -> 'south to wildflower_field]
 }
 

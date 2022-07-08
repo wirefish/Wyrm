@@ -167,6 +167,21 @@ extension Avatar {
                             state |= (1 << exit.direction.rawValue)
                         }
 
+                        print(cell.location.name)
+                        print(cell.location.contents)
+                        print(cell.location.contents.compactMap { $0 as? Questgiver })
+
+                        if cell.location.contents.contains(where: {
+                            if let q = $0 as? Questgiver {
+                                print(q, q.offersQuests)
+                                return q.offersQuests.contains { $0.acceptableBy(self) }
+                            } else {
+                                return false
+                            }
+                        }) {
+                            state |= Self.questAvailableBit
+                        }
+
                         return .list([.integer(cell.offset.x),
                                       .integer(cell.offset.y),
                                       .string(cell.location.name),

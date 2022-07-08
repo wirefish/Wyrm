@@ -5,13 +5,6 @@
 //  Created by Craig Becker on 6/28/22.
 //
 
-protocol Interactable {
-    var offers_quests: [Quest] { get }
-    // TODO: interaction_verbs that are like implied commands, if the user enters an unknown
-    // command it parses the rest of the input and matches it against entities at the current
-    // location, then if they have a matching verb it generates events for that verb.
-}
-
 struct QuestState: Encodable {
     enum State: ValueRepresentable, Encodable {
         case `nil`
@@ -90,6 +83,12 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
         // TODO: what determines this? A specific state value I guess?
         return false
     }
+}
+
+protocol Questgiver {
+    var offersQuests: [Quest] { get }
+
+    func advancesQuest(_ quest: Quest, phase: String) -> Bool
 }
 
 extension Entity {
