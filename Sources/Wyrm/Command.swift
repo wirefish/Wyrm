@@ -180,10 +180,22 @@ class Command {
         lookCommand,
     ]
 
-    static let verbsToCommands = [String:Command](
-        uniqueKeysWithValues: allCommands.flatMap { command in
-            command.grammar.verbs.map { ($0, command) }
-        })
+    struct VerbCommand: Comparable {
+        let verb: String
+        let command: Command!
+
+        static func == (_ lhs: VerbCommand, _ rhs: VerbCommand) -> Bool {
+            return lhs.verb == rhs.verb
+        }
+
+        static func < (_ lhs: VerbCommand, _ rhs: VerbCommand) -> Bool {
+            return lhs.verb < rhs.verb
+        }
+    }
+
+    static let verbsToCommands = allCommands.flatMap { command in
+        command.grammar.verbs.map { VerbCommand(verb: $0, command: command) }
+    }.sorted()
 
     static func processInput(actor: Avatar, input: String) {
         guard input.count <= 1000 else {
@@ -197,12 +209,14 @@ class Command {
             return
         }
 
-        guard let command = verbsToCommands[verb] else {
+        guard let index = verbsToCommands.lowerBound(for: VerbCommand(verb: verb, command: nil)),
+              verbsToCommands[index].verb.hasPrefix(verb) else {
             actor.show("Unknown command \"\(verb)\".")
             return
         }
 
-        command.run(actor, verb, &tokens)
+        // FIXME: check for an exact match, otherwise check for ambiguous commands.
+        verbsToCommands[index].command.run(actor, verb, &tokens)
     }
 }
 

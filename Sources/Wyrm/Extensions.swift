@@ -41,9 +41,10 @@ extension StringProtocol {
 }
 
 extension RandomAccessCollection where Element: Comparable {
-    // Returns the index of the specified element using binary search. The result
-    // is undefined if the collection is not sorted in increasing order.
-    func binarySearch(for item: Element) -> Index? {
+    // Returns the index of the first element in the collection that does not
+    // satisfy self[index] < item. The result is undefined if the collection is
+    // not sorted in increasing order.
+    func lowerBound(for item: Element) -> Index? {
         var lower = startIndex, upper = endIndex
         while lower < upper {
             let mid = index(lower, offsetBy: distance(from: lower, to: upper) / 2)
@@ -55,6 +56,15 @@ extension RandomAccessCollection where Element: Comparable {
                 upper = mid
             }
         }
-        return nil
+        return lower == endIndex ? nil : lower
+    }
+
+    // Returns the index of the specified element using binary search. The
+    // result is undefined if the collection is not sorted in increasing order.
+    func binarySearch(for item: Element) -> Index? {
+        guard let index = lowerBound(for: item), self[index] == item else {
+            return nil
+        }
+        return index
     }
 }
