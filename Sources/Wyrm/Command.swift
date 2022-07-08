@@ -82,13 +82,16 @@ struct Grammar {
         var clauses = [ClauseSpec]()
         while let clause = it.next() {
             let parts = clause.split(separator: ":", maxSplits: 1)
-            guard parts.count == 2 else {
+            switch parts.count {
+            case 1:
+                clauses.append(.phrase([], String(parts[0])))
+            case 2:
+                let preps = parts[0].split(separator: "|").map{ String($0) }
+                clauses.append(.phrase(preps, String(parts[1])))
+            default:
                 logger.error("malformed clause specification \(clause)")
                 return nil
             }
-            let preps = parts[0].split(separator: "|").map{ String($0) }
-            let name = String(parts[1])
-            clauses.append(.phrase(preps, name))
         }
         self.clauses = clauses
     }
@@ -178,6 +181,7 @@ class Command {
 
     static let allCommands = [
         lookCommand,
+        lootCommand,
     ]
 
     struct VerbCommand: Comparable {
@@ -215,6 +219,16 @@ class Command {
             return
         }
 
+        if (verbsToCommands[index].verb != verb) {
+            let end = verbsToCommands[index...].firstIndex(where: {
+                !$0.verb.hasPrefix(verb)
+            }) ?? verbsToCommands.endIndex
+            if end != index.advanced(by: 1) {
+                let alts = verbsToCommands[index..<end].map({ $0.verb }).joined(separator: ", ")
+                actor.show("Ambiguous command \"\(verb)\". Did you mean \(alts)?")
+            }
+        }
+
         // FIXME: check for an exact match, otherwise check for ambiguous commands.
         verbsToCommands[index].command.run(actor, verb, &tokens)
     }
@@ -227,5 +241,10 @@ let lookCommand = Command("look at:target with|using|through:tool") {
     guard let location = actor.location else {
         return
     }
+}
+
+let lootCommand = Command("loot corpse") {
+    actor, verb, clauses in
+    print(clauses)
 }
 
