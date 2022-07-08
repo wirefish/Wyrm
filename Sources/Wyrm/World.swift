@@ -325,7 +325,12 @@ extension World {
             return .symbol(s)
 
         case let .identifier(id):
-            return lookup(id, context: context)
+            guard let value = lookup(id, context: context) else {
+                // FIXME: need to propogate errors here
+                logger.error("cannot lookup identifier \(id)")
+                return nil
+            }
+            return value
 
         case let .unaryExpr(op, rhs):
             guard let rhs = eval(rhs, context: context) else {
