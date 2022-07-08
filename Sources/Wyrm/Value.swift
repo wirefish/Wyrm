@@ -20,9 +20,9 @@ enum Value: Equatable {
     case function(Callable)
     case module(Module)
 
-    var asEntity: Entity? {
+    func asEntity<T: Entity>(_ t: T.Type) -> T? {
         if case let .entity(entity) = self {
-            return entity
+            return entity as? T
         } else {
             return nil
         }

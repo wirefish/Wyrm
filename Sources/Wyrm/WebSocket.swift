@@ -45,9 +45,11 @@ class WebSocketHandler: TCPHandler {
     func start(_ conn: TCPConnection) {
         self.conn = conn
         conn.receive(maximumLength: Self.bufferSize, then: onRead)
+        delegate.onOpen(self)
     }
 
     func finish(_ conn: TCPConnection) {
+        delegate.onClose(self)
         self.conn = nil
     }
 
@@ -70,8 +72,8 @@ class WebSocketHandler: TCPHandler {
 
     private static let magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-    static func startUpgrade(_ http: HTTPHandler, _ request: HTTPRequestHead,
-                             _ conn: TCPConnection) -> Bool {
+    static func upgrade(_ http: HTTPHandler, _ request: HTTPRequestHead,
+                        _ conn: TCPConnection) -> Bool {
         guard let key = request.getHeader("Sec-WebSocket-Key"),
               request.getHeader("Connection") == "Upgrade",
               request.getHeader("Upgrade") == "websocket",

@@ -21,13 +21,36 @@ class Module: ValueDictionary {
     }
 }
 
-enum WorldError: Error {
-    case invalidModuleSpec(String)
-}
-
 enum ValueRef: Hashable, Codable {
     case absolute(String, String)
     case relative(String)
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        let s = try c.decode(String.self)
+        if let sep = s.firstIndex(of: ".") {
+            self = .absolute(String(s.prefix(upTo: sep)), String(s.suffix(after: sep)))
+        } else {
+            self = .relative(s)
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case let .absolute(module, name):
+            try c.encode("\(module).\(name)")
+        case let .relative(name):
+            try c.encode(name)
+        }
+    }
+}
+
+enum WorldError: Error {
+    case invalidModuleSpec(String)
+    case cannotOpenDatabase
+    case invalidAvatarPrototype
+    case invalidStartLocation
 }
 
 class World {
@@ -38,12 +61,14 @@ class World {
     let builtins = Module("__BUILTINS__")
     var startableEntities = [Entity]()
     let db = Database()
+    var avatarPrototype: Avatar!
+    var startLocation: Location!
 
-    init(config: Config) {
+    init(config: Config) throws {
         assert(World.instance == nil)
 
         guard db.open(config.world.databasePath) else {
-            fatalError("cannot open database \(config.world.databasePath)")
+            throw WorldError.cannotOpenDatabase
         }
 
         let rootPath = config.world.rootPath
@@ -64,6 +89,18 @@ class World {
             proto.ref = .absolute(builtins.name, name)
             builtins[name] = .entity(proto)
         }
+
+        try load()
+
+        guard let av = lookup(config.world.avatarPrototype, in: nil)?.asEntity(Avatar.self) else {
+            throw WorldError.invalidAvatarPrototype
+        }
+        avatarPrototype = av
+
+        guard let loc = lookup(config.world.startLocation, in: nil)?.asEntity(Location.self) else {
+            throw WorldError.invalidStartLocation
+        }
+        startLocation = loc
 
         World.instance = self
     }
@@ -120,11 +157,11 @@ extension World {
 
 extension World {
 
-    func load() {
+    func load() throws {
         logger.info("loading world from \(rootPath)")
         let startTime = CFAbsoluteTimeGetCurrent()
         
-        for relativePath in try! readModulesFile() {
+        for relativePath in try readModulesFile() {
             let moduleName = moduleName(for: relativePath)
             let module = requireModule(named: moduleName)
             load(contentsOfFile: relativePath, into: module)

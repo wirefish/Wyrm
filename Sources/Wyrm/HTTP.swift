@@ -142,7 +142,7 @@ extension HTTPHandler {
             data += body
         }
         conn.send(data)
-        
+
         if status != .switchingProtocols {
             readRequestHead(conn)
         }
@@ -228,10 +228,9 @@ class TCPConnection {
 
 class TCPServer {
     let listener: NWListener
-    let handlerFactory: () -> TCPHandler
+    var handlerFactory: (() -> HTTPHandler)!
 
-    init?(port: UInt16, handlerFactory: @escaping () -> TCPHandler) {
-        self.handlerFactory = handlerFactory
+    init?(port: UInt16) {
         do {
             listener = try NWListener(using: .tcp, on: NWEndpoint.Port(integerLiteral: port))
         } catch {
@@ -242,7 +241,8 @@ class TCPServer {
         listener.newConnectionHandler = onNewConnection
     }
 
-    func run() {
+    func run(_ factory: @escaping () -> HTTPHandler) {
+        self.handlerFactory = factory
         listener.start(queue: DispatchQueue.main)
         dispatchMain()
     }

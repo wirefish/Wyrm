@@ -10,10 +10,10 @@ fileprivate let signingKey = getRandomBytes(32)!
 fileprivate let authCookieName = "WyrmAuth"
 
 struct AuthToken {
-    let accountID: Database.AccountID
+    let accountID: AccountID
     let username: String
 
-    init(accountID: Database.AccountID, username: String) {
+    init(accountID: AccountID, username: String) {
         self.accountID = accountID
         self.username = username
     }
@@ -47,27 +47,15 @@ struct AuthToken {
     }
 }
 
-class GameWebSocketDelegate: WebSocketDelegate {
-    func onOpen(_ handler: WebSocketHandler) {
-        // TODO:
-    }
-
-    func onClose(_ handler: WebSocketHandler) {
-        // TODO:
-    }
-
-    func onReceiveMessage(_ handler: WebSocketHandler, _ message: String) {
-        let call = ClientCall(fn: "showNotice", args: [.string(message)])
-        let encoder = JSONEncoder()
-        let data = try! encoder.encode(call)
-        handler.sendTextMessage(String(data: data, encoding: .utf8)!)
-    }
-}
-
 class GameHandler: HTTPHandler {
+    var server: GameServer
+
+    init(_ server: GameServer) {
+        self.server = server
+    }
 
     static let endpoints = [
-        "/game/createAccout": handleCreateAccountRequest,
+        "/game/createAccount": handleCreateAccountRequest,
         "/game/login": handleLoginRequest,
         "/game/logout": handleLogoutRequest,
         "/game/auth": handleAuthRequest,
@@ -94,11 +82,8 @@ class GameHandler: HTTPHandler {
             return
         }
 
-        // FIXME:
-        guard case let .entity(e) = World.instance.lookup(.relative("avatar"), in: nil) else {
-            fatalError("cannot find avatar prototype")
-        }
-        let avatar = (e as! Avatar).clone()
+        let avatar = World.instance.avatarPrototype.clone()
+        avatar.location = World.instance.startLocation
 
         guard let accountID = World.instance.db.createAccount(
             username: username, password: password, avatar: avatar) else {
@@ -106,11 +91,7 @@ class GameHandler: HTTPHandler {
             return
         }
 
-        let token = AuthToken(accountID: accountID, username: username)
-        respondWithStatus(
-                .ok,
-                extraHeaders: [("Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
-                conn)
+        respondWithAuthToken(conn, accountID, username)
     }
 
     func handleLoginRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
@@ -124,15 +105,19 @@ class GameHandler: HTTPHandler {
             return
         }
 
+        respondWithAuthToken(conn, accountID, username)
+    }
+
+    func respondWithAuthToken(_ conn: TCPConnection, _ accountID: AccountID, _ username: String) {
         let encoder = JSONEncoder()
         let body = try! encoder.encode(["username": username])
 
         let token = AuthToken(accountID: accountID, username: username)
         respondWithStatus(
-            .ok,
-            extraHeaders: [("Set-Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
-            body: body,
-            conn)
+                .ok,
+                extraHeaders: [("Set-Cookie", "\(authCookieName)=\(token.base64EncodedString())")],
+                body: body,
+                conn)
     }
 
     func handleLogoutRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
@@ -153,16 +138,19 @@ class GameHandler: HTTPHandler {
     }
 
     func handleSessionRequest(_ conn: TCPConnection, _ request: HTTPRequestHead) {
-        guard checkAuthToken(request) != nil else {
+        guard let token = checkAuthToken(request) else {
             respondWithStatus(.unauthorized, conn)
             return
         }
 
-        if WebSocketHandler.startUpgrade(self, request, conn) {
+        guard let avatar = server.requireAvatar(token.accountID) else {
+            respondWithStatus(.internalServerError, conn)
+            return
+        }
+
+        if WebSocketHandler.upgrade(self, request, conn) {
             logger.debug("upgraded to websocket")
-            conn.replaceHandler(WebSocketHandler(delegate: GameWebSocketDelegate()))
-        } else {
-            respondWithStatus(.badRequest, conn)
+            conn.replaceHandler(WebSocketHandler(delegate: avatar))
         }
     }
 
@@ -227,16 +215,27 @@ class GameHandler: HTTPHandler {
 
 class GameServer {
     let tcpServer: TCPServer
+    var avatars = [AccountID:Avatar]()
 
     init?(_ config: Config) {
-        guard let tcpServer = TCPServer(port: config.server.port,
-                                        handlerFactory: { GameHandler() }) else {
+        guard let tcpServer = TCPServer(port: config.server.port) else {
             return nil
         }
         self.tcpServer = tcpServer
     }
 
     func run() {
-        tcpServer.run()
+        tcpServer.run{ GameHandler(self) }
+    }
+
+    func requireAvatar(_ accountID: AccountID) -> Avatar? {
+        if let avatar = avatars[accountID] {
+            return avatar
+        } else if let avatar = World.instance.db.loadAvatar(accountID: accountID) {
+            avatars[accountID] = avatar
+            return avatar
+        } else {
+            return nil
+        }
     }
 }

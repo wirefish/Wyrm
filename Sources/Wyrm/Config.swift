@@ -9,14 +9,14 @@ import TOMLDecoder
 
 struct Config: Codable {
     struct Server: Codable {
-        let host: String
         let port: UInt16
     }
 
     struct World: Codable {
         let rootPath: String
-        let avatarPrototype: String
         let databasePath: String
+        let avatarPrototype: ValueRef
+        let startLocation: ValueRef
     }
 
     let server: Server

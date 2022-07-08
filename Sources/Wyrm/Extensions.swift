@@ -22,13 +22,17 @@ extension Array {
     }
 }
 
-extension Substring {
-    func trimmed(_ pred: (Character) -> Bool) -> Substring {
+extension StringProtocol {
+    func trimmed(_ pred: (Character) -> Bool) -> Self.SubSequence {
         if let first = firstIndex(where: { !pred($0) }),
            let last = lastIndex(where: { !pred($0) }) {
             return self[first...last]
         } else {
-            return Substring()
+            return ""
         }
+    }
+
+    func suffix(after pos: Self.Index) -> Self.SubSequence {
+        return suffix(from: index(after: pos))
     }
 }

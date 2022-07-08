@@ -13,15 +13,17 @@ struct DatabaseError: Error, CustomStringConvertible {
     }
 }
 
-class Database {
-    typealias AccountID = Int64
+typealias AccountID = Int64
 
+class Database {
     private var conn: SQLiteConnection!
     private var createAccountStmt: SQLiteStatement!
     private var createAvatarStmt: SQLiteStatement!
     private var getCredentialsStmt: SQLiteStatement!
     private var loadAvatarStmt: SQLiteStatement!
     private var saveAvatarStmt: SQLiteStatement!
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
 
     // MARK: - public methods
 
@@ -95,11 +97,13 @@ class Database {
         do {
             var results = try loadAvatarStmt.query(accountID)
             guard let row = results.next() else {
+                logger.warning("no avatar found for accountID \(accountID)")
                 return nil
             }
-            let encodedAvatar = row.getString(0)
-            return nil
+            let encodedAvatar = row.getBlob(0)
+            return try decoder.decode(Avatar.self, from: Data(encodedAvatar!))
         } catch {
+            logger.error("error loading avatar: \(error)")
             return nil
         }
     }

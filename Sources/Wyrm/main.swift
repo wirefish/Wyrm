@@ -9,8 +9,7 @@ let config = try! Config(contentsOfFile: "/Users/craig/Projects/Wyrm/config/conf
 
 let logger = Logger(level: .debug)  // FIXME:
 
-let world = World(config: config)
-world.load()
+let world = try! World(config: config)
 
 var state = AvatarState()
 state.name = "Bob"
