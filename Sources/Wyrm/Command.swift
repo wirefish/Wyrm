@@ -84,10 +84,22 @@ struct Grammar {
             let parts = clause.split(separator: ":", maxSplits: 1)
             switch parts.count {
             case 1:
-                clauses.append(.phrase([], String(parts[0])))
+                if clauses.isEmpty {
+                    clauses.append(.phrase([], String(parts[0])))
+                } else {
+                    logger.error("clauses after the first must specify at least one preposition")
+                }
             case 2:
-                let preps = parts[0].split(separator: "|").map{ String($0) }
-                clauses.append(.phrase(preps, String(parts[1])))
+                let name = String(parts[1])
+                switch parts[0] {
+                case "1":
+                    clauses.append(.word(name))
+                case "*":
+                    clauses.append(.rest(name))
+                default:
+                    let preps = parts[0].split(separator: "|").map{ String($0) }
+                    clauses.append(.phrase(preps, name))
+                }
             default:
                 logger.error("malformed clause specification \(clause)")
                 return nil
