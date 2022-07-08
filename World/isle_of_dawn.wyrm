@@ -483,3 +483,123 @@ deflocation dwarven_shrine: isle_location {
         show(actor) "The caretaker joins you in silent reflection."
     }
 }
+
+// goblin_shrine
+
+def chessboard: fixture {
+    brief = "a stone chessboard"
+    pose = "rests atop a low table."
+    description = |
+        The chessboard is remarkable for its pieces: each is a finely detailed
+        and garishly-painted rendition of a creature who looks much like the
+        caretaker. The pieces are so realistic they seem almost alive.
+    is_obvious = false
+}
+
+def goblin_caretaker: lib.npc {
+    brief = "the goblin caretaker"
+    pose = "stands beside a chessboard, apparently pondering his next move."
+    description = |
+        The caretaker is a short, big-eared creature with greenish-blue skin. In
+        contrast with his somewhat comical proportions and garish attire, his
+        large dark eyes evince a keen intellect.
+
+    when talk(actor: .quest(choose_a_race, active), self, topic) {
+        tell(self, actor) |
+            Hello, friend! I can't tell you how happy I am to see your interest
+            in goblinkind. We are a misunderstood folk! Let me set the record
+            straight.
+
+            Goblins are small in stature but we have big dreams. Mostly dreams
+            of wealth, it's true, but there's nothing wrong with a little
+            spending cash, eh?
+
+            Some larger folks will tell you we are thieves, beggars, and worse.
+            That is so mostly untrue! The majority of us would rather get rich
+            through shrewd business practices and hard bargaining than by using
+            less savory methods.
+
+            When those ignorant louts take offense at our methods, it certainly
+            helps that we're quick and stealthy by nature. You won't see many
+            goblins waving huge swords around, but as they say, \"Size isn't
+            everything!\"
+
+            If you feel like you're one of us at heart, why not become one of us
+            in body, too? Just `meditate` here and the deed will be done.
+    }
+}
+
+deflocation goblin_shrine: isle_location {
+    name = "Shrine of Fortune"
+    description = |
+        The ground here has been cleared, leveled, and surfaced with
+        multi_colored bricks.
+    surface = "stone"
+    contents = [chessboard!, goblin_caretaker!]
+    exits = [gravel_path -> 'north to dwarven_shrine, gravel_path -> 'south to ogre_shrine,
+             gravel_path -> 'east to elven_shrine]
+
+    when meditate(actor: .quest(choose_a_race, active)) {
+        show(actor) |
+            As soon as you close your eyes, you have a vision of the world
+            around you getting larger...or are you getting smaller? For a moment
+            you are stricken with vertigo as the world shifts and spins.
+
+            Once the dizziness passes, you open your eyes to find that your
+            stature and greenish skin now match those of the caretaker.
+        change_race(actor, lib.goblin)
+        tell(self, actor) "Huzzah! Welcome to the family!"
+        advance_quest(actor, choose_a_race)
+    }
+
+    when meditate(actor) {
+        show(actor) "The caretaker leaves you to your meditation."
+    }
+}
+
+// ogre_shrine
+
+def ogre_caretaker: lib.npc {
+    brief = "the ogre caretaker"
+    pose = "is here, casually pulverizing rocks with his hammer."
+    description = |
+        The caretaker is a hulking figure, standing over eight feel tall. He
+        wears an iron helm, iron gauntlets, and a breechclout. He carries an
+        enormous iron sledgehammer.
+
+    when talk(actor: .quest(choose_a_race, active), self, topic) {
+        tell(self, actor) |
+            Ugh. I be ogre of few words, but I know what you want. I tell you of
+            my kin. We big. We strong. Done!
+
+            You came to `meditate`? Ha. If you wanna be ogre, do it. Done!
+    }
+}
+
+deflocation ogre_shrine: isle_location {
+    name = "Shrine of Strength"
+    description = |
+        This area is choked with a haphazard collection of rough stone blocks,
+        many overgrown with vines and twisting grasses. The blocks' surfaces
+        have been crudely painted with scenes of carnage featuring enormous
+        warriors laying waste to their tiny assailants.
+    surface = "stone"
+    contents = [ogre_caretaker!]
+    exits = [gravel_path -> 'north to goblin_shrine, gravel_path -> 'east to human_shrine]
+
+    when meditate(actor: .quest(choose_a_race, active)) {
+        show(actor) |
+            The caretaker selects a boulder and tosses it on the ground before
+            you. He then steps over, raises his hammer, and crushes the rock as
+            he lets out an enormous belly laugh.
+
+            Rocks fly around. Muscles grow. Brain shrink.
+        change_race(actor, lib.ogre)
+        advance_quest(actor, choose_a_race)
+    }
+
+    when meditate(actor) {
+        show(actor) "The caretaker chuckles and crushes another boulder."
+    }
+}
+
