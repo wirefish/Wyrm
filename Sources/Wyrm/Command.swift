@@ -185,24 +185,24 @@ class Command {
             command.grammar.verbs.map { ($0, command) }
         })
 
-    static func processInput(actor: Avatar, input: String) -> String? {
+    static func processInput(actor: Avatar, input: String) {
         guard input.count <= 1000 else {
             // Silently ignore large input.
-            return nil
+            return
         }
 
         var tokens = TokenSequence(input)
         guard let verb = tokens.next()?.lowercased() else {
             // Silently ignore empty input.
-            return nil
+            return
         }
 
         guard let command = verbsToCommands[verb] else {
-            return "Invalid command \"\(verb)\"."
+            actor.show("Unknown command \"\(verb)\".")
+            return
         }
 
         command.run(actor, verb, &tokens)
-        return nil
     }
 }
 

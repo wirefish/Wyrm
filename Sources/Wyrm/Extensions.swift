@@ -2,7 +2,7 @@
 //  Extensions.swift
 //  Wyrm
 //
-//  General-purpose extensions of built-in types.
+//  General-purpose extensions of standard library types.
 //
 
 extension Array {
@@ -23,7 +23,9 @@ extension Array {
 }
 
 extension StringProtocol {
-    func trimmed(_ pred: (Character) -> Bool) -> Self.SubSequence {
+    // Returns a subsequence where elements matching the predicate have been removed
+    // from both ends of the string.
+    func trimmed(_ pred: (Element) -> Bool) -> Self.SubSequence {
         if let first = firstIndex(where: { !pred($0) }),
            let last = lastIndex(where: { !pred($0) }) {
             return self[first...last]
@@ -32,7 +34,27 @@ extension StringProtocol {
         }
     }
 
+    // Returns the suffix formed by all elements after (but not including) the given index.
     func suffix(after pos: Self.Index) -> Self.SubSequence {
         return suffix(from: index(after: pos))
+    }
+}
+
+extension RandomAccessCollection where Element: Comparable {
+    // Returns the index of the specified element using binary search. The result
+    // is undefined if the collection is not sorted in increasing order.
+    func binarySearch(for item: Element) -> Index? {
+        var lower = startIndex, upper = endIndex
+        while lower < upper {
+            let mid = index(lower, offsetBy: distance(from: lower, to: upper) / 2)
+            if self[mid] == item {
+                return mid
+            } else if self[mid] < item {
+                lower = index(after: mid)
+            } else {
+                upper = mid
+            }
+        }
+        return nil
     }
 }

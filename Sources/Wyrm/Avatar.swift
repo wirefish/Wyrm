@@ -103,8 +103,7 @@ extension Avatar: WebSocketDelegate {
     }
 
     func onReceiveMessage(_ handler: WebSocketHandler, _ message: String) {
-        // TODO:
-        showNotice(message)
+        Command.processInput(actor: self, input: message)
     }
 }
 
