@@ -241,7 +241,6 @@ class Command {
             }
         }
 
-        // FIXME: check for an exact match, otherwise check for ambiguous commands.
         verbsToCommands[index].command.run(actor, verb, &tokens)
     }
 }
