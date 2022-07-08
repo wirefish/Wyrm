@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-class Entity: ValueDictionary, Equatable {
+class Entity: ValueDictionary {
     static var idIterator = (1...).makeIterator()
 
     let id = idIterator.next()!
@@ -43,9 +43,15 @@ class Entity: ValueDictionary, Equatable {
         get { return extraMembers[memberName] }
         set { extraMembers[memberName] = newValue }
     }
+}
 
+extension Entity: Hashable {
     static func == (_ lhs: Entity, _ rhs: Entity) -> Bool {
-        return lhs === rhs
+        return lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 

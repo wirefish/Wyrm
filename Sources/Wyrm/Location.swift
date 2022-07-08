@@ -6,8 +6,8 @@
 //
 
 // Possible directions of movement.
-enum Direction: ValueRepresentableEnum {
-    case north, northeast, east, southeast, south, southwest, west, northwest
+enum Direction: Int, ValueRepresentableEnum {
+    case north = 0, northeast, east, southeast, south, southwest, west, northwest
     case up, down, `in`, out
 
     var opposite: Direction {
@@ -24,6 +24,23 @@ enum Direction: ValueRepresentableEnum {
         case .down: return .up
         case .in: return .out
         case .out: return .in
+        }
+    }
+
+    var offset: (Int, Int, Int) {
+        switch self {
+        case .north: return (0, -1, 0)
+        case .northeast: return (1, -1, 0)
+        case .east: return (1, 0, 0)
+        case .southeast: return (1, 1, 0)
+        case .south: return (0, 1, 0)
+        case .southwest: return (-1, 1, 0)
+        case .west: return (-1, 0, 0)
+        case .northwest: return (-1, -1, 0)
+        case .up: return (0, 0, 1)
+        case .down: return (0, 0, -1)
+        case .in: return (0, 0, 0)
+        case .out: return (0, 0, 0)
         }
     }
 

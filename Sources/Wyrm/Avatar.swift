@@ -143,5 +143,38 @@ extension Avatar {
                     .string(location.description),
                     .list(exits),
                     .list(contents))
+
+        let map = Map.init(at: location, radius: 3)
+        showMap(map)
+    }
+
+    // Bits in the location state sent to the client. Lower bits are derived from
+    // the raw values of the exit directions.
+    static let questAvailableBit = 1 << 12
+    static let questAdvanceableBit = 1 << 13
+    static let vendorBit = 1 << 15
+    static let trainerBit = 1 << 16
+
+    func showMap(_ map: Map) {
+        sendMessage("showMap",
+                    .string(location.name),
+                    .string("Region Name"), .string("Subregion Name"),  // FIXME:
+                    .integer(map.radius),
+                    .list(map.cells.map { cell -> ClientValue in
+
+                        var state = 0
+                        for exit in cell.location.exits {
+                            state |= (1 << exit.direction.rawValue)
+                        }
+
+                        return .list([.integer(cell.offset.x),
+                                      .integer(cell.offset.y),
+                                      .string(cell.location.name),
+                                      .string(nil),  // FIXME: icon
+                                      .integer(state),
+                                      .string(location.surface),
+                                      .string(nil),  // FIXME: surrounding
+                                      .string(location.domain)])
+                    }))
     }
 }
