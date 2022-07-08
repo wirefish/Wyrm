@@ -254,16 +254,20 @@ extension World {
 
         // Initialize the members.
         for (name, initialValue) in members {
-            if let value = eval(initialValue, context: context) {
-                quest[name] = value
+            do {
+                quest[name] = try eval(initialValue, context: context)
+            } catch {
+                print("\(quest.ref) \(name): \(error)")
             }
         }
 
         for (phaseName, members) in phases {
             let phase = QuestPhase(phaseName)
             for (name, initialValue) in members {
-                if let value = eval(initialValue, context: context) {
-                    phase[name] = value
+                do {
+                    phase[name] = try eval(initialValue, context: context)
+                } catch {
+                    print("\(quest.ref) \(phaseName) \(name): \(error)")
                 }
             }
             quest.phases.append(phase)
@@ -279,8 +283,10 @@ extension World {
 
         // Initialize the members.
         for (name, initialValue) in members {
-            if let value = eval(initialValue, context: context) {
-                entity[name] = value
+            do {
+                entity[name] = try eval(initialValue, context: context)
+            } catch {
+                print("\(entity.ref!) \(name) \(error)")
             }
         }
 
@@ -305,9 +311,15 @@ extension World {
 
 // MARK: - evaluating expressions
 
+enum EvalError: Error {
+    case typeMismatch(String)
+    case undefinedIdentifier(String)
+    case malformedExpression
+}
+
 extension World {
 
-    func eval(_ node: ParseNode, context: [ValueDictionary]) -> Value? {
+    func eval(_ node: ParseNode, context: [ValueDictionary]) throws -> Value {
         switch node {
         case let .boolean(b):
             return .boolean(b)
@@ -326,40 +338,34 @@ extension World {
 
         case let .identifier(id):
             guard let value = lookup(id, context: context) else {
-                // FIXME: need to propogate errors here
-                logger.error("cannot lookup identifier \(id)")
-                return nil
+                throw EvalError.undefinedIdentifier(id)
             }
             return value
 
         case let .unaryExpr(op, rhs):
-            guard let rhs = eval(rhs, context: context) else {
-                return nil
-            }
+            let rhs = try eval(rhs, context: context)
             switch op {
             case .minus:
                 guard case let .number(n) = rhs else {
-                    fatalError("operand to unary - must be a number")
+                    throw EvalError.typeMismatch("operand of '-' must be a number")
                 }
                 return .number(-n)
             case .not:
                 guard case let .boolean(b) = rhs else {
-                    fatalError("operand to ! must be a boolean")
+                    throw EvalError.typeMismatch("operand of '!' must be a boolean")
                 }
                 return .boolean(!b)
             default:
-                fatalError("malformed unaryExpr")
+                throw EvalError.malformedExpression
             }
 
         case let .binaryExpr(lhs, op, rhs):
-            guard let lhs = eval(lhs, context: context), let rhs = eval(rhs, context: context) else {
-                return nil
-            }
+            let lhs = try eval(lhs, context: context)
+            let rhs = try eval(rhs, context: context)
             switch lhs {
             case let .number(a):
                 guard case let .number(b) = rhs else {
-                    print("type mismatch in operands of \(op)")
-                    break
+                    throw EvalError.typeMismatch("operands of '\(op)' must be of same type")
                 }
                 switch op {
                 case .plus: return .number(a + b)
@@ -374,142 +380,103 @@ extension World {
                 case .greater: return .boolean(a > b)
                 case .greaterEqual: return .boolean(a >= b)
                 default:
-                    print("operator \(op) cannot be applied to numeric operands")
+                    throw EvalError.typeMismatch("operator \(op) cannot be applied to numbers")
                 }
 
             case let .boolean(a):
                 guard case let .boolean(b) = rhs else {
-                    print("type mismatch in operands of \(op)")
-                    break
+                    throw EvalError.typeMismatch("operands of '\(op)' must be of same type")
                 }
                 switch op {
                 case .notEqual: return .boolean(a != b)
                 case .equalEqual: return .boolean(a == b)
                 default:
-                    print("operator \(op) cannot be applied to boolean operands")
+                    throw EvalError.typeMismatch("operator \(op) cannot be applied to booleans")
                 }
 
             default:
-                print("invalid operands of \(op)")
+                throw EvalError.typeMismatch("invalid operaands of \(op)")
             }
 
         case let .conjuction(lhs, rhs):
-            guard let lhs = eval(lhs, context: context) else {
-                return nil
-            }
+            let lhs = try eval(lhs, context: context)
             guard case let .boolean(a) = lhs else {
-                print("expression before && does not evaluate to a boolean value")
-                return nil
+                throw EvalError.typeMismatch("expression before && must be a boolean")
             }
             if !a {
                 return .boolean(false)
             } else {
-                guard let rhs = eval(rhs, context: context) else {
-                    return nil
-                }
+                let rhs = try eval(rhs, context: context)
                 guard case let .boolean(b) = rhs else {
-                    print("expression after && does not evaluate to a boolean value")
-                    return nil
+                    throw EvalError.typeMismatch("expression after && must be a boolean")
                 }
                 return .boolean(b)
             }
 
         case let .disjunction(lhs, rhs):
-            guard let lhs = eval(lhs, context: context) else {
-                return nil
-            }
+            let lhs = try eval(lhs, context: context)
             guard case let .boolean(a) = lhs else {
-                print("expression before || does not evaluate to a boolean value")
-                return nil
+                throw EvalError.typeMismatch("expression before || must be a boolean")
             }
             if a {
                 return .boolean(true)
             } else {
-                guard let rhs = eval(rhs, context: context) else {
-                    return nil
-                }
+                let rhs = try eval(rhs, context: context)
                 guard case let .boolean(b) = rhs else {
-                    print("expression after || does not evaluate to a boolean value")
-                    return nil
+                    throw EvalError.typeMismatch("expression after || must be a boolean")
                 }
                 return .boolean(b)
             }
 
         case let .list(nodes):
-            let values = nodes.map { eval($0, context: context) }
-            guard values.allSatisfy({ $0 != nil}) else {
-                break
-            }
-            return .list(ValueList(values.map({ $0! })))
+            let values = try nodes.map { try eval($0, context: context) }
+            return .list(ValueList(values))
 
         case let .exit(portal, dir, dest):
-            guard let portal = eval(portal, context: context) else {
-                break
-            }
-            guard case let .entity(portalPrototype) = portal,
-                  let portalPrototype = portalPrototype as? Portal else {
-                print("invalid exit portal")
-                break
+            let portal = try eval(portal, context: context)
+            guard let portalPrototype = portal.asEntity(Portal.self) else {
+                throw EvalError.typeMismatch("invalid exit portal")
             }
             guard let destRef = dest.asValueRef else {
-                print("exit destination must be a reference")
-                break
+                throw EvalError.typeMismatch("exit destination must be a reference")
             }
             return .exit(Exit(portal: portalPrototype.clone(), direction: dir, destination: destRef))
 
         case let .clone(lhs):
-            guard let lhs = eval(lhs, context: context) else {
-                break
-            }
+            let lhs = try eval(lhs, context: context)
             guard case let .entity(entity) = lhs else {
-                print("cannot clone non-entity")
-                break
+                throw EvalError.typeMismatch("cannot clone non-entity")
             }
             return .entity(entity.clone())
 
         case let .call(lhs, args):
-            guard let lhs = eval(lhs, context: context) else {
-                break
-            }
-            let args = args.map { eval($0, context: context) }
-            guard args.allSatisfy({ $0 != nil}) else {
-                break
-            }
+            let lhs = try eval(lhs, context: context)
+            let args = try args.map { try eval($0, context: context) }
             guard case let .function(fn) = lhs else {
-                print("expression is not callable")
-                break
+                throw EvalError.typeMismatch("expression is not callable")
             }
-            return try! fn.call(args.map({ $0! }), context: [])
+            return try fn.call(args, context: []) ?? .nil
 
         case let .dot(lhs, member):
-            guard let lhs = eval(lhs, context: context) else {
-                break
-            }
+            let lhs = try eval(lhs, context: context)
             guard let lhs = lhs.asValueDictionary else {
-                print("cannot apply . operator to operand")
-                break
+                throw EvalError.typeMismatch("cannot apply . to non-object")
             }
-            return lhs[member]
+            return lhs[member] ?? .nil
 
         case let .subscript(lhs, rhs):
-            guard let lhs = eval(lhs, context: context),
-                  let rhs = eval(rhs, context: context) else {
-                break
-            }
+            let lhs = try eval(lhs, context: context)
+            let rhs = try eval(rhs, context: context)
             guard case let .list(lhs) = lhs else {
-                print("cannot apply [] operator to non-list")
-                break
+                throw EvalError.typeMismatch("cannot apply [] to non-list")
             }
             guard let index = Int.fromValue(rhs) else {
-                print("subscript index must be an integer")
-                break
+                throw EvalError.typeMismatch("subscript index must be an integer")
             }
             return lhs.values[index]
 
         default:
-            fatalError("not an expression: \(node)")
+            throw EvalError.malformedExpression
         }
-
-        return nil
     }
 }
