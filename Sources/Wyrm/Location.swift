@@ -133,9 +133,11 @@ class Location: Entity, Container {
     }
 }
 
+// FIXME:
 extension PhysicalEntity {
 
     func travel(to destination: Location, direction: Direction, via portal: Portal) {
+        let avatar = self as? Avatar
         let entry = destination.findExit(direction.opposite)
         guard let location = self.container as? Location else {
             // Feedback?
@@ -152,7 +154,7 @@ extension PhysicalEntity {
         triggerEvent("enter_location", in: destination, participants: [self, entry!.portal],
                      args: [self, destination, entry!.portal]) {
             destination.insert(self)
-            // describeLocation()
+            avatar?.locationChanged()
         }
     }
 }

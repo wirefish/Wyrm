@@ -87,7 +87,7 @@ extension Avatar: WebSocketDelegate {
         if reconnecting {
             sendMessage("showNotice", .string("Welcome back!"))
             // TODO: update entire UI state.
-            describeLocation()
+            locationChanged()
         } else {
             // FIXME: figure out a portal to use.
             // TODO: update entire UI state.
@@ -96,7 +96,7 @@ extension Avatar: WebSocketDelegate {
                          args: [self, location]) {
                 location.contents.append(self)
                 container = location
-                describeLocation()
+                locationChanged()
             }
         }
     }
@@ -130,6 +130,11 @@ extension Avatar {
         sendMessage("showNotice", .string(message))
     }
 
+    func locationChanged() {
+        describeLocation()
+        showMap()
+    }
+
     func describeLocation() {
         let exits = location.exits.map { ClientValue.string(String(describing: $0.direction)) }
         let contents = location.contents.compactMap { entity -> ClientValue? in
@@ -145,9 +150,6 @@ extension Avatar {
                     .string(location.description),
                     .list(exits),
                     .list(contents))
-
-        let map = Map.init(at: location, radius: 3)
-        showMap(map)
     }
 
     // Bits in the location state sent to the client. Lower bits are derived from
@@ -157,7 +159,8 @@ extension Avatar {
     static let vendorBit = 1 << 15
     static let trainerBit = 1 << 16
 
-    func showMap(_ map: Map) {
+    func showMap() {
+        let map = Map(at: location, radius: 3)
         sendMessage("showMap",
                     .string(location.name),
                     .string("Region Name"), .string("Subregion Name"),  // FIXME:
