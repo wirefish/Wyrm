@@ -156,7 +156,7 @@ extension World {
                 guard case let .symbol(s) = code.constants[Int(index)] else {
                     throw ExecError.typeMismatch
                 }
-                guard let value = lookup(s, context: context) else {
+                guard let value = lookup(.relative(s), context: context) else {
                     throw ExecError.undefinedSymbol(s)
                 }
                 stack.append(value)
@@ -206,12 +206,13 @@ extension World {
             case .makeExit:
                 guard case let .entity(destination) = stack.removeLast(),
                       let direction = Direction.fromValue(stack.removeLast()),
-                      case let .entity(portal) = stack.removeLast(),
-                      let portal = portal as? Portal else {
+                      let portalProto = stack.removeLast().asEntity(Portal.self) else {
                     throw ExecError.typeMismatch
                 }
-                stack.append(.exit(Exit(portal: portal.clone(), direction: direction,
-                                        destination: destination.ref!)))
+                let portal = portalProto.clone()
+                portal.direction = direction
+                portal.destination = destination.ref!
+                stack.append(.entity(portal))
 
             case .clone:
                 let value = stack.removeLast()

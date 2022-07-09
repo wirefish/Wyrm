@@ -23,14 +23,17 @@ class Map {
         var nextOpen = 0
         while nextOpen < cells.count {
             let cell = cells[nextOpen]; nextOpen += 1
-            for exit in cell.location.exits {
-                if let dest = World.instance.lookup(exit.destination, context: module)?.asEntity(Location.self),
-                   // TODO: portal is visible
-                   seen.insert(dest).inserted {
-                    let (x, y, z) = exit.direction.offset
+            for portal in cell.location.exits {
+                guard let destinationRef = portal.destination,
+                      let destination = World.instance.lookup(
+                        destinationRef, context: module)?.asEntity(Location.self) else {
+                    continue
+                }
+                if seen.insert(destination).inserted {
+                    let (x, y, z) = portal.direction.offset
                     if z == 0 && (x != 0 || y != 0) && abs(cell.offset.x + x) <= radius &&
                         abs(cell.offset.y + y) <= radius {
-                        cells.append(Cell(location: dest,
+                        cells.append(Cell(location: destination,
                                           offset: (x + cell.offset.x, y + cell.offset.y)))
                     }
                 }

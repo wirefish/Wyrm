@@ -14,11 +14,13 @@ enum PortalState: ValueRepresentableEnum {
 }
 
 class Portal: PhysicalEntity {
+    var direction: Direction = .in
+    var destination: ValueRef?
     var size = Size.large
     var isCloseable = false
     var lockableWith: Item?
     var state = PortalState.open
-    var twin: Portal?
+    weak var twin: Portal?
 
     override func copyProperties(from other: Entity) {
         let other = other as! Portal
@@ -47,5 +49,9 @@ class Portal: PhysicalEntity {
                 super[member] = newValue
             }
         }
+    }
+
+    override func match(_ tokens: ArraySlice<String>) -> MatchQuality {
+        return max(direction.match(tokens), super.match(tokens))
     }
 }

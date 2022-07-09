@@ -95,7 +95,7 @@ extension Entity {
     }
 }
 
-class PhysicalEntity: Entity, Viewable {
+class PhysicalEntity: Entity, Viewable, Matchable {
     // Viewable
     var brief: NounPhrase?
     var pose: String?
@@ -143,9 +143,7 @@ class PhysicalEntity: Entity, Viewable {
         let brief = brief ?? Self.defaultBrief
         return "\(brief.format(capitalize: true)) \(pose ?? Self.defaultPose)"
     }
-}
 
-extension PhysicalEntity: Matchable {
     func match(_ tokens: ArraySlice<String>) -> MatchQuality {
         return alts.reduce(brief?.match(tokens) ?? .none) { max($0, $1.match(tokens)) }
     }

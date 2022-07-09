@@ -281,13 +281,14 @@ let goCommand = Command("go direction") {
         actor.show("Do you want to go \(dirs.conjunction(using: "or"))?")
         return
     }
-    let exit = matches.first!
+    let portal = matches.first!
 
-    guard let destination = World.instance.lookup(exit.destination, context: location.ref!)?
-        .asEntity(Location.self) else {
+    guard let destinationRef = portal.destination,
+          let destination = World.instance.lookup(destinationRef, context: location.ref!)?
+            .asEntity(Location.self) else {
         actor.show("A strange force prevents you from going that way.")
         return
     }
 
-    actor.travel(to: destination, direction: exit.direction, via: exit.portal)
+    actor.travel(to: destination, direction: portal.direction, via: portal)
 }

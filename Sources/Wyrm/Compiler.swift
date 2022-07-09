@@ -348,4 +348,13 @@ class Compiler {
             fatalError("invalid attempt to compile object definition")
         }
     }
+
+    func compile(_ ref: ValueRef, _ block: inout ScriptFunction) {
+        switch ref {
+        case let .relative(name):
+            compile(.identifier(name), &block)
+        case let .absolute(module, name):
+            compile(.dot(.identifier(module), name), &block)
+        }
+    }
 }

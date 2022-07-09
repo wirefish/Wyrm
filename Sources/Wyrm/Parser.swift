@@ -50,7 +50,7 @@ indirect enum ParseNode {
     case call(ParseNode, [ParseNode])
     case dot(ParseNode, String)
     case `subscript`(ParseNode, ParseNode)
-    case exit(ParseNode, Direction, ParseNode)
+    case exit(ValueRef, Direction, ValueRef)
 
     // Statements.
     case `var`(String, ParseNode)
@@ -732,7 +732,7 @@ class Parser {
             return nil
         }
 
-        guard let dir = Direction.fromValue(.symbol(name)) else {
+        guard let direction = Direction.fromValue(.symbol(name)) else {
             error("invalid direction \(name) after ->")
             return nil
         }
@@ -744,11 +744,16 @@ class Parser {
             return nil
         }
 
-        guard let rhs = parseExpr() else {
+        guard let destination = parseValueRef() else {
             return nil
         }
 
-        return .exit(lhs, dir, rhs)
+        guard let portal = lhs.asValueRef else {
+            error("invalid portal prototype in exit")
+            return nil
+        }
+
+        return .exit(portal, direction, destination)
     }
 
     private func parseSequence<T>(from start: Token, to end: Token,

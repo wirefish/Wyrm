@@ -115,22 +115,27 @@ class World {
         }
     }
 
-    func lookup(_ name: String, context: [ValueDictionary]) -> Value? {
-        if let value = context.firstMap({ $0[name] }) ?? builtins[name] {
-            return value
-        } else if let module = modules[name] {
-            return .module(module)
-        } else {
-            return nil
+    func lookup(_ ref: ValueRef, context: [ValueDictionary]) -> Value? {
+        switch ref {
+        case let .absolute(module, name):
+            return modules[module]?[name]
+        case let .relative(name):
+            if let value = context.firstMap({ $0[name] }) ?? builtins[name] {
+                return value
+            } else if let module = modules[name] {
+                return .module(module)
+            } else {
+                return nil
+            }
         }
     }
 
-    func lookup(_ ref: ValueRef, context: Module?) -> Value? {
+    func lookup(_ ref: ValueRef, context: ValueDictionary?) -> Value? {
         switch ref {
         case let .absolute(module, name):
-            return modules[module]?.bindings[name]
+            return modules[module]?[name]
         case let .relative(name):
-            return context?.bindings[name] ?? builtins.bindings[name]
+            return context?[name] ?? builtins[name]
         }
     }
 
@@ -349,7 +354,7 @@ extension World {
             return .symbol(s)
 
         case let .identifier(id):
-            guard let value = lookup(id, context: context) else {
+            guard let value = lookup(.relative(id), context: context) else {
                 throw EvalError.undefinedIdentifier(id)
             }
             return value
@@ -444,15 +449,14 @@ extension World {
             let values = try nodes.map { try eval($0, context: context) }
             return .list(ValueList(values))
 
-        case let .exit(portal, dir, dest):
-            let portal = try eval(portal, context: context)
-            guard let portalPrototype = portal.asEntity(Portal.self) else {
+        case let .exit(portalRef, direction, destination):
+            guard let portalProto = lookup(portalRef, context: context)?.asEntity(Portal.self) else {
                 throw EvalError.typeMismatch("invalid exit portal")
             }
-            guard let destRef = dest.asValueRef else {
-                throw EvalError.typeMismatch("exit destination must be a reference")
-            }
-            return .exit(Exit(portal: portalPrototype.clone(), direction: dir, destination: destRef))
+            let portal = portalProto.clone()
+            portal.direction = direction
+            portal.destination = destination
+            return .entity(portal)
 
         case let .clone(lhs):
             let lhs = try eval(lhs, context: context)

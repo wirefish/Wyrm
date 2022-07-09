@@ -168,8 +168,8 @@ extension Avatar {
                     .list(map.cells.map { cell -> ClientValue in
 
                         var state = 0
-                        for exit in cell.location.exits {
-                            state |= (1 << exit.direction.rawValue)
+                        for portal in cell.location.exits {
+                            state |= (1 << portal.direction.rawValue)
                         }
 
                         if cell.location.contents.contains(where: {

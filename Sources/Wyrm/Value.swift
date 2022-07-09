@@ -15,7 +15,6 @@ enum Value: Equatable {
     case symbol(String)
     case entity(Entity)
     case quest(Quest)
-    case exit(Exit)
     case list(ValueList)
     case function(Callable)
     case module(Module)
@@ -45,7 +44,7 @@ enum Value: Equatable {
         case let .number(a): if case let .number(b) = rhs { return a == b }
         case let .string(a): if case let .string(b) = rhs { return a == b }
         case let .symbol(a): if case let .symbol(b) = rhs { return a == b }
-        case let .entity(a): if case let .entity(b) = rhs { return a === b }
+        case let .entity(a): if case let .entity(b) = rhs { return a == b }
         case let .quest(a): if case let .quest(b) = rhs { return a === b }
         default: break
         }
@@ -236,19 +235,6 @@ extension NounPhrase: ValueRepresentable {
     func toValue() -> Value {
         // FIXME: This isn't right but it really doesn't matter.
         return .string(singular)
-    }
-}
-
-extension Exit: ValueRepresentable {
-    static func fromValue(_ value: Value) -> Exit? {
-        guard case let .exit(exit) = value else {
-            return nil
-        }
-        return exit
-    }
-
-    func toValue() -> Value {
-        return .exit(self)
     }
 }
 
