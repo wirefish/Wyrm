@@ -276,13 +276,12 @@ let goCommand = Command("go direction") {
         return
     }
 
-    let exits = matches.matches
-    guard exits.count == 1 else {
-        let dirs = exits.map { String(describing: $0.direction) }
+    guard matches.count == 1 else {
+        let dirs = matches.map { String(describing: $0.direction) }
         actor.show("Do you want to go \(dirs.conjunction(using: "or"))?")
         return
     }
-    let exit = exits.first!
+    let exit = matches.first!
 
     guard let destination = World.instance.lookup(exit.destination, context: location.ref!)?
         .asEntity(Location.self) else {

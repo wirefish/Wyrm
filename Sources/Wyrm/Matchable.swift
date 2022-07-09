@@ -75,6 +75,13 @@ struct MatchResult<T: Matchable> {
     let matches: [T]
 }
 
+extension MatchResult: Collection {
+    var startIndex: Int { matches.startIndex }
+    var endIndex: Int { matches.endIndex }
+    subscript(position: Int) -> T { matches[position] }
+    func index(after i: Int) -> Int { i + 1 }
+}
+
 func match<T: Matchable>(_ tokens: [String], against subjects: [T]) -> MatchResult<T>? {
     var tokens = tokens[...]
 
