@@ -70,16 +70,16 @@ extension Entity: CustomDebugStringConvertible {
 extension Entity {
     @discardableResult
     final func handleEvent(_ phase: EventPhase, _ event: String, args: [Value]) -> Value {
+        let args = [.entity(self)] + args
         var observer: Entity! = self
         while observer != nil {
-            let args = [.entity(observer)] + args
             let handlers = observer.handlers.keep {
                 $0.appliesTo(phase: phase, event: event, observer: self, args: args)
             }
             // FIXME: handle fallthrough
             if let handler = handlers.first {
                 do {
-                    return try handler.fn.call(args, context: [observer]) ?? .nil
+                    return try handler.fn.call(args, context: [self]) ?? .nil
                 } catch {
                     logger.error("error executing event handler: \(error)")
                     return .nil

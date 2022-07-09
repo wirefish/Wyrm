@@ -80,7 +80,8 @@ struct ScriptLibrary: ScriptProvider {
     }
 
     static func show(_ args: [Value]) throws -> Value {
-        // TODO:
+        let (avatar, message) = try unpack(args, Avatar.self, String.self)
+        avatar.show(message)
         return .nil
     }
 }
