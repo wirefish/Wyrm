@@ -21,9 +21,6 @@ enum EquippedSlot: String, CodingKeyRepresentable, Hashable, Encodable {
 final class Avatar: PhysicalEntity, Codable {
     var level = 1
 
-    // Current location.
-    weak var location: Location!
-
     // Equipped items.
     var equipped = [EquippedSlot:Item?]()
 
@@ -54,11 +51,11 @@ final class Avatar: PhysicalEntity, Codable {
         level = try container.decode(Int.self, forKey: .level)
 
         let locationRef = try container.decode(ValueRef.self, forKey: .location)
-        if let loc = World.instance.lookup(locationRef, in: nil)?.asEntity(Location.self) {
-            location = loc
+        if let loc = World.instance.lookup(locationRef, context: nil)?.asEntity(Location.self) {
+            self.container = loc
         } else {
             logger.warning("cannot find location \(locationRef), using start location")
-            location = World.instance.startLocation
+            self.container = World.instance.startLocation
         }
 
         // TODO: other fields
@@ -67,11 +64,16 @@ final class Avatar: PhysicalEntity, Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(level, forKey: .level)
-        try container.encode(location?.ref, forKey: .location)
+        try container.encode(location.ref, forKey: .location)
         try container.encode(equipped, forKey: .equipped)
         try container.encode(activeQuests, forKey: .activeQuests)
         try container.encode(completedQuests, forKey: .completedQuests)
         try container.encode(skills, forKey: .skills)
+    }
+
+    var location: Location {
+        get { container as! Location }
+        set { container = newValue }
     }
 }
 
@@ -166,10 +168,6 @@ extension Avatar {
                         for exit in cell.location.exits {
                             state |= (1 << exit.direction.rawValue)
                         }
-
-                        print(cell.location.name)
-                        print(cell.location.contents)
-                        print(cell.location.contents.compactMap { $0 as? Questgiver })
 
                         if cell.location.contents.contains(where: {
                             if let q = $0 as? Questgiver {

@@ -95,7 +95,7 @@ extension Entity {
     }
 }
 
-class PhysicalEntity: Entity, Viewable, Matchable {
+class PhysicalEntity: Entity, Viewable {
     // Viewable
     var brief: NounPhrase?
     var pose: String?
@@ -106,7 +106,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     // Matchable
     var alts = [NounPhrase]()
 
-    var container: Container?
+    weak var container: Container?
 
     override func copyProperties(from other: Entity) {
         let other = other as! PhysicalEntity
@@ -142,5 +142,11 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     func describePose() -> String {
         let brief = brief ?? Self.defaultBrief
         return "\(brief.format(capitalize: true)) \(pose ?? Self.defaultPose)"
+    }
+}
+
+extension PhysicalEntity: Matchable {
+    func match(_ tokens: ArraySlice<String>) -> MatchQuality {
+        return alts.reduce(brief?.match(tokens) ?? .none) { max($0, $1.match(tokens)) }
     }
 }

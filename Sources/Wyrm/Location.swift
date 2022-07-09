@@ -51,6 +51,17 @@ enum Direction: Int, ValueRepresentableEnum {
     })
 }
 
+extension Direction: Matchable {
+    func match(_ tokens: ArraySlice<String>) -> MatchQuality {
+        // FIXME: allow abbreviations, partial matches
+        if tokens.count == 1 && tokens[0] == String(describing: self) {
+            return .exact
+        } else {
+            return .none
+        }
+    }
+}
+
 // Note that an exit is not an entity or facet itself, but refers to a shared portal
 // entity.
 struct Exit {
@@ -62,6 +73,12 @@ struct Exit {
         self.portal = portal
         self.direction = direction
         self.destination = destination
+    }
+}
+
+extension Exit: Matchable {
+    func match(_ tokens: ArraySlice<String>) -> MatchQuality {
+        return max(direction.match(tokens), portal.match(tokens))
     }
 }
 
@@ -132,9 +149,9 @@ extension PhysicalEntity {
             return
         }
 
-        triggerEvent("enter_location", in: location, participants: [self, entry!.portal],
-                     args: [self, location, entry!.portal]) {
-            location.insert(self)
+        triggerEvent("enter_location", in: destination, participants: [self, entry!.portal],
+                     args: [self, destination, entry!.portal]) {
+            destination.insert(self)
             // describeLocation()
         }
     }

@@ -24,7 +24,7 @@ class Map {
         while nextOpen < cells.count {
             let cell = cells[nextOpen]; nextOpen += 1
             for exit in cell.location.exits {
-                if let dest = World.instance.lookup(exit.destination, in: module)?.asEntity(Location.self),
+                if let dest = World.instance.lookup(exit.destination, context: module)?.asEntity(Location.self),
                    // TODO: portal is visible
                    seen.insert(dest).inserted {
                     let (x, y, z) = exit.direction.offset

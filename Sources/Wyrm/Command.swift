@@ -250,9 +250,6 @@ class Command {
 let lookCommand = Command("look at:target with|using|through:tool") {
     actor, verb, clauses in
     print(clauses)
-    guard let location = actor.location else {
-        return
-    }
     actor.describeLocation()
 }
 
@@ -270,12 +267,28 @@ let goCommand = Command("go direction") {
         return
     }
 
-    // FIXME: match against exit directions and portals.
     guard case let .phrase(_, tokens) = clauses[0] else {
         return
     }
 
-    print(tokens)
+    guard let matches = match(tokens, against: location.exits) else {
+        actor.show("You don't see any exit matching that description.")
+        return
+    }
 
-    actor.show("You cannot go that way.")
+    let exits = matches.matches
+    guard exits.count == 1 else {
+        let dirs = exits.map { String(describing: $0.direction) }
+        actor.show("Do you want to go \(dirs.conjunction(using: "or"))?")
+        return
+    }
+    let exit = exits.first!
+
+    guard let destination = World.instance.lookup(exit.destination, context: location.ref!)?
+        .asEntity(Location.self) else {
+        actor.show("A strange force prevents you from going that way.")
+        return
+    }
+
+    actor.travel(to: destination, direction: exit.direction, via: exit.portal)
 }

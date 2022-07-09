@@ -92,12 +92,12 @@ class World {
 
         try load()
 
-        guard let av = lookup(config.world.avatarPrototype, in: nil)?.asEntity(Avatar.self) else {
+        guard let av = lookup(config.world.avatarPrototype, context: nil)?.asEntity(Avatar.self) else {
             throw WorldError.invalidAvatarPrototype
         }
         avatarPrototype = av
 
-        guard let loc = lookup(config.world.startLocation, in: nil)?.asEntity(Location.self) else {
+        guard let loc = lookup(config.world.startLocation, context: nil)?.asEntity(Location.self) else {
             throw WorldError.invalidStartLocation
         }
         startLocation = loc
@@ -125,12 +125,24 @@ class World {
         }
     }
 
-    func lookup(_ ref: ValueRef, in context: Module?) -> Value? {
+    func lookup(_ ref: ValueRef, context: Module?) -> Value? {
         switch ref {
         case let .absolute(module, name):
             return modules[module]?.bindings[name]
         case let .relative(name):
             return context?.bindings[name] ?? builtins.bindings[name]
+        }
+    }
+
+    func lookup(_ ref: ValueRef, context: ValueRef) -> Value? {
+        switch ref {
+        case let .absolute(module, name):
+            return modules[module]?.bindings[name]
+        case let .relative(name):
+            guard case let .absolute(module, _) = context else {
+                return nil
+            }
+            return modules[module]?.bindings[name]
         }
     }
 }
@@ -230,7 +242,7 @@ extension World {
         }
 
         // Find the prototype and construct the new entity.
-        guard case let .entity(prototype) = lookup(prototypeRef, in: module) else {
+        guard case let .entity(prototype) = lookup(prototypeRef, context: module) else {
             print("cannot find prototype \(prototypeRef)")
             return
         }

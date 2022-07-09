@@ -15,11 +15,10 @@ enum MatchQuantity {
 }
 
 protocol Matchable {
-    var brief: NounPhrase? { get }
-    var alts: [NounPhrase] { get }
+    func match(_ tokens: ArraySlice<String>) -> MatchQuality
 }
 
-extension String {
+extension String: Matchable {
     func match(_ tokens: ArraySlice<String>) -> MatchQuality {
         guard !tokens.isEmpty else {
             return .none
@@ -46,20 +45,14 @@ extension String {
     }
 }
 
-extension NounPhrase {
+extension NounPhrase: Matchable {
     func match(_ tokens: ArraySlice<String>) -> MatchQuality {
         let q = singular.match(tokens)
         return q == .exact ? q : max(q, plural.match(tokens))
     }
 }
 
-extension Matchable {
-    func match(_ tokens: ArraySlice<String>) -> MatchQuality {
-        return alts.reduce(brief?.match(tokens) ?? .none) { max($0, $1.match(tokens)) }
-    }
-}
-
-func consumeQuantity(_ tokens: inout ArraySlice<String>) -> MatchQuantity {
+private func consumeQuantity(_ tokens: inout ArraySlice<String>) -> MatchQuantity {
     if tokens.first == "all" || tokens.first == "every" {
         tokens.removeFirst()
         return .all
@@ -76,36 +69,32 @@ func consumeQuantity(_ tokens: inout ArraySlice<String>) -> MatchQuantity {
     }
 }
 
-func match(_ tokens: [String], against subject: Entity) -> (MatchQuality, MatchQuantity) {
-    var tokens = tokens[...]
-    let matchQuantity = consumeQuantity(&tokens)
-    return ((subject as? Matchable)?.match(tokens) ?? .none, matchQuantity)
+struct MatchResult<T: Matchable> {
+    let quality: MatchQuality
+    let quantity: MatchQuantity
+    let matches: [T]
 }
 
-func match(_ tokens: [String], against subjects: [Entity]) -> (MatchQuality, MatchQuantity, [Entity])? {
+func match<T: Matchable>(_ tokens: [String], against subjects: [T]) -> MatchResult<T>? {
     var tokens = tokens[...]
 
     let matchQuantity = consumeQuantity(&tokens)
-    var matchEntities = [Entity]()
     var matchQuality = MatchQuality.partial
+    var matches = [T]()
 
     for subject in subjects {
-        guard let matchable = subject as? Matchable else {
-            continue
-        }
-        let quality = matchable.match(tokens)
+        let quality = subject.match(tokens)
         if quality > matchQuality {
-            matchEntities = [subject]
+            matches = [subject]
             matchQuality = quality
         } else if quality == matchQuality {
-            matchEntities.append(subject)
+            matches.append(subject)
         }
     }
 
-    return matchEntities.isEmpty ? nil : (matchQuality, matchQuantity, matchEntities)
+    return matches.isEmpty ? nil : MatchResult(quality: matchQuality, quantity: matchQuantity, matches: matches)
 }
 
-func match(_ tokens: [String], against subjects: [Entity], where fn: (Entity) -> Bool)
--> (MatchQuality, MatchQuantity, [Entity])? {
-    return match(tokens, against: subjects.filter(fn))
+func match<T: Matchable>(_ tokens: [String], against subjects: [T], where pred: (T) -> Bool) -> MatchResult<T>? {
+    return match(tokens, against: subjects.filter(pred))
 }
