@@ -12,18 +12,17 @@ struct EventHandler {
     let event: String
     let fn: ScriptFunction
 
-    func appliesTo(phase: EventPhase, event: String, observer: Entity, args: [Value]) -> Bool {
+    func appliesTo(phase: EventPhase, event: String, args: [Value]) -> Bool {
         guard phase == self.phase && event == self.event && args.count == fn.parameters.count else {
             return false
         }
 
-        let observer: Value = .entity(observer)
         return zip(args, fn.parameters).allSatisfy { arg, param in
             switch param.constraint {
             case .none:
                 return true
             case .self:
-                return arg == observer
+                return arg == args.first
             case let .prototype(ref):
                 guard case let .entity(entity) = arg else {
                     return false

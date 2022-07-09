@@ -74,7 +74,7 @@ extension Entity {
         var observer: Entity! = self
         while observer != nil {
             let handlers = observer.handlers.keep {
-                $0.appliesTo(phase: phase, event: event, observer: self, args: args)
+                $0.appliesTo(phase: phase, event: event, args: args)
             }
             // FIXME: handle fallthrough
             if let handler = handlers.first {
