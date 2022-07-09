@@ -188,9 +188,9 @@ extension Avatar {
                                       .string(cell.location.name),
                                       .string(nil),  // FIXME: icon
                                       .integer(state),
-                                      .string(location.surface),
+                                      .string(cell.location.surface),
                                       .string(nil),  // FIXME: surrounding
-                                      .string(location.domain)])
+                                      .string(cell.location.domain)])
                     }))
     }
 }
