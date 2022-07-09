@@ -174,7 +174,6 @@ extension Avatar {
 
                         if cell.location.contents.contains(where: {
                             if let q = $0 as? Questgiver {
-                                print(q, q.offersQuests)
                                 return q.offersQuests.contains { $0.acceptableBy(self) }
                             } else {
                                 return false
