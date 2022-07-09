@@ -192,6 +192,7 @@ class Command {
     }
 
     static let allCommands = [
+        goCommand,
         lookCommand,
         lootCommand,
     ]
@@ -252,6 +253,7 @@ let lookCommand = Command("look at:target with|using|through:tool") {
     guard let location = actor.location else {
         return
     }
+    actor.describeLocation()
 }
 
 let lootCommand = Command("loot corpse") {
@@ -259,3 +261,21 @@ let lootCommand = Command("loot corpse") {
     print(clauses)
 }
 
+let goCommand = Command("go direction") {
+    actor, verb, clauses in
+    print(actor, clauses)
+
+    guard let location = actor.container as? Location else {
+        actor.show("You cannot move right now.")
+        return
+    }
+
+    // FIXME: match against exit directions and portals.
+    guard case let .phrase(_, tokens) = clauses[0] else {
+        return
+    }
+
+    print(tokens)
+
+    actor.show("You cannot go that way.")
+}

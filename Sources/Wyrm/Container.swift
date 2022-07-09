@@ -28,11 +28,13 @@ extension Container {
     // Attempts to insert an entity into the container, possibly combining it into a
     // stack already within the container. Returns the resulting entity on success or
     // nil if the entity cannot be added because the container is full.
+    @discardableResult
     func insert(_ entity: PhysicalEntity) -> PhysicalEntity? {
         if let stack = contents.first(where: { Self.combine(entity, into: $0) }) {
             return stack
         } else if contents.count < capacity {
             contents.append(entity)
+            entity.container = self
             return entity
         } else {
             return nil
@@ -45,6 +47,7 @@ extension Container {
             return false
         }
         contents.remove(at: index)
+        entity.container = nil
         return true
     }
 
@@ -85,8 +88,11 @@ extension Container {
             }
         }
 
-        contents = contents.filter {
-            entity in itemsToRemove.first(where: { $0 === entity }) == nil
+        contents = contents.filter { entity in
+            itemsToRemove.first(where: { $0 === entity }) == nil
+        }
+        for item in itemsToRemove {
+            item.container = nil
         }
 
         return result

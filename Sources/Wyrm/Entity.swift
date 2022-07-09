@@ -106,6 +106,8 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     // Matchable
     var alts = [NounPhrase]()
 
+    var container: Container?
+
     override func copyProperties(from other: Entity) {
         let other = other as! PhysicalEntity
         brief = other.brief

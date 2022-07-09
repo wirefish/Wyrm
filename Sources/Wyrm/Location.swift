@@ -5,6 +5,8 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+import AppKit
+
 // Possible directions of movement.
 enum Direction: Int, ValueRepresentableEnum {
     case north = 0, northeast, east, southeast, south, southwest, west, northwest
@@ -106,6 +108,34 @@ class Location: Entity, Container {
             } else {
                 super[member] = newValue
             }
+        }
+    }
+
+    func findExit(_ direction: Direction) -> Exit? {
+        return exits.first { $0.direction == direction }
+    }
+}
+
+extension PhysicalEntity {
+
+    func travel(to destination: Location, direction: Direction, via portal: Portal) {
+        let entry = destination.findExit(direction.opposite)
+        guard let location = self.container as? Location else {
+            // Feedback?
+            return
+        }
+
+        guard triggerEvent("exit_location", in: location, participants: [self, portal],
+                           args: [self, location, portal], body: {
+            location.remove(self)
+        }) else {
+            return
+        }
+
+        triggerEvent("enter_location", in: location, participants: [self, entry!.portal],
+                     args: [self, location, entry!.portal]) {
+            location.insert(self)
+            // describeLocation()
         }
     }
 }

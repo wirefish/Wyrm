@@ -93,6 +93,7 @@ extension Avatar: WebSocketDelegate {
             triggerEvent("enter_location", in: location, participants: [self],
                          args: [self, location]) {
                 location.contents.append(self)
+                container = location
                 describeLocation()
             }
         }
