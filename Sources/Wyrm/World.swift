@@ -332,6 +332,7 @@ enum EvalError: Error {
     case typeMismatch(String)
     case undefinedIdentifier(String)
     case malformedExpression
+    case invalidResult
 }
 
 extension World {
@@ -471,7 +472,10 @@ extension World {
             guard case let .function(fn) = lhs else {
                 throw EvalError.typeMismatch("expression is not callable")
             }
-            return try fn.call(args, context: []) ?? .nil
+            guard case let .value(value) = try fn.call(args, context: []) else {
+                throw EvalError.invalidResult
+            }
+            return value
 
         case let .dot(lhs, member):
             let lhs = try eval(lhs, context: context)

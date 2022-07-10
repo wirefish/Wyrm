@@ -3,16 +3,22 @@
 //  Wyrm
 //
 
+enum CallableResult {
+    case value(Value)
+    case await
+    case `fallthrough`
+}
+
 protocol Callable {
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> Value?
+    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult
 }
 
 struct NativeFunction: Callable {
     let name: String
     let fn: ([Value]) throws -> Value
 
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> Value? {
-        return try fn(args)
+    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {
+        return .value(try fn(args))
     }
 }
 
@@ -54,7 +60,7 @@ class ScriptFunction: Callable {
         locals = parameters.map(\.name)
     }
 
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> Value? {
+    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {
         return try World.instance.exec(self, args: args, context: context + [module])
     }
 }

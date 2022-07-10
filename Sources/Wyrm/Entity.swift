@@ -73,13 +73,20 @@ extension Entity {
         let args = [.entity(self)] + args
         var observer: Entity! = self
         while observer != nil {
-            let handlers = observer.handlers.keep {
-                $0.appliesTo(phase: phase, event: event, args: args)
-            }
-            // FIXME: handle fallthrough
-            if let handler = handlers.first {
+            for handler in observer.handlers {
+                guard handler.appliesTo(phase: phase, event: event, args: args) else {
+                    continue
+                }
                 do {
-                    return try handler.fn.call(args, context: [self]) ?? .nil
+                    switch try handler.fn.call(args, context: [self]) {
+                    case let .value(value):
+                        return value
+                    case .await:
+                        logger.error("await not implemented")
+                        return .nil
+                    case .fallthrough:
+                        break
+                    }
                 } catch {
                     logger.error("error executing event handler: \(error)")
                     return .nil

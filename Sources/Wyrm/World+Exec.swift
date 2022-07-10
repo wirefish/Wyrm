@@ -7,6 +7,7 @@ enum ExecError: Error {
     case typeMismatch
     case undefinedSymbol(String)
     case expectedCallable
+    case invalidResult
 }
 
 extension ScriptFunction {
@@ -16,7 +17,7 @@ extension ScriptFunction {
 }
 
 extension World {
-    func exec(_ code: ScriptFunction, args: [Value], context: [ValueDictionary]) throws -> Value {
+    func exec(_ code: ScriptFunction, args: [Value], context: [ValueDictionary]) throws -> CallableResult {
         // The arguments are always the first locals, and self is always the first argument.
         // Subsequent locals start with no value.
         var locals = args
@@ -228,7 +229,11 @@ extension World {
                 guard case let .function(fn) = stack.removeLast() else {
                     throw ExecError.expectedCallable
                 }
-                stack.append(try fn.call(args, context: []) ?? .nil)
+                guard case let .value(value) = try fn.call(args, context: []) else {
+                    // await and fallthrough are not supported results from nested calls.
+                    throw ExecError.invalidResult
+                }
+                stack.append(value)
                 ip += 1
 
             case .stringify:
@@ -256,11 +261,11 @@ extension World {
                 break loop
 
             case .fallthrough:
-                fatalError("fallthrough not yet implemented")
+                return .fallthrough
             }
         }
 
-        return stack.last ?? .nil
+        return .value(stack.last ?? .nil)
     }
 
     private func stringify(value: Value, format: Text.Format) -> String {
