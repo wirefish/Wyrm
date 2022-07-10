@@ -2,63 +2,95 @@
 //  Compiler.swift
 //  Wyrm
 //
-//  Created by Craig Becker on 6/25/22.
-//
 
+// Bytecode operations. Each operation is one byte followed by 0, 1, or 2 bytes
+// describing an optional argument. Two-byte arguments are stored in
+// little-endian order.
 enum Opcode: UInt8 {
-    // Manipulate the value stack.
+    // Push a boolean constant onto the stack.
     case pushTrue = 1
     case pushFalse
-    case pushSmallInt  // next byte is signed value -128...127
-    case pushConstant  // next two bytes are offset into constants table
+
+    // The next byte is an integer in the range -128...127. Push it into the stack.
+    case pushSmallInt
+
+    // The next two bytes are an index into the constants table. Push the constant
+    // at that index onto the stack.
+    case pushConstant
+
+    // Pop and discard the value on the top of the stack.
     case pop
-    case pushLocal  // next byte is unsigned index of local
-    case popLocal  // next byte is unsigned index of local
 
-    // Transform the top of the value stack with a unary operation.
-    case not, negate
+    // The next byte is the index of a local. Push its value onto the stack.
+    case pushLocal
 
-    // Replace the top two values on the stack with the result of a binary operation.
+    // The next byte is the index of a local. Pop the top of the stack and store
+    // it in the local.
+    case popLocal
+
+    // Replace the boolean value on the top of the stack with its inverse.
+    case not
+
+    // Replace the numeric value on the top of the stack with its negation.
+    case negate
+
+    // Replace the two numeric values on the top of the stack with the result of
+    // a binary operation.
     case add, subtract, multiply, divide, modulus
+
+    // Replace the two numeric or boolean values on the top of the stack with
+    // the result of a comparison.
     case equal, notEqual, less, lessEqual, greater, greaterEqual
 
     // Change the instruction pointer. The next two bytes are an unsigned offset.
-    case jump, jumpIf, jumpIfNot
+    case jump
 
-    // Lookup the value of an identifier constant and push that value onto the stack.
+    // Like jump, but only if the value on the top of the stack is true or
+    // false, respectively.
+    case jumpIf, jumpIfNot
+
+    // Lookup the value of an identifier and push its value onto the stack. The
+    // next two bytes are the index of a symbolic constant in the constants
+    // table.
     case lookupSymbol
 
-    // Lookup a member of an object.
+    // Lookup the value of a member of an object. The next two bytes are the
+    // index of a symbolic constant; the top of the stack is the object. Pushes
+    // the resulting value onto the stack.
     case lookupMember
 
-    // Pop the value on top of the stack and store it in a member of the enclosing entity.
+    // Assign a value to a member of an object. The next two bytes are the index
+    // of a symbolic constant. The value to assign is on the top of the stack
+    // and the object is next on the stack.
     case assignMember
 
-    // Subscript a list.
+    // Subscript a list. The top of the stack is the index and the list is next
+    // on the stack.
     case `subscript`
 
     // Assign an element of a list.
     case assignSubscript
 
-    // The next two bytes are the number of values to pop from the stack. Replace them with
-    // a value representing a list of those values.
+    // The next two bytes are the number of values to pop from the stack.
+    // Replace them with a value representing a list of those values.
     case makeList
 
-    // Create an exit from the three values on the top of the stack.
-    case makeExit
+    // Create a Portal from the three values on the top of the stack.
+    case makePortal
 
     // Replace the entity on the top of the stack with a clone.
     case clone
 
-    // Call a function. The top of the stack contains the function and the arguments.
-    // The next byte is the number of arguments.
+    // Call a function. The top of the stack contains the function and the
+    // arguments. The next byte is the number of arguments.
     case call
 
-    // Convert the value at the top of the stack into a string. The following byte describes
-    // the desired format.
+    // Convert the value at the top of the stack into a string. The following
+    // byte describes the desired format.
     case stringify
 
-    // The next byte is the number of strings on the stack. Merge them into a single string.
+    // The next byte is the number of strings to pop from the stack. Replace
+    // them with their concatenation.
     case joinStrings
 
     // Await the result of a promise.
@@ -67,26 +99,13 @@ enum Opcode: UInt8 {
     // Return the value at the top of the stack.
     case `return`
 
-    // Return no value and indicate that the next matching event handler should be run.
+    // Return no value and indicate that control should pass to the next
+    // matching event handler.
     case `fallthrough`
 }
 
-class ScriptFunction: Callable {
-    let parameters: [Parameter]
-    weak var module: Module!
-    var locals = [String]()
-    var constants = [Value]()
-    var bytecode = [UInt8]()
-
-    init(parameters: [Parameter], module: Module) {
-        self.parameters = parameters
-        self.module = module
-    }
-
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> Value? {
-        return try World.instance.exec(self, args: args, context: context + [module])
-    }
-
+// Methods used to generate bytecode.
+extension ScriptFunction {
     func emit(_ op: Opcode) {
         bytecode.append(op.rawValue)
     }
@@ -121,7 +140,9 @@ class ScriptFunction: Callable {
         constants.append(value)
         return UInt16(index)
     }
+}
 
+extension ScriptFunction {
     func dump() {
         print("constants:")
         for (i, value) in constants.enumerated() {
@@ -168,8 +189,7 @@ class ScriptFunction: Callable {
 class Compiler {
     func compileFunction(parameters: [Parameter], body: ParseNode,
                          in module: Module) -> ScriptFunction? {
-        var block = ScriptFunction(parameters: parameters, module: module)
-        block.locals = parameters.map { $0.name }
+        var block = ScriptFunction(module: module, parameters: parameters)
         compile(body, &block)
         return block
     }
@@ -276,7 +296,7 @@ class Compiler {
             compile(portal, &block)
             block.emit(.pushConstant, block.addConstant(direction.toValue()))
             compile(destination, &block)
-            block.emit(.makeExit)
+            block.emit(.makePortal)
 
         case let .var(name, initialValue):
             let index = UInt8(block.locals.count)
@@ -320,7 +340,7 @@ class Compiler {
             switch lhs {
             case let .identifier(s):
                 guard let localIndex = block.locals.firstIndex(of: s) else {
-                    fatalError("undefined local")
+                    fatalError("undefined local \(s)")
                 }
                 compile(rhs, &block)
                 block.emit(.popLocal, UInt8(localIndex))
@@ -337,7 +357,7 @@ class Compiler {
                 block.emit(.assignMember, block.addConstant(.symbol(member)))
 
             default:
-                fatalError("invalid assignment")
+                fatalError("invalid assignment form")
             }
 
         case let .ignoredValue(expr):

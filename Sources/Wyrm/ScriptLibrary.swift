@@ -2,17 +2,6 @@
 //  ScriptLibrary.swift
 //  Wyrm
 //
-//  Created by Craig Becker on 6/26/22.
-//
-
-struct NativeFunction: Callable {
-    let name: String
-    let fn: ([Value]) throws -> Value
-
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> Value? {
-        return try fn(args)
-    }
-}
 
 enum ScriptError: Error {
     case invalidArgument

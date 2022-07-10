@@ -72,11 +72,6 @@ class ValueList: CustomDebugStringConvertible {
     var debugDescription: String { "<ValueList \(values)>" }
 }
 
-// FIXME: move this?
-protocol Callable {
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> Value?
-}
-
 // MARK: - ValueDictionary
 
 // A pair of functions used to get and set the value of a particular property

@@ -203,7 +203,7 @@ extension World {
                 stack.append(.list(ValueList(values)))
                 ip += 2
 
-            case .makeExit:
+            case .makePortal:
                 guard case let .entity(destination) = stack.removeLast(),
                       let direction = Direction.fromValue(stack.removeLast()),
                       let portalProto = stack.removeLast().asEntity(Portal.self) else {
