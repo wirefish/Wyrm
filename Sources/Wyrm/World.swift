@@ -21,7 +21,7 @@ class Module: ValueDictionary {
     }
 }
 
-enum ValueRef: Hashable, Codable {
+enum ValueRef: Hashable, Codable, CustomStringConvertible {
     case absolute(String, String)
     case relative(String)
 
@@ -37,11 +37,15 @@ enum ValueRef: Hashable, Codable {
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.singleValueContainer()
+        try c.encode(description)
+    }
+
+    var description: String {
         switch self {
         case let .absolute(module, name):
-            try c.encode("\(module).\(name)")
+            return "\(module).\(name)"
         case let .relative(name):
-            try c.encode(name)
+            return name
         }
     }
 }
@@ -184,6 +188,8 @@ extension World {
             load(contentsOfFile: relativePath, into: module)
         }
 
+        twinPortals()
+
         logger.info(String(format: "loaded world in %.3f seconds", CFAbsoluteTimeGetCurrent() - startTime))
     }
 
@@ -322,6 +328,41 @@ extension World {
             return relativePath[..<sep].replacingOccurrences(of: "/", with: "_")
         } else {
             return String(relativePath.prefix(while: { $0 != "." }))
+        }
+    }
+
+    private func twinPortals() {
+        for entity in startableEntities {
+            guard let location = entity as? Location else {
+                continue
+            }
+            for portal in location.exits {
+                guard portal.twin == nil else {
+                    continue
+                }
+                guard let destinationRef = portal.destination else {
+                    logger.warning("portal \(portal.direction) from \(location.ref!) has no destination")
+                    continue
+                }
+                guard let destination = lookup(destinationRef, context: location.ref!)?.asEntity(Location.self) else {
+                    logger.warning("portal \(portal.direction) from \(location.ref!) has invalid destination \(destinationRef)")
+                    continue
+                }
+                guard let twin = destination.findExit(portal.direction.opposite) else {
+                    logger.warning("cannot find twin for portal \(portal.direction) from \(location.ref!)")
+                    continue
+                }
+                guard twin.destination != nil else {
+                    logger.warning("twin of portal \(portal.direction) from \(location.ref!) has no destination")
+                    continue
+                }
+                guard lookup(twin.destination!, context: destination.ref!)?.asEntity(Location.self) == location else {
+                    logger.warning("twin of portal \(portal.direction) from \(location.ref!) has mismatched destination \(twin.destination!)")
+                    continue
+                }
+                portal.twin = twin
+                twin.twin = portal
+            }
         }
     }
 }
