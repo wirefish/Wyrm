@@ -7,9 +7,11 @@
 // describing an optional argument. Two-byte arguments are stored in
 // little-endian order.
 enum Opcode: UInt8 {
+    // Push nil onto the stack.
+    case pushNil = 1
+
     // Push a boolean constant onto the stack.
-    case pushTrue = 1
-    case pushFalse
+    case pushTrue, pushFalse
 
     // The next byte is an integer in the range -128...127. Push it into the stack.
     case pushSmallInt
@@ -326,7 +328,11 @@ class Compiler {
             block.emit(.await)
 
         case let .return(rhs):
-            compile(rhs, &block)
+            if let rhs = rhs {
+                compile(rhs, &block)
+            } else {
+                block.emit(.pushNil)
+            }
             block.emit(.return)
 
         case .fallthrough:

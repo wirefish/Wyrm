@@ -34,7 +34,7 @@ indirect enum ParseNode {
     case `if`(ParseNode, ParseNode, ParseNode?)
     case `for`(String, ParseNode, ParseNode)
     case await(ParseNode)
-    case `return`(ParseNode)
+    case `return`(ParseNode?)
     case `fallthrough`
     case block([ParseNode])
     case assignment(ParseNode, Token, ParseNode)
@@ -517,10 +517,7 @@ class Parser {
 
     private func parseReturn() -> ParseNode? {
         assert(match(.return))
-        guard let rhs = parseExpr() else {
-            return nil
-        }
-        return .return(rhs)
+        return .return(lookingAtExpr() ? parseExpr() : nil)
     }
 
     private func parseFallthrough() -> ParseNode {
@@ -541,6 +538,15 @@ class Parser {
     }
 
     // MARK: - parsing expressions
+
+    private func lookingAtExpr() -> Bool {
+        switch currentToken {
+        case .boolean, .number, .string, .symbol, .identifier, .minus, .not, .lparen, .lsquare:
+            return true
+        default:
+            return false
+        }
+    }
 
     private func parseExpr(_ prec: Precedence = .or) -> ParseNode? {
         var node: ParseNode?

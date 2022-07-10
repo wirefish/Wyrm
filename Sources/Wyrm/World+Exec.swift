@@ -30,6 +30,8 @@ extension World {
             ip += 1
             switch op {
 
+            case .pushNil: stack.append(.nil)
+
             case .pushTrue: stack.append(.boolean(true))
 
             case .pushFalse: stack.append(.boolean(false))
