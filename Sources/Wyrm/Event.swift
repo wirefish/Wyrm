@@ -31,8 +31,7 @@ struct EventHandler {
                 return entity.extends(ref)
             case let .quest(ref, phase):
                 guard let avatar = arg.asEntity(Avatar.self),
-                      let value = World.instance.lookup(ref, context: fn.module),
-                      case let .quest(quest) = value else {
+                      case let .quest(quest) = World.instance.lookup(ref, context: fn.module) else {
                     return false
                 }
                 if phase == "available" {
