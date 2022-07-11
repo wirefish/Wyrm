@@ -82,6 +82,7 @@ let goCommand = Command("go|head direction", aliases: goAliases) { actor, verb, 
     }
 
     guard case let .phrase(_, tokens) = clauses[0] else {
+        actor.show("Where do you want to go?")
         return
     }
 

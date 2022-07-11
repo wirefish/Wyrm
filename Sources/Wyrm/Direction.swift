@@ -3,6 +3,8 @@
 //  Wyrm
 //
 
+import CoreFoundation
+
 enum Direction: Int, ValueRepresentableEnum {
     case north = 0, northeast, east, southeast, south, southwest, west, northwest
     case up, down, `in`, out
@@ -47,12 +49,16 @@ enum Direction: Int, ValueRepresentableEnum {
 }
 
 extension Direction: Matchable {
+    // FIXME: allow abbreviations like 'sw' for 'southwest'.
     func match(_ tokens: ArraySlice<String>) -> MatchQuality {
-        // FIXME: allow abbreviations, partial matches
-        if tokens.count == 1 && tokens[0] == String(describing: self) {
-            return .exact
-        } else {
-            return .none
+        if tokens.count == 1 {
+            let name = String(describing: self)
+            if tokens[0] == name {
+                return .exact
+            } else if name.hasPrefix(tokens[0]) {
+                return .partial
+            }
         }
+        return .none
     }
 }
