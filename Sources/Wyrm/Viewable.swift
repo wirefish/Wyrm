@@ -6,19 +6,15 @@
 //
 
 protocol Viewable {
-    var brief: NounPhrase? { get }
-    var pose: String? { get }
-    var description: String? { get }
+    func isVisible(to observer: Avatar) -> Bool
+
+    func isObvious(to observer: Avatar) -> Bool
+
+    func describeBriefly(_ format: Text.Format) -> String
+
+    func describePose() -> String
+
+    func describeFully() -> String
+
     var icon: String? { get }
-    var isObvious: Bool { get }
 }
-
-fileprivate let defaultBrief = NounPhrase("an entity")
-
-extension Viewable {
-    func describeBriefly(_ format: Text.Format) -> String {
-        (brief ?? defaultBrief).format(quantity: 1, capitalize: format.contains(.capitalized),
-                                       article: format.article)
-    }
-}
-

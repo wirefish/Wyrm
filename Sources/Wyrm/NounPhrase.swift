@@ -93,20 +93,23 @@ struct NounPhrase: Codable {
         }
     }
     
-    func format(quantity: Int = 1, capitalize: Bool = false, article: Article = .indefinite) -> String {
-        if self.article == nil {
+    func format(_ format: Text.Format, count: Int = 1) -> String {
+        if article == nil {
             return singular
-        } else if quantity > 1 {
-            return "\(quantity) \(plural)"
-        } else if quantity == 0 {
-            return capitalize ? capitalized(plural) : plural
-        } else if article == .none {
-            return capitalize ? capitalized(singular) : singular
+        } else if count > 1 {
+            if format.contains(.noQuantity) {
+                return format.contains(.capitalized) ? capitalized(plural) : plural
+            } else {
+                return "\(count) \(plural)"
+            }
         } else {
-            var out = article == .definite ? "the" : self.article!
-            out += " "
-            out += singular
-            return capitalize ? capitalized(out) : out
+            var out: String
+            switch format.article {
+            case .none: out = singular
+            case .indefinite: out = "\(article!) \(singular)"
+            case .definite: out = "the \(singular)"
+            }
+            return format.contains(.capitalized) ? capitalized(out) : out
         }
     }
 }

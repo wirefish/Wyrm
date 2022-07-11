@@ -4,13 +4,11 @@
 //
 
 class PhysicalEntity: Entity, Viewable, Matchable {
-    // Viewable
     var brief: NounPhrase?
     var pose: String?
     var description: String?
     var icon: String?
     var isObvious = true
-
     var alts = [NounPhrase]()
     weak var container: Container?
 
@@ -42,13 +40,31 @@ class PhysicalEntity: Entity, Viewable, Matchable {
         }
     }
 
+    // MARK: - Viewable
+
+    func isVisible(to observer: Avatar) -> Bool {
+        return true
+    }
+
+    func isObvious(to observer: Avatar) -> Bool {
+        return isObvious
+    }
+
     static let defaultBrief = NounPhrase("an entity")
-    static let defaultPose = "is here."
+
+    func describeBriefly(_ format: Text.Format) -> String {
+        return (brief ?? Self.defaultBrief).format(format)
+    }
 
     func describePose() -> String {
-        let brief = brief ?? Self.defaultBrief
-        return "\(brief.format(capitalize: true)) \(pose ?? Self.defaultPose)"
+        return pose ?? "is here."
     }
+
+    func describeFully() -> String {
+        return description ?? "The entity is unremarkable."
+    }
+
+    // MARK: - Matchable
 
     func match(_ tokens: ArraySlice<String>) -> MatchQuality {
         return alts.reduce(brief?.match(tokens) ?? .none) { max($0, $1.match(tokens)) }
