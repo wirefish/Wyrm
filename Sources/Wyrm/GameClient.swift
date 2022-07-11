@@ -37,6 +37,7 @@ struct ClientCall: Encodable {
 }
 
 enum ClientValue: Encodable {
+    case boolean(Bool?)
     case integer(Int?)
     case double(Double?)
     case string(String?)
@@ -44,6 +45,9 @@ enum ClientValue: Encodable {
 
     func encode(to encoder: Encoder) throws {
         switch self {
+        case let .boolean(b):
+            var c = encoder.singleValueContainer()
+            try c.encode(b)
         case let .integer(i):
             var c = encoder.singleValueContainer()
             try c.encode(i)

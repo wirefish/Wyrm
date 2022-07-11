@@ -315,4 +315,5 @@ let allCommands = [
     goCommand,
     helpCommand,
     lookCommand,
+    talkCommand,
 ]

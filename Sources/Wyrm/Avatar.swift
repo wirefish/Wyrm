@@ -131,6 +131,14 @@ extension Avatar {
         sendMessage("showNotice", .string(message))
     }
 
+    func showSay(_ actor: PhysicalEntity, _ verb: String, _ message: String, _ isChat: Bool) {
+        sendMessage("showSay",
+                    .string(actor.describeBriefly([.capitalized, .indefinite])),
+                    .string(verb),
+                    .string(message),
+                    .boolean(isChat))
+    }
+
     func locationChanged() {
         describeLocation()
         showMap()
@@ -224,8 +232,33 @@ let lookCommand = Command("look at:target with|using|through:tool") { actor, ver
 
         // TODO: using tool
 
-        for target in targetMatch.matches {
+        for target in targetMatch {
             actor.show(target.describeFully())
         }
+    }
+}
+
+// MARK: - talk command
+
+let talkCommand = Command("talk to:target about:topic") { actor, verb, clauses in
+    guard let targetPhrase = clauses[0] else {
+        actor.show("Who do you want to talk to?")
+        return
+    }
+    guard let match = match(targetPhrase, against: actor.location.contents) else {
+        actor.show("There's nobody like that here to talk to.")
+        return
+    }
+    guard match.count == 1 else {
+        let names = match.map { $0.describeBriefly([.definite]) }
+        actor.show("Do you want to talk to \(names.conjunction(using: "or"))?")
+        return
+    }
+
+    let target = match.first!
+    let topic = clauses[1]?.joined(separator: " ") ?? ""
+
+    triggerEvent("talk", in: actor.location, participants: [actor, target],
+                 args: [actor, target, topic]) {
     }
 }
