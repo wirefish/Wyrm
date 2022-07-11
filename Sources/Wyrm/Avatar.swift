@@ -137,15 +137,16 @@ extension Avatar {
     }
 
     func describeLocation() {
-        let exits = location.exits.map { ClientValue.string(String(describing: $0.direction)) }
-        let contents = location.contents.compactMap { entity -> ClientValue? in
-            guard entity != self && entity.isObvious else {
-                return nil
+        let exits = location.exits.filter{ $0.isObvious(to: self) }
+            .map { ClientValue.string(String(describing: $0.direction)) }
+
+        let contents = location.contents.filter { $0 != self && $0.isObvious(to: self) }
+            .map {
+                ClientValue.list([.integer($0.id),
+                                  .string($0.describeBriefly([.capitalized, .indefinite])),
+                                  .string($0.describePose())])
             }
-            return ClientValue.list([.integer(entity.id),
-                                     .string(entity.describeBriefly([.capitalized, .indefinite])),
-                                     .string(entity.pose ?? "is here.")])
-        }
+
         sendMessage("showLocation",
                     .string(location.name),
                     .string(location.description),
@@ -209,7 +210,9 @@ let lookCommand = Command("look at:target with|using|through:tool") { actor, ver
         }
     } else {
         let location = actor.container as! Location
-        guard let targetMatch = match(target!, against: location.contents, location.exits) else {
+        guard let targetMatch = match(target!, against: location.contents, location.exits, where: {
+            $0.isVisible(to: actor)
+        }) else {
             actor.show("You don't see anything like that here.")
             return
         }
@@ -220,6 +223,4 @@ let lookCommand = Command("look at:target with|using|through:tool") { actor, ver
             actor.show(target.describeFully())
         }
     }
-
-    // FIXME: ot
 }
