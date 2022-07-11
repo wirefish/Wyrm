@@ -194,3 +194,32 @@ extension Avatar {
                     }))
     }
 }
+
+// MARK: - look command
+
+let lookCommand = Command("look at:target with|using|through:tool") { actor, verb, clauses in
+    let target = clauses[0], tool = clauses[1]
+
+    if target == nil {
+        if tool == nil {
+            actor.describeLocation()
+            return
+        } else {
+            // TODO:
+        }
+    } else {
+        let location = actor.container as! Location
+        guard let targetMatch = match(target!, against: location.contents, location.exits) else {
+            actor.show("You don't see anything like that here.")
+            return
+        }
+
+        // TODO: using tool
+
+        for target in targetMatch.matches {
+            actor.show(target.describeFully())
+        }
+    }
+
+    // FIXME: ot
+}

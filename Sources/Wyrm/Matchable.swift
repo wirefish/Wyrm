@@ -82,26 +82,28 @@ extension MatchResult: Collection {
     func index(after i: Int) -> Int { i + 1 }
 }
 
-func match<T: Matchable>(_ tokens: [String], against subjects: [T]) -> MatchResult<T>? {
+func match<T: Matchable>(_ tokens: [String], against subjectLists: [T]...) -> MatchResult<T>? {
     var tokens = tokens[...]
 
     let matchQuantity = consumeQuantity(&tokens)
     var matchQuality = MatchQuality.partial
     var matches = [T]()
 
-    for subject in subjects {
-        let quality = subject.match(tokens)
-        if quality > matchQuality {
-            matches = [subject]
-            matchQuality = quality
-        } else if quality == matchQuality {
-            matches.append(subject)
+    for subjects in subjectLists {
+        for subject in subjects {
+            let quality = subject.match(tokens)
+            if quality > matchQuality {
+                matches = [subject]
+                matchQuality = quality
+            } else if quality == matchQuality {
+                matches.append(subject)
+            }
         }
     }
 
     return matches.isEmpty ? nil : MatchResult(quality: matchQuality, quantity: matchQuantity, matches: matches)
 }
 
-func match<T: Matchable>(_ tokens: [String], against subjects: [T], where pred: (T) -> Bool) -> MatchResult<T>? {
-    return match(tokens, against: subjects.filter(pred))
+func match<T: Matchable>(_ tokens: [String], against subjectLists: [T]..., where pred: (T) -> Bool) -> MatchResult<T>? {
+    return match(tokens, against: subjectLists.flatMap({ $0.filter(pred) }))
 }

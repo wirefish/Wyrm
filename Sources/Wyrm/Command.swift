@@ -107,13 +107,7 @@ struct Grammar {
 // MARK: - Command
 
 class Command {
-    // The result of parsing a clause based on its grammar.
-    enum Clause {
-        case phrase(String?, [String])
-        case word(String)
-        case rest(String)
-    }
-
+    typealias Clause = [String]
     typealias RunFunction = (Avatar, String, [Clause?]) -> Void
 
     let grammar: Grammar
@@ -149,14 +143,14 @@ class Command {
             switch clause {
             case .word:
                 if let word = tokens.next() {
-                    clauses.append(.word(word.lowercased()))
+                    clauses.append([word.lowercased()])
                 } else {
                     clauses.append(nil)
                 }
 
             case .rest:
                 if let rest = tokens.rest() {
-                    clauses.append(.rest(String(rest)))  // FIXME: normalize whitespace
+                    clauses.append([String(rest)])
                 } else {
                     clauses.append(nil)
                 }
@@ -188,7 +182,7 @@ class Command {
                         phraseTokens.append(token)
                         tokens.consume()
                     }
-                    clauses.append(phraseTokens.isEmpty ? nil : .phrase(prep, phraseTokens))
+                    clauses.append(phraseTokens.isEmpty ? nil : phraseTokens)
                 }
                 needsPrep = true
             }
@@ -267,17 +261,4 @@ class Command {
 let allCommands = [
     goCommand,
     lookCommand,
-    lootCommand,
 ]
-
-// TEST:
-let lookCommand = Command("look at:target with|using|through:tool") {
-    actor, verb, clauses in
-    print(clauses)
-    actor.describeLocation()
-}
-
-let lootCommand = Command("loot corpse") {
-    actor, verb, clauses in
-    print(clauses)
-}

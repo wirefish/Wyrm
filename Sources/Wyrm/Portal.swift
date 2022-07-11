@@ -54,6 +54,14 @@ class Portal: PhysicalEntity {
     override func match(_ tokens: ArraySlice<String>) -> MatchQuality {
         return max(direction.match(tokens), super.match(tokens))
     }
+
+    override func describeFully() -> String {
+        if isObvious {
+            return "\(describeBriefly([.capitalized, .indefinite])) leads \(direction). \(super.describeFully())"
+        } else {
+            return super.describeFully()
+        }
+    }
 }
 
 // MARK: - go command
@@ -81,7 +89,7 @@ let goCommand = Command("go|head direction", aliases: goAliases) { actor, verb, 
         return
     }
 
-    guard case let .phrase(_, tokens) = clauses[0] else {
+    guard let tokens = clauses[0] else {
         actor.show("Where do you want to go?")
         return
     }
