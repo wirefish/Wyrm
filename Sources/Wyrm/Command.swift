@@ -112,12 +112,15 @@ class Command {
 
     let grammar: Grammar
     let aliases: [(String,String)]
+    let help: String?
     let fn: RunFunction
     let allPreps: [String:Int]
 
-    init(_ grammarSpec: String, aliases: [[String]:String] = [:], _ fn: @escaping RunFunction) {
+    init(_ grammarSpec: String, aliases: [[String]:String] = [:], help: String? = nil,
+         _ fn: @escaping RunFunction) {
         self.grammar = Grammar(grammarSpec)!
         self.aliases = aliases.flatMap { keys, value in keys.map { ($0, value) } }
+        self.help = help
         self.fn = fn
 
         allPreps = [String:Int](uniqueKeysWithValues: grammar.clauses.enumerated().flatMap {
@@ -214,6 +217,20 @@ class Command {
         command.aliases.map { VerbAction(verb: $0, action: .alias($1)) }
     }.sorted()
 
+    static func matchVerb(_ verb: String) -> ArraySlice<VerbAction> {
+        guard let index = verbActions.lowerBound(for: VerbAction(verb: verb, action: .none)),
+              verbActions[index].verb.hasPrefix(verb) else {
+            return []
+        }
+
+        if verbActions[index].verb == verb {
+            return verbActions[index...index]
+        }
+
+        let end = verbActions[index...].firstIndex(where: { !$0.verb.hasPrefix(verb) }) ?? verbActions.endIndex
+        return verbActions[index..<end]
+    }
+
     static func processInput(actor: Avatar, input: String) {
         guard input.count <= 1000 else {
             // Silently ignore large input.
@@ -226,24 +243,19 @@ class Command {
             return
         }
 
-        guard let index = verbActions.lowerBound(for: VerbAction(verb: verb, action: .none)),
-              verbActions[index].verb.hasPrefix(verb) else {
+        let actions = matchVerb(verb)
+        if actions.isEmpty {
             actor.show("Unknown command \"\(verb)\".")
             return
         }
 
-        if (verbActions[index].verb != verb) {
-            let end = verbActions[index...].firstIndex(where: {
-                !$0.verb.hasPrefix(verb)
-            }) ?? verbActions.endIndex
-            if end != index.advanced(by: 1) {
-                let alts = verbActions[index..<end].map(\.verb).conjunction(using: "or")
-                actor.show("Ambiguous command \"\(verb)\". Did you mean \(alts)?")
-                return
-            }
+        if actions.count > 1 {
+            let alts = actions.map(\.verb).conjunction(using: "or")
+            actor.show("Ambiguous command \"\(verb)\". Did you mean \(alts)?")
+            return
         }
 
-        switch verbActions[index].action {
+        switch actions.first!.action {
         case .none:
             break
         case let .command(command):
@@ -267,10 +279,33 @@ func primaryCommandVerbs() -> [String] {
 }
 
 let helpCommand = Command("help topic") { actor, verb, clauses in
-    // FIXME: handle topics
-
-    let verbs = primaryCommandVerbs()
-    actor.showLinks(helpIntro, "help", verbs)
+    let topic = clauses[0]
+    if topic == nil {
+        let verbs = primaryCommandVerbs()
+        actor.showLinks(helpIntro, "help", verbs)
+    } else {
+        let actions = Command.matchVerb(topic!.first!)
+        if actions.isEmpty {
+            actor.show("There is no help available for that topic.")
+        } else if actions.count > 1 {
+            actor.show("Did you mean \(actions.map({ "`help:\($0.verb)`" }).conjunction(using: "or"))?")
+        } else {
+            switch actions.first!.action {
+            case let .alias(alias):
+                actor.show("The command `\(actions.first!.verb)` is an alias for `\(alias)`.")
+                Command.processInput(actor: actor, input: "help \(alias)")
+            case let .command(command):
+                if let help = command.help {
+                    actor.show(help)
+                } else {
+                    actor.show("There is no help available for that command.")
+                }
+            case .none:
+                // This should never happen as .none is only used for searching.
+                break
+            }
+        }
+    }
 }
 
 // MARK: - registry of all commands

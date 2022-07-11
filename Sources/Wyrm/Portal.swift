@@ -81,8 +81,18 @@ let goAliases = [
     ["down"]: "go down",
 ]
 
-let goCommand = Command("go|head direction", aliases: goAliases) { actor, verb, clauses in
-    print(actor, clauses)
+let goHelp = """
+Use the `go` command to move from one location to another. You can use a
+direction, such as `go north`, or the name of an object, such as `go wooden
+door`.
+
+In addition, you can use shortcuts to move in common directions. For example,
+you can type `n` or `north` instead of `go north`. Shortcuts are available for
+all the compass directions as well as for `in`, `out`, `up`, and `down`.
+"""
+
+let goCommand = Command("go|head direction", aliases: goAliases, help: goHelp) {
+    actor, verb, clauses in
 
     guard let location = actor.container as? Location else {
         actor.show("You cannot move right now.")
