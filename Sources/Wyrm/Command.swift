@@ -2,28 +2,8 @@
 //  Command.swift
 //  Wyrm
 //
-//  Created by Craig Becker on 6/29/22.
-//
 
-enum ClauseSpec {
-    // The clause consumes a phrase starting with one of the words in preps and
-    // continuing either until the first prep that begins a subsequent clause, or
-    // the end of the input.
-    case phrase([String], String)
-
-    // The clause consumes one word, if a word is present.
-    case word(String)
-
-    // The clause consumes the rest of the input.
-    case rest(String)
-}
-
-// The result of parsing a clause based on its grammar.
-enum Clause {
-    case phrase(String?, [String])
-    case word(String)
-    case rest(String)
-}
+// MARK: - TokenSequence
 
 struct TokenSequence: Sequence, IteratorProtocol {
     private var input: Substring
@@ -66,9 +46,24 @@ struct TokenSequence: Sequence, IteratorProtocol {
     }
 }
 
+// MARK: - Grammar
+
 struct Grammar {
+    enum Clause {
+        // The clause consumes a phrase starting with one of the words in preps and
+        // continuing either until the first prep that begins a subsequent clause, or
+        // the end of the input.
+        case phrase([String], String)
+
+        // The clause consumes one word, if a word is present.
+        case word(String)
+
+        // The clause consumes the rest of the input.
+        case rest(String)
+    }
+
     let verbs: [String]
-    let clauses: [ClauseSpec]
+    let clauses: [Clause]
 
     init?(_ s: String) {
         var it = TokenSequence(s).makeIterator()
@@ -79,7 +74,7 @@ struct Grammar {
         }
         self.verbs = verbs.split(separator: "|").map { String($0) }
 
-        var clauses = [ClauseSpec]()
+        var clauses = [Clause]()
         while let clause = it.next() {
             let parts = clause.split(separator: ":", maxSplits: 1)
             switch parts.count {
@@ -109,7 +104,16 @@ struct Grammar {
     }
 }
 
+// MARK: - Command
+
 class Command {
+    // The result of parsing a clause based on its grammar.
+    enum Clause {
+        case phrase(String?, [String])
+        case word(String)
+        case rest(String)
+    }
+
     typealias RunFunction = (Avatar, String, [Clause?]) -> Void
 
     let grammar: Grammar
@@ -139,8 +143,8 @@ class Command {
 
         // Each iteration of this loop attempts to match the remaining input against
         // the next clause in the grammar.
-        for spec in grammar.clauses {
-            switch spec {
+        for clause in grammar.clauses {
+            switch clause {
             case .word:
                 if let word = tokens.next() {
                     clauses.append(.word(word.lowercased()))
@@ -191,12 +195,6 @@ class Command {
         return clauses
     }
 
-    static let allCommands = [
-        goCommand,
-        lookCommand,
-        lootCommand,
-    ]
-
     struct VerbCommand: Comparable {
         let verb: String
         let command: Command!
@@ -246,6 +244,15 @@ class Command {
     }
 }
 
+// MARK: - allCommands
+
+// NOTE: To make a command available, add it to this array!
+let allCommands = [
+    goCommand,
+    lookCommand,
+    lootCommand,
+]
+
 // TEST:
 let lookCommand = Command("look at:target with|using|through:tool") {
     actor, verb, clauses in
@@ -256,39 +263,4 @@ let lookCommand = Command("look at:target with|using|through:tool") {
 let lootCommand = Command("loot corpse") {
     actor, verb, clauses in
     print(clauses)
-}
-
-let goCommand = Command("go direction") {
-    actor, verb, clauses in
-    print(actor, clauses)
-
-    guard let location = actor.container as? Location else {
-        actor.show("You cannot move right now.")
-        return
-    }
-
-    guard case let .phrase(_, tokens) = clauses[0] else {
-        return
-    }
-
-    guard let matches = match(tokens, against: location.exits) else {
-        actor.show("You don't see any exit matching that description.")
-        return
-    }
-
-    guard matches.count == 1 else {
-        let dirs = matches.map { String(describing: $0.direction) }
-        actor.show("Do you want to go \(dirs.conjunction(using: "or"))?")
-        return
-    }
-    let portal = matches.first!
-
-    guard let destinationRef = portal.destination,
-          let destination = World.instance.lookup(destinationRef, context: location.ref!)?
-            .asEntity(Location.self) else {
-        actor.show("A strange force prevents you from going that way.")
-        return
-    }
-
-    actor.travel(to: destination, direction: portal.direction, via: portal)
 }

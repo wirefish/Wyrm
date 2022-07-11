@@ -55,29 +55,3 @@ class Location: Entity, Container {
         return exits.first { $0.direction == direction }
     }
 }
-
-// FIXME:
-extension PhysicalEntity {
-
-    func travel(to destination: Location, direction: Direction, via portal: Portal) {
-        let avatar = self as? Avatar
-        let entry = destination.findExit(direction.opposite)
-        guard let location = self.container as? Location else {
-            // Feedback?
-            return
-        }
-
-        guard triggerEvent("exit_location", in: location, participants: [self, portal],
-                           args: [self, location, portal], body: {
-            location.remove(self)
-        }) else {
-            return
-        }
-
-        triggerEvent("enter_location", in: destination, participants: [self, entry!],
-                     args: [self, destination, entry!]) {
-            destination.insert(self)
-            avatar?.locationChanged()
-        }
-    }
-}
