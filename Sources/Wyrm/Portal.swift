@@ -16,7 +16,6 @@ enum PortalState: ValueRepresentableEnum {
 class Portal: PhysicalEntity {
     var direction: Direction = .in
     var destination: ValueRef?
-    var size = Size.large
     var isCloseable = false
     var lockableWith: Item?
     var state = PortalState.open
@@ -33,7 +32,6 @@ class Portal: PhysicalEntity {
     }
 
     static let accessors = [
-        "size": accessor(\Portal.size),
         "is_closeable": accessor(\Portal.isCloseable),
         "lockable_with": accessor(\Portal.lockableWith),
         "state": accessor(\Portal.state),

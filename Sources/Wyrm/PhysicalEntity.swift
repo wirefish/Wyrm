@@ -10,6 +10,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     var icon: String?
     var isObvious = true
     var alts = [NounPhrase]()
+    var size = Size.huge
     weak var container: Container?
 
     override func copyProperties(from other: Entity) {
@@ -19,6 +20,8 @@ class PhysicalEntity: Entity, Viewable, Matchable {
         description = other.description
         icon = other.icon
         isObvious = other.isObvious
+        alts = other.alts
+        size = other.size
         super.copyProperties(from: other)
     }
 
@@ -29,6 +32,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
         "icon": accessor(\PhysicalEntity.icon),
         "is_obvious": accessor(\PhysicalEntity.isObvious),
         "alts": accessor(\PhysicalEntity.alts),
+        "size": accessor(\PhysicalEntity.size),
     ]
 
     override subscript(member: String) -> Value? {

@@ -46,6 +46,7 @@ final class Avatar: PhysicalEntity, Codable {
 
     init(from decoder: Decoder) throws {
         super.init(withPrototype: World.instance.avatarPrototype)
+        copyProperties(from: World.instance.avatarPrototype)
 
         let container = try decoder.container(keyedBy: CodingKeys.self)
         level = try container.decode(Int.self, forKey: .level)

@@ -1,5 +1,9 @@
 // Core prototype definitions.
 
+def avatar: avatar {
+    size = 'medium
+}
+
 def npc: creature {
     when talk(actor, self, topic) {
         tell(self, actor) |

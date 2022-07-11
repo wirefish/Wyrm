@@ -6,7 +6,6 @@
 //
 
 class Item: PhysicalEntity {
-    var size = Size.small
     var stackLimit = 1
     var count = 1
     var level = 0
@@ -15,7 +14,6 @@ class Item: PhysicalEntity {
 
     override func copyProperties(from other: Entity) {
         let other = other as! Item
-        size = other.size
         stackLimit = other.stackLimit
         count = other.count
         level = other.level
@@ -24,7 +22,6 @@ class Item: PhysicalEntity {
     }
 
     private static let accessors = [
-        "size": accessor(\Item.size),
         "stack_limit": accessor(\Item.stackLimit),
         "count": accessor(\Item.count),
         "level": accessor(\Item.level),
