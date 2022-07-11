@@ -154,6 +154,11 @@ extension Avatar {
                     .list(contents))
     }
 
+    func showLinks(_ heading: String, _ prefix: String, _ links: [String]) {
+        sendMessage("showLinks", .string(heading), .string(prefix),
+                    .list(links.map { ClientValue.string($0) }))
+    }
+
     // Bits in the location state sent to the client. Lower bits are derived from
     // the raw values of the exit directions.
     static let questAvailableBit = 1 << 12

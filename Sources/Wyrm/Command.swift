@@ -255,10 +255,29 @@ class Command {
     }
 }
 
-// MARK: - allCommands
+// MARK: - help command
+
+let helpIntro = """
+Help is available on the following topics. Type `help` followed by the topic of
+interest for more information.
+"""
+
+func primaryCommandVerbs() -> [String] {
+    allCommands.map({ $0.grammar.verbs.first! }).sorted()
+}
+
+let helpCommand = Command("help topic") { actor, verb, clauses in
+    // FIXME: handle topics
+
+    let verbs = primaryCommandVerbs()
+    actor.showLinks(helpIntro, "help", verbs)
+}
+
+// MARK: - registry of all commands
 
 // NOTE: To make a command available, add it to this array!
 let allCommands = [
     goCommand,
+    helpCommand,
     lookCommand,
 ]
