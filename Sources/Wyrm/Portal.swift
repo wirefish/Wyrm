@@ -56,10 +56,24 @@ class Portal: PhysicalEntity {
     }
 }
 
-// MARK: - goCommand
+// MARK: - go command
 
-let goCommand = Command("go direction") {
-    actor, verb, clauses in
+let goAliases = [
+    ["n", "north"]: "go north",
+    ["ne", "northeast"]: "go northeast",
+    ["e", "east"]: "go east",
+    ["se", "southeast"]: "go southeast",
+    ["s", "south"]: "go south",
+    ["sw", "southwest"]: "go southwest",
+    ["w", "west"]: "go west",
+    ["nw", "northwest"]: "go northwest",
+    ["in", "enter"]: "go in",
+    ["out", "exit"]: "go out",
+    ["up"]: "go up",
+    ["down"]: "go down",
+]
+
+let goCommand = Command("go|head direction", aliases: goAliases) { actor, verb, clauses in
     print(actor, clauses)
 
     guard let location = actor.container as? Location else {
@@ -93,7 +107,7 @@ let goCommand = Command("go direction") {
     actor.travel(to: destination, direction: portal.direction, via: portal)
 }
 
-// MARK: - PhysicalEntity+travel
+// MARK: - travel-related extensions
 
 extension PhysicalEntity {
     func travel(to destination: Location, direction: Direction, via portal: Portal) {
@@ -106,6 +120,7 @@ extension PhysicalEntity {
 
         guard triggerEvent("exit_location", in: location, participants: [self, portal],
                            args: [self, location, portal], body: {
+            avatar?.willExitLocation(via: portal)
             location.remove(self)
         }) else {
             return
@@ -114,7 +129,19 @@ extension PhysicalEntity {
         triggerEvent("enter_location", in: destination, participants: [self, entry!],
                      args: [self, destination, entry!]) {
             destination.insert(self)
-            avatar?.locationChanged()
+            avatar?.didEnterLocation(via: entry!)
         }
+    }
+}
+
+extension Avatar {
+    func willExitLocation(via portal: Portal) {
+        // FIXME: add "along the path." or "through the door." - Portal can
+        // define the prep to use.
+        show("You head \(portal.direction).")
+    }
+
+    func didEnterLocation(via portal: Portal) {
+        locationChanged()
     }
 }

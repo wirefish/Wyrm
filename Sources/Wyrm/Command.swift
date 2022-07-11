@@ -117,11 +117,13 @@ class Command {
     typealias RunFunction = (Avatar, String, [Clause?]) -> Void
 
     let grammar: Grammar
+    let aliases: [(String,String)]
     let fn: RunFunction
     let allPreps: [String:Int]
 
-    init(_ grammarSpec: String, _ fn: @escaping RunFunction) {
+    init(_ grammarSpec: String, aliases: [[String]:String] = [:], _ fn: @escaping RunFunction) {
         self.grammar = Grammar(grammarSpec)!
+        self.aliases = aliases.flatMap { keys, value in keys.map { ($0, value) } }
         self.fn = fn
 
         allPreps = [String:Int](uniqueKeysWithValues: grammar.clauses.enumerated().flatMap {
@@ -195,21 +197,27 @@ class Command {
         return clauses
     }
 
-    struct VerbCommand: Comparable {
+    struct VerbAction: Comparable {
+        enum Action {
+            case none
+            case command(Command)
+            case alias(String)
+        }
         let verb: String
-        let command: Command!
+        let action: Action
 
-        static func == (_ lhs: VerbCommand, _ rhs: VerbCommand) -> Bool {
+        static func == (_ lhs: VerbAction, _ rhs: VerbAction) -> Bool {
             return lhs.verb == rhs.verb
         }
 
-        static func < (_ lhs: VerbCommand, _ rhs: VerbCommand) -> Bool {
+        static func < (_ lhs: VerbAction, _ rhs: VerbAction) -> Bool {
             return lhs.verb < rhs.verb
         }
     }
 
-    static let verbsToCommands = allCommands.flatMap { command in
-        command.grammar.verbs.map { VerbCommand(verb: $0, command: command) }
+    static let verbActions = allCommands.flatMap { command in
+        command.grammar.verbs.map { VerbAction(verb: $0, action: .command(command)) } +
+        command.aliases.map { VerbAction(verb: $0, action: .alias($1)) }
     }.sorted()
 
     static func processInput(actor: Avatar, input: String) {
@@ -224,23 +232,32 @@ class Command {
             return
         }
 
-        guard let index = verbsToCommands.lowerBound(for: VerbCommand(verb: verb, command: nil)),
-              verbsToCommands[index].verb.hasPrefix(verb) else {
+        guard let index = verbActions.lowerBound(for: VerbAction(verb: verb, action: .none)),
+              verbActions[index].verb.hasPrefix(verb) else {
             actor.show("Unknown command \"\(verb)\".")
             return
         }
 
-        if (verbsToCommands[index].verb != verb) {
-            let end = verbsToCommands[index...].firstIndex(where: {
+        if (verbActions[index].verb != verb) {
+            let end = verbActions[index...].firstIndex(where: {
                 !$0.verb.hasPrefix(verb)
-            }) ?? verbsToCommands.endIndex
+            }) ?? verbActions.endIndex
             if end != index.advanced(by: 1) {
-                let alts = verbsToCommands[index..<end].map(\.verb).conjunction(using: "or")
+                let alts = verbActions[index..<end].map(\.verb).conjunction(using: "or")
                 actor.show("Ambiguous command \"\(verb)\". Did you mean \(alts)?")
+                return
             }
         }
 
-        verbsToCommands[index].command.run(actor, verb, &tokens)
+        switch verbActions[index].action {
+        case .none:
+            break
+        case let .command(command):
+            command.run(actor, verb, &tokens)
+        case let .alias(alias):
+            // FIXME: retain rest of input and append it to alias?
+            processInput(actor: actor, input: alias)
+        }
     }
 }
 
