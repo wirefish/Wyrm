@@ -17,24 +17,31 @@ struct EventHandler {
             return false
         }
 
+        let observer = args.first!
         return zip(args, fn.parameters).allSatisfy { arg, param in
             switch param.constraint {
             case .none:
                 return true
             case .self:
-                return arg == args.first
+                return arg == observer
             case let .prototype(ref):
                 guard case let .entity(entity) = arg else {
                     return false
                 }
                 return entity.extends(ref)
             case let .quest(ref, phase):
-                guard case let .entity(entity) = arg,
-                      let avatar = entity as? Avatar,
-                      let state = avatar.activeQuests[ref] else {
+                guard let avatar = arg.asEntity(Avatar.self),
+                      let value = World.instance.lookup(ref, context: fn.module),
+                      case let .quest(quest) = value else {
                     return false
                 }
-                return state.phase == phase
+                if phase == "available" {
+                    return quest.acceptableBy(avatar)
+                } else if phase == "complete" {
+                    return avatar.completedQuests[quest.ref] != nil
+                } else {
+                    return avatar.activeQuests[ref]?.phase == phase
+                }
             }
         }
     }

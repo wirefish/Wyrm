@@ -129,7 +129,7 @@ def officious_kobold: lib.npc {
     offers_quests = [choose_a_race]
 
     when talk(actor: .quest(choose_a_race, available), self, topic) {
-        tell(npc, avatar) |
+        tell(self, avatar) |
             Hello, friend! As you may have noticed, your current body is just a
             ghostly manifestation of your spirit. To fix that you'll need to
             select a race and take on a physical form. It just so happens I can
@@ -160,15 +160,15 @@ def officious_kobold: lib.npc {
             and track your progress toward their completion.
     }
 
-    when talk(actor: .quest(choose_a_race, active), self, npc) {
-        tell(npc, avatar) |
+    when talk(actor: .quest(choose_a_race, active), self, topic) {
+        tell(self, avatar) |
             Have you selected a race yet? The caretakers to the west will be
             more than happy to describe their races and help you make the right
             decision.
     }
 
-    when talk(actor: .quest(choose_a_race, done), self, npc) {
-        tell(npc, actor) |
+    when talk(actor: .quest(choose_a_race, done), self, topic) {
+        tell(self, actor) |
             A fine choice! I had no doubt you would choose to become
             {actor.race}. I am something of an expert in these matters, after
             all.
