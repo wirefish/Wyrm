@@ -199,7 +199,7 @@ deflocation wildflower_field: isle_location {
     tutorial = |
         The ! symbol on the map means that a creature wants to talk to you about
         an available quest. You can `talk` to the creature to learn more. When
-        you see the &mldr; symbol, you can `talk` to the creature about a quest
+        you see the &#x22ef; symbol, you can `talk` to the creature about a quest
         you have accepted but not yet completed. If you see the &#x2713; symbol,
         then you have completed a quest and can `talk` to the creature to
         receive your rewards!

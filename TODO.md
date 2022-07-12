@@ -9,4 +9,6 @@
 
 - add generic verbs that are implied commands. parses rest of input and matches against contents of location. optional ignored prep. if matched entity defines the verb, triggers event, or if location defines verb, triggers event. things like meditate or talk that have no inherent mechanical effect (but unlike say equip) can use this and not require explicit commands.
 
-- show tutorials
+- show tutorials. implement tutorial command to force show and reset.
+
+- update map icons when quest state changes.
