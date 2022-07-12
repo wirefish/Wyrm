@@ -133,7 +133,7 @@ extension PhysicalEntity {
         let avatar = self as? Avatar
         let entry = destination.findExit(direction.opposite)
         guard let location = self.container as? Location else {
-            // Feedback?
+            avatar?.show("You don't have any way to leave this place.")
             return
         }
 
