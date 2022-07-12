@@ -13,6 +13,7 @@ enum Value: Equatable {
     case number(Double)
     case string(String)
     case symbol(String)
+    case ref(ValueRef)
     case entity(Entity)
     case quest(Quest)
     case race(Race)
@@ -45,6 +46,7 @@ enum Value: Equatable {
         case let .number(a): if case let .number(b) = rhs { return a == b }
         case let .string(a): if case let .string(b) = rhs { return a == b }
         case let .symbol(a): if case let .symbol(b) = rhs { return a == b }
+        case let .ref(a): if case let .ref(b) = rhs { return a == b }
         case let .entity(a): if case let .entity(b) = rhs { return a == b }
         case let .quest(a): if case let .quest(b) = rhs { return a === b }
         default: break
@@ -269,10 +271,14 @@ extension ValueRepresentableEnum {
 
 extension Entity: ValueRepresentable {
     static func fromValue(_ value: Value) -> Self? {
-        guard case let .entity(entity) = value else {
+        switch value {
+        case let .entity(entity):
+            return entity as? Self
+        case let .ref(ref):
+            return World.instance.lookup(ref, context: nil)?.asEntity(Self.self)
+        default:
             return nil
         }
-        return entity as? Self
     }
 
     func toValue() -> Value {
@@ -282,10 +288,17 @@ extension Entity: ValueRepresentable {
 
 extension Quest: ValueRepresentable {
     static func fromValue(_ value: Value) -> Quest? {
-        guard case let .quest(quest) = value else {
+        switch value {
+        case let .quest(quest):
+            return quest
+        case let .ref(ref):
+            guard case let .quest(quest) = World.instance.lookup(ref, context: nil) else {
+                return nil
+            }
+            return quest
+        default:
             return nil
         }
-        return quest
     }
 
     func toValue() -> Value {

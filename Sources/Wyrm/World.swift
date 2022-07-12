@@ -22,7 +22,7 @@ class Module: ValueDictionary {
     }
 }
 
-enum ValueRef: Hashable, Codable, CustomStringConvertible {
+enum ValueRef: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
     case absolute(String, String)
     case relative(String)
 
@@ -48,6 +48,17 @@ enum ValueRef: Hashable, Codable, CustomStringConvertible {
         case let .relative(name):
             return name
         }
+    }
+
+    static func fromValue(_ value: Value) -> ValueRef? {
+        guard case let .ref(ref) = value else {
+            return nil
+        }
+        return ref
+    }
+
+    func toValue() -> Value {
+        return .ref(self)
     }
 }
 
@@ -102,6 +113,7 @@ class World {
             builtins[name] = .entity(proto)
         }
 
+        World.instance = self
         try load()
 
         guard let av = lookup(config.world.avatarPrototype, context: nil)?.asEntity(Avatar.self) else {
@@ -284,12 +296,11 @@ extension World {
         }
 
         let quest = Quest(ref: .absolute(module.name, name))
-        let context: [ValueDictionary] = [quest, module]
 
         // Initialize the members.
         for (name, initialValue) in members {
             do {
-                quest[name] = try eval(initialValue, context: context)
+                quest[name] = try evalInitializer(initialValue, in: module)
             } catch {
                 print("\(quest.ref) \(name): \(error)")
             }
@@ -299,7 +310,7 @@ extension World {
             let phase = QuestPhase(phaseName)
             for (name, initialValue) in members {
                 do {
-                    phase[name] = try eval(initialValue, context: context)
+                    phase[name] = try evalInitializer(initialValue, in: module)
                 } catch {
                     print("\(quest.ref) \(phaseName) \(name): \(error)")
                 }
@@ -316,12 +327,11 @@ extension World {
         }
 
         let race = Race(ref: .absolute(module.name, name))
-        let context: [ValueDictionary] = [race, module]
 
         // Initialize the members.
         for (name, initialValue) in members {
             do {
-                race[name] = try eval(initialValue, context: context)
+                race[name] = try evalInitializer(initialValue, in: module)
             } catch {
                 print("\(race.ref) \(name): \(error)")
             }
@@ -333,12 +343,10 @@ extension World {
     private func initializeEntity(_ entity: Entity,
                                   members: [ParseNode.Member], handlers: [ParseNode.Handler],
                                   module: Module) {
-        let context: [ValueDictionary] = [entity, module]
-
         // Initialize the members.
         for (name, initialValue) in members {
             do {
-                entity[name] = try eval(initialValue, context: context)
+                entity[name] = try evalInitializer(initialValue, in: module)
             } catch {
                 print("\(entity.ref!) \(name) \(error)")
             }
@@ -409,7 +417,7 @@ enum EvalError: Error {
 
 extension World {
 
-    func eval(_ node: ParseNode, context: [ValueDictionary]) throws -> Value {
+    func evalInitializer(_ node: ParseNode, in module: Module) throws -> Value {
         switch node {
         case let .boolean(b):
             return .boolean(b)
@@ -427,13 +435,10 @@ extension World {
             return .symbol(s)
 
         case let .identifier(id):
-            guard let value = lookup(.relative(id), context: context) else {
-                throw EvalError.undefinedIdentifier(id)
-            }
-            return value
+            return .ref(.absolute(module.name, id))
 
         case let .unaryExpr(op, rhs):
-            let rhs = try eval(rhs, context: context)
+            let rhs = try evalInitializer(rhs, in: module)
             switch op {
             case .minus:
                 guard case let .number(n) = rhs else {
@@ -450,8 +455,8 @@ extension World {
             }
 
         case let .binaryExpr(lhs, op, rhs):
-            let lhs = try eval(lhs, context: context)
-            let rhs = try eval(rhs, context: context)
+            let lhs = try evalInitializer(lhs, in: module)
+            let rhs = try evalInitializer(rhs, in: module)
             switch lhs {
             case let .number(a):
                 guard case let .number(b) = rhs else {
@@ -489,14 +494,14 @@ extension World {
             }
 
         case let .conjuction(lhs, rhs):
-            let lhs = try eval(lhs, context: context)
+            let lhs = try evalInitializer(lhs, in: module)
             guard case let .boolean(a) = lhs else {
                 throw EvalError.typeMismatch("expression before && must be a boolean")
             }
             if !a {
                 return .boolean(false)
             } else {
-                let rhs = try eval(rhs, context: context)
+                let rhs = try evalInitializer(rhs, in: module)
                 guard case let .boolean(b) = rhs else {
                     throw EvalError.typeMismatch("expression after && must be a boolean")
                 }
@@ -504,14 +509,14 @@ extension World {
             }
 
         case let .disjunction(lhs, rhs):
-            let lhs = try eval(lhs, context: context)
+            let lhs = try evalInitializer(lhs, in: module)
             guard case let .boolean(a) = lhs else {
                 throw EvalError.typeMismatch("expression before || must be a boolean")
             }
             if a {
                 return .boolean(true)
             } else {
-                let rhs = try eval(rhs, context: context)
+                let rhs = try evalInitializer(rhs, in: module)
                 guard case let .boolean(b) = rhs else {
                     throw EvalError.typeMismatch("expression after || must be a boolean")
                 }
@@ -519,53 +524,31 @@ extension World {
             }
 
         case let .list(nodes):
-            let values = try nodes.map { try eval($0, context: context) }
+            let values = try nodes.map { try evalInitializer($0, in: module) }
             return .list(ValueList(values))
 
         case let .exit(portalRef, direction, destination):
-            guard let portalProto = lookup(portalRef, context: context)?.asEntity(Portal.self) else {
+            guard let proto = lookup(portalRef, context: module)?.asEntity(Portal.self) else {
                 throw EvalError.typeMismatch("invalid exit portal")
             }
-            let portal = portalProto.clone()
+            let portal = proto.clone()
             portal.direction = direction
             portal.destination = destination
             return .entity(portal)
 
         case let .clone(lhs):
-            let lhs = try eval(lhs, context: context)
-            guard case let .entity(entity) = lhs else {
-                throw EvalError.typeMismatch("cannot clone non-entity")
+            let lhs = try evalInitializer(lhs, in: module)
+            guard case let .ref(ref) = lhs,
+                  case let .entity(proto) = lookup(ref, context: module) else {
+                throw EvalError.typeMismatch("invalid entity prototype")
             }
-            return .entity(entity.clone())
+            return .entity(proto.clone())
 
-        case let .call(lhs, args):
-            let lhs = try eval(lhs, context: context)
-            let args = try args.map { try eval($0, context: context) }
-            guard case let .function(fn) = lhs else {
-                throw EvalError.typeMismatch("expression is not callable")
+        case .dot:
+            guard let ref = node.asValueRef else {
+                throw EvalError.invalidExpression("invalid reference")
             }
-            guard case let .value(value) = try fn.call(args, context: []) else {
-                throw EvalError.invalidResult
-            }
-            return value
-
-        case let .dot(lhs, member):
-            let lhs = try eval(lhs, context: context)
-            guard let lhs = lhs.asValueDictionary else {
-                throw EvalError.typeMismatch("cannot apply . to non-object")
-            }
-            return lhs[member] ?? .nil
-
-        case let .subscript(lhs, rhs):
-            let lhs = try eval(lhs, context: context)
-            let rhs = try eval(rhs, context: context)
-            guard case let .list(lhs) = lhs else {
-                throw EvalError.typeMismatch("cannot apply [] to non-list")
-            }
-            guard let index = Int.fromValue(rhs) else {
-                throw EvalError.typeMismatch("subscript index must be an integer")
-            }
-            return lhs.values[index]
+            return .ref(ref)
 
         default:
             throw EvalError.invalidExpression("expression not allowed in member initializer")

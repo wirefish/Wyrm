@@ -58,6 +58,9 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
     var name = ""
     var summary = ""
     var level = 1
+    var requiredQuests = [ValueRef]()
+    var awardedItems = [Item]()
+
     var phases = [QuestPhase]()
 
     init(ref: ValueRef) {
@@ -68,6 +71,8 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
         "name": accessor(\Quest.name),
         "summary": accessor(\Quest.summary),
         "level": accessor(\Quest.level),
+        "required_quests": accessor(\Quest.requiredQuests),
+        "awarded_items": accessor(\Quest.awardedItems),
     ]
 
     var debugDescription: String { "<Quest \(ref)>" }

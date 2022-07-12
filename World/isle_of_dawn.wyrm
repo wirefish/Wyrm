@@ -635,7 +635,7 @@ defquest get_some_clothes {
     name = "Cover Up"
     summary = |
         Pick a white tulip for Dhalia, then exchange it for a set of clothes.
-    // FIXME: required_quests = [@choose_a_race]
+    required_quests = [choose_a_race]
     awarded_items = [simple_shirt, simple_pants, canvas_shoes, small_backpack]
 
     phase active {
