@@ -639,7 +639,7 @@ defquest get_some_clothes {
     awarded_items = [simple_shirt, simple_pants, canvas_shoes, small_backpack]
 
     phase active {
-        summary = "Pick a white tulip from the nearby fields."
+        summary = "Pick a white tulip from the fields east of the clothing stall."
     }
 
     phase done {
@@ -662,6 +662,7 @@ def seamstress: lib.npc {
             certainly seems you have need of my wares. I will happily provide
             you with an outfit that should serve your needs, but I must ask a
             favor in return.
+        offer_quest(self, get_some_clothes, actor)
     }
 
     after accept_quest(actor, quest: get_some_clothes, self) {

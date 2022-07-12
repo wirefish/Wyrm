@@ -10,5 +10,3 @@
 - add generic verbs that are implied commands. parses rest of input and matches against contents of location. optional ignored prep. if matched entity defines the verb, triggers event, or if location defines verb, triggers event. things like meditate or talk that have no inherent mechanical effect (but unlike say equip) can use this and not require explicit commands.
 
 - show tutorials
-
-- offers and accept command. rescind offer when leaving location.
