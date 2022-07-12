@@ -15,6 +15,9 @@ enum EquippableSlot: ValueRepresentableEnum {
     // Accessories.
     case ears, neck, wrists, eitherFinger
 
+    // Storage.
+    case backpack
+
     static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
         (String(describing: $0), $0)
     })
@@ -24,6 +27,9 @@ class Equipment: Item {
     var slot: EquippableSlot?
     var trait: CombatTrait?
     var traitCoeff = 1.0
+
+    // Inventory capacity gained by equipping this item.
+    var capacity = 0
 
     override func copyProperties(from other: Entity) {
         let other = other as! Equipment
@@ -37,6 +43,7 @@ class Equipment: Item {
         "slot": accessor(\Equipment.slot),
         "trait": accessor(\Equipment.trait),
         "trait_coeff": accessor(\Equipment.traitCoeff),
+        "capacity": accessor(\Equipment.capacity),
     ]
 
     override subscript(member: String) -> Value? {

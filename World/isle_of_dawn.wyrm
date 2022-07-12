@@ -143,7 +143,7 @@ def officious_kobold: lib.npc {
             kinds of rewards. Type `help quests` for more information.
     }
 
-    after accept_quest(actor, choose_a_race, self) {
+    after accept_quest(actor, quest: choose_a_race, self) {
         tell(self, actor) |
             Excellent! To the west you will find several shrines, each dedicated
             to a different race. Talk to the caretaker at each shrine to learn
@@ -603,3 +603,107 @@ deflocation ogre_shrine: isle_location {
     }
 }
 
+// clothing_stall
+
+def simple_shirt: lib.shirt {
+    brief = "a simple cotton shirt"
+    description = |
+        The shirt is well-made and comfortable if not entirely fashionable.
+}
+
+def simple_pants: lib.pants {
+    brief = "a pair of cotton pants"
+    description = |
+        The pants are made of thick brown cloth. They have been patched only a
+        handful of times.
+}
+
+def canvas_shoes: lib.shoes {
+    brief = "a pair of canvas shoes"
+    description = |
+        These low shoes have a sturdy sole. They seem suitable for walking
+        long distances.
+}
+
+def small_backpack: lib.backpack {
+    brief = "a small canvas backpack"
+    description = |
+        The backpack has wide leather straps and a drawstring closure.
+}
+
+defquest get_some_clothes {
+    name = "Cover Up"
+    summary = |
+        Pick a white tulip for Dhalia, then exchange it for a set of clothes.
+    // FIXME: required_quests = [@choose_a_race]
+    awarded_items = [simple_shirt, simple_pants, canvas_shoes, small_backpack]
+
+    phase active {
+        summary = "Pick a white tulip from the nearby fields."
+    }
+
+    phase done {
+        summary = "Return the tulip to Dhalia."
+    }
+}
+
+def seamstress: lib.npc {
+    brief = "Dhalia"
+    pose = "stands in the stall, organizing her wares."
+    description = |
+        Dhalia is a human woman of indeterminate age. She wears silver-rimmed
+        spectacles and an impeccably-tailored dress decorated with a floral
+        pattern.
+    offers_quests = [get_some_clothes]
+
+    when talk(actor: .quest(get_some_clothes, available), self, topic) {
+        tell(self, actor) |
+            Greetings! Did our mutual kobold friend send you my way? It
+            certainly seems you have need of my wares. I will happily provide
+            you with an outfit that should serve your needs, but I must ask a
+            favor in return.
+    }
+
+    after accept_quest(actor, quest: get_some_clothes, self) {
+        tell(self, actor) |
+            Wonderful! You see, I am very fond of white tulips, but my work here
+            prevents me from taking the time to gather them. Would you head to
+            the east and get one for me?
+    }
+
+    when talk(actor: .quest(get_some_clothes, active), self, topic) {
+        tell(self, actor) |
+            Have you found a white tulip for me? They're just to the east.
+    }
+
+    when talk(actor: .quest(get_some_clothes, done), self, topic) {
+        tell(self, actor) |
+            Why thank you, this tulip is lovely! Your timing is perfect; I have
+            just finished selecting an outfit for you.
+
+        complete_quest(actor, get_some_clothes)
+
+        show_tutorial(actor, 'items) |
+            The seamstress have given you several items; type `inventory` or
+            `inv` to list them.
+
+            To wear an item, use the `equip` command. For example, type `equip
+            shirt`. Type just `equip` to list the items you currently have
+            equipped.
+
+            In addition to clothing, the seamstress also gave you a backpack.
+            Equipping it will increase the number of items you can carry.
+
+            For more information type `help equip` or `help inventory`.
+    }
+}
+
+deflocation clothing_stall: isle_location {
+    name = "Clothing Stall"
+    description = |
+        A wooden market stall has been erected beside the path. Its counter is
+        piled with basic clothing items in myriad styles and sizes.
+    contents = [seamstress!]
+    exits = [gravel_path -> 'north to wildflower_field, gravel_path -> 'south to fountain_plaza,
+             gravel_path -> 'east to tulip_field_sw]
+}

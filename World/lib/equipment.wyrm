@@ -1,0 +1,23 @@
+def clothing: equipment {
+}
+
+def shirt: clothing {
+    brief = "a shirt"
+    slot = 'torso
+}
+
+def pants: clothing {
+    brief = "a pair[s] of pants"
+    slot = 'legs
+}
+
+def shoes: clothing {
+    brief = "a pair[s] of shoes"
+    slot = 'feet
+}
+
+def backpack: equipment {
+    brief = "a backpack"
+    slot = 'backpack
+    capacity = 20
+}
