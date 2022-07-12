@@ -77,9 +77,16 @@ class World {
 
         let rootPath = config.world.rootPath
         self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
-        
-        for (name, fn) in ScriptLibrary.functions {
-            builtins[name] = .function(NativeFunction(name: name, fn: fn))
+
+        let scriptProviders: [ScriptProvider.Type] = [
+            ScriptLibrary.self,
+            QuestScriptFunctions.self,
+        ]
+
+        for provider in scriptProviders {
+            for (name, fn) in provider.functions {
+                builtins[name] = .function(NativeFunction(name: name, fn: fn))
+            }
         }
 
         for (name, proto) in [("avatar", Avatar(withPrototype: nil)),

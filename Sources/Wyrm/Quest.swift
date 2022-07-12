@@ -108,11 +108,44 @@ extension Entity {
     }
 }
 
+struct QuestOffer: Offer {
+    weak var questgiver: PhysicalEntity?
+    let quest: Quest
+
+    func accept(_ avatar: Avatar) {
+        guard let questgiver = questgiver, quest.acceptableBy(avatar) else {
+            avatar.showNotice("You can no longer accept the quest \"\(quest.name)\".")
+            return
+        }
+
+        triggerEvent("accept_quest", in: avatar.location, participants: [avatar, questgiver],
+                             args: [avatar, quest, questgiver]) {
+            let phase = quest.phases.first!
+            avatar.activeQuests[quest.ref] = QuestState(phase: phase.label, state: phase.initialState)
+            avatar.showNotice("You have accepted the quest \"\(quest.name)\".")
+        }
+    }
+
+    func decline(_ avatar: Avatar) {
+        avatar.showNotice("You have declined the offer to accept the quest \"\(quest.name)\".")
+    }
+}
+
 // Avatar methods related to managing quests.
 extension Avatar {
-    func acceptQuest(_ quest: Quest) {
-        let phase = quest.phases.first!
-        activeQuests[quest.ref] = QuestState(phase: phase.label, state: phase.initialState)
+    // Called when the player types `accept` after having been offered a quest.
+    func acceptQuest(_ quest: Quest, from npc: PhysicalEntity?) {
+        guard quest.acceptableBy(self) && npc != nil else {
+            showNotice("You can no longer accept the quest \(quest.name).")
+            return
+        }
+
+        triggerEvent("accept_quest", in: location, participants: [self, npc!],
+                             args: [self, quest, npc!]) {
+            let phase = quest.phases.first!
+            activeQuests[quest.ref] = QuestState(phase: phase.label, state: phase.initialState)
+            showNotice("You have accepted the quest \(quest.name).")
+        }
     }
 
     func advanceQuest(_ quest: Quest, to phaseLabel: String) -> Bool {
@@ -146,21 +179,19 @@ extension Avatar {
 
 struct QuestScriptFunctions: ScriptProvider {
     static let functions = [
-        ("accept_quest", acceptQuest),
+        ("offer_quest", offerQuest),
     ]
 
-    static func acceptQuest(_ args: [Value]) throws -> Value {
-        let (avatar, quest, npc) = try unpack(args, Avatar.self, Quest.self, Entity.self)
+    static func offerQuest(_ args: [Value]) throws -> Value {
+        let (npc, quest, avatar) = try unpack(args, PhysicalEntity.self, Quest.self, Avatar.self)
 
-        guard quest.acceptableBy(avatar) else {
-            // avatar.notify("You can no longer accept the quest \(quest.name).")
-            return .boolean(false)
-        }
-
-        let b = triggerEvent("accept_quest", in: avatar.location, participants: [avatar, npc],
-                             args: [avatar, quest, npc]) {
-            avatar.acceptQuest(quest)
-            // avatar.notify("You have accepted the quest \(quest.name).")
+        let b = triggerEvent("offer_quest", in: avatar.location, participants: [npc, avatar],
+                             args: [npc, quest, avatar]) {
+            avatar.receiveOffer(QuestOffer(questgiver: npc, quest: quest))
+            avatar.showNotice("""
+                \(npc.describeBriefly([.capitalized, .definite])) has offered you the quest
+                "\(quest.name)". Type `accept` to accept it.
+                """)
         }
 
         return .boolean(b)

@@ -18,7 +18,12 @@ enum EquippedSlot: String, CodingKeyRepresentable, Hashable, Encodable {
     case ears, neck, wrists, leftFinger, rightFinger
 }
 
-final class Avatar: PhysicalEntity, Codable {
+protocol Offer {
+    func accept(_ avatar: Avatar)
+    func decline(_ avatar: Avatar)
+}
+
+final class Avatar: PhysicalEntity {
     var level = 1
 
     // Equipped items.
@@ -30,22 +35,48 @@ final class Avatar: PhysicalEntity, Codable {
     // A mapping from identifiers of completed quests to the time of completion.
     var completedQuests = [ValueRef:Int]()
 
+    var tutorialsSeen = Set<String>()
+
     // Current rank in all known skills.
     var skills = [ValueRef:Int]()
 
+    // Pending offer, if any.
+    var offer: Offer?
+
     // Open WebSocket used to communicate with the client.
     var handler: WebSocketHandler?
-
-    enum CodingKeys: CodingKey {
-        case level, location, equipped, activeQuests, completedQuests, skills
-    }
 
     required init(withPrototype prototype: Entity?) {
         super.init(withPrototype: prototype)
     }
 
-    init(from decoder: Decoder) throws {
-        super.init(withPrototype: World.instance.avatarPrototype)
+    var location: Location {
+        get { container as! Location }
+        set { container = newValue }
+    }
+
+    func receiveOffer(_ offer: Offer) {
+        cancelOffer()
+        self.offer = offer
+    }
+
+    func cancelOffer() {
+        if let oldOffer = self.offer {
+            oldOffer.decline(self)
+            self.offer = nil
+        }
+    }
+}
+
+// MARK: - as Codable
+
+extension Avatar: Codable {
+    enum CodingKeys: CodingKey {
+        case level, location, equipped, activeQuests, completedQuests, skills
+    }
+
+    convenience init(from decoder: Decoder) throws {
+        self.init(withPrototype: World.instance.avatarPrototype)
         copyProperties(from: World.instance.avatarPrototype)
 
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -70,11 +101,6 @@ final class Avatar: PhysicalEntity, Codable {
         try container.encode(activeQuests, forKey: .activeQuests)
         try container.encode(completedQuests, forKey: .completedQuests)
         try container.encode(skills, forKey: .skills)
-    }
-
-    var location: Location {
-        get { container as! Location }
-        set { container = newValue }
     }
 }
 
@@ -142,6 +168,15 @@ extension Avatar {
     func locationChanged() {
         describeLocation()
         showMap()
+        if let tutorial = location.tutorial, let key = location.ref?.description {
+            showTutorial(key, tutorial)
+        }
+    }
+
+    func showTutorial(_ key: String, _ message: String) {
+        if tutorialsSeen.insert(key).inserted {
+            sendMessage("showTutorial", .string(message))
+        }
     }
 
     func describeLocation() {
@@ -260,5 +295,25 @@ let talkCommand = Command("talk to:target about:topic") { actor, verb, clauses i
 
     triggerEvent("talk", in: actor.location, participants: [actor, target],
                  args: [actor, target, topic]) {
+    }
+}
+
+// MARK: - accept and decline
+
+let acceptCommand = Command("accept") { actor, verb, clauses in
+    if let offer = actor.offer {
+        actor.offer = nil
+        offer.accept(actor)
+    } else {
+        actor.show("You haven't been offered anything to accept.")
+    }
+}
+
+let declineCommand = Command("decline") { actor, verb, clauses in
+    if let offer = actor.offer {
+        actor.offer = nil
+        offer.decline(actor)
+    } else {
+        actor.show("You haven't been offered anything to decline.")
     }
 }

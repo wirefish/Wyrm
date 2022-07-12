@@ -56,6 +56,7 @@ struct ScriptLibrary: ScriptProvider {
         ("log_debug", logDebug),
         ("trunc", trunc),
         ("show", show),
+        ("show_tutorial", showTutorial),
         ("tell", tell),
     ]
 
@@ -72,6 +73,12 @@ struct ScriptLibrary: ScriptProvider {
     static func show(_ args: [Value]) throws -> Value {
         let (avatar, message) = try unpack(args, Avatar.self, String.self)
         avatar.show(message)
+        return .nil
+    }
+
+    static func showTutorial(_ args: [Value]) throws -> Value {
+        let (avatar, key, message) = try unpack(args, Avatar.self, String.self, String.self)
+        avatar.showTutorial(key, message)
         return .nil
     }
 

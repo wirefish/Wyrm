@@ -36,6 +36,8 @@ struct EventHandler {
                 }
                 if phase == "available" {
                     return quest.acceptableBy(avatar)
+                } else if phase == "offered" {
+                    return (avatar.offer as? QuestOffer)?.quest === quest
                 } else if phase == "complete" {
                     return avatar.completedQuests[quest.ref] != nil
                 } else {

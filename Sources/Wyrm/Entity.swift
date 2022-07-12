@@ -88,7 +88,7 @@ extension Entity {
                         break
                     }
                 } catch {
-                    logger.error("error executing event handler: \(error)")
+                    logger.error("error in event handler for \(self) \(phase) \(event): \(error)")
                     return .nil
                 }
             }

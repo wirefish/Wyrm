@@ -208,10 +208,11 @@ extension Double: ValueRepresentable {
 
 extension String: ValueRepresentable {
     static func fromValue(_ value: Value) -> String? {
-        guard case let .string(s) = value else {
-            return nil
+        switch value {
+        case let .string(s): return s
+        case let .symbol(s): return s
+        default: return nil
         }
-        return s
     }
 
     func toValue() -> Value {
