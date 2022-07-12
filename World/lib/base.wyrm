@@ -6,7 +6,6 @@ def avatar: avatar {
 
 def npc: creature {
     when talk(actor, self, topic) {
-        tell(self, actor) |
-            {self:D} has nothing to say to you.
+        show(actor) "{self:D} has nothing to say to you."
     }
 }
