@@ -276,21 +276,32 @@ let lookCommand = Command("look at:target with|using|through:tool") { actor, ver
 // MARK: - talk command
 
 let talkCommand = Command("talk to:target about:topic") { actor, verb, clauses in
-    guard let targetPhrase = clauses[0] else {
-        actor.show("Who do you want to talk to?")
-        return
+    let candidates = actor.location.contents.filter {
+        $0.canRespondTo(phase: .when, event: "talk")
     }
-    guard let match = match(targetPhrase, against: actor.location.contents) else {
-        actor.show("There's nobody like that here to talk to.")
-        return
+
+    var targets: [PhysicalEntity]
+    if let targetPhrase = clauses[0] {
+        guard let match = match(targetPhrase, against: candidates) else {
+            actor.show("There's nobody like that here to talk to.")
+            return
+        }
+        targets = match.matches
+    } else {
+        guard candidates.count > 0 else {
+            actor.show("There's nobody here to talk to.")
+            return
+        }
+        targets = candidates
     }
-    guard match.count == 1 else {
-        let names = match.map { $0.describeBriefly([.definite]) }
+
+    guard targets.count == 1 else {
+        let names = targets.map { $0.describeBriefly([.definite]) }
         actor.show("Do you want to talk to \(names.conjunction(using: "or"))?")
         return
     }
 
-    let target = match.first!
+    let target = targets.first!
     let topic = clauses[1]?.joined(separator: " ") ?? ""
 
     triggerEvent("talk", in: actor.location, participants: [actor, target],

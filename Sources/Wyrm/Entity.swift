@@ -100,4 +100,12 @@ extension Entity {
     final func allowEvent(_ event: String, args: [Value]) -> Bool {
         return handleEvent(.allow, event, args: args) != .boolean(false)
     }
+
+    final func canRespondTo(phase: EventPhase, event: String) -> Bool {
+        if handlers.contains(where: { $0.phase == phase && $0.event == event }) {
+            return true
+        } else {
+            return prototype?.canRespondTo(phase: phase, event: event) ?? false
+        }
+    }
 }
