@@ -6,6 +6,7 @@
 //
 
 import CoreFoundation
+import Dispatch
 
 class Module: ValueDictionary {
     let name: String
@@ -546,5 +547,12 @@ extension World {
         default:
             throw EvalError.malformedExpression
         }
+    }
+}
+
+extension World {
+    static func schedule(delay: Double, block: @escaping () -> Void) {
+        let when = DispatchTime.now() + delay
+        DispatchQueue.main.asyncAfter(deadline: when, execute: DispatchWorkItem(block: block))
     }
 }

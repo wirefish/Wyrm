@@ -214,7 +214,6 @@ it and begin again if you decide to complete it in the future.
 """
 
 let questCommand = Command("quest 1:subcommand *:name", help: questHelp) { actor, verb, clauses in
-    print(clauses)
     let descriptions: [String] = actor.activeQuests.compactMap {
         let (ref, state) = $0
         guard case let .quest(quest) = world.lookup(ref, context: nil) else {

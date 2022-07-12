@@ -157,8 +157,9 @@ extension Avatar {
     func willExitLocation(via portal: Portal) {
         // FIXME: add "along the path." or "through the door." - Portal can
         // define the prep to use.
-        show("You head \(portal.direction).")
+        cancelActivity()
         cancelOffer()
+        show("You head \(portal.direction).")
     }
 
     func didEnterLocation(via portal: Portal) {

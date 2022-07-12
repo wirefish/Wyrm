@@ -38,6 +38,9 @@ final class Avatar: PhysicalEntity {
     // Pending offer, if any.
     var offer: Offer?
 
+    // Current activity, if any.
+    var activity: Activity?
+
     // Open WebSocket used to communicate with the client.
     var handler: WebSocketHandler?
 

@@ -52,7 +52,7 @@ struct EventHandler {
 func triggerEvent(_ event: String, in location: Location, participants: [Entity],
                   args: [ValueRepresentable], body: () -> Void) -> Bool {
     let args = args.map { $0.toValue() }
-    let observers = participants + (location.contents + location.exits).filter {
+    let observers = participants + ([location] + location.contents + location.exits).filter {
         !participants.contains($0)
     }
 
