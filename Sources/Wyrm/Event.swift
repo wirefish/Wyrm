@@ -41,7 +41,7 @@ struct EventHandler {
                 } else if phase == "complete" {
                     return avatar.completedQuests[quest.ref] != nil
                 } else {
-                    return avatar.activeQuests[ref]?.phase == phase
+                    return avatar.activeQuests[quest.ref]?.phase == phase
                 }
             }
         }
