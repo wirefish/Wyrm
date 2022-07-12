@@ -398,12 +398,12 @@ extension World {
     }
 }
 
-// MARK: - evaluating expressions
+// MARK: - evaluating member initializers
 
 enum EvalError: Error {
     case typeMismatch(String)
     case undefinedIdentifier(String)
-    case malformedExpression
+    case invalidExpression(String)
     case invalidResult
 }
 
@@ -419,7 +419,7 @@ extension World {
 
         case let .string(text):
             guard let s = text.asLiteral else {
-                fatalError("interpolated string not allowed in this context")
+                throw EvalError.invalidExpression("interpolated string not allowed in member initializer")
             }
             return .string(s)
 
@@ -446,7 +446,7 @@ extension World {
                 }
                 return .boolean(!b)
             default:
-                throw EvalError.malformedExpression
+                throw EvalError.invalidExpression("unknown unary operator")
             }
 
         case let .binaryExpr(lhs, op, rhs):
@@ -568,7 +568,7 @@ extension World {
             return lhs.values[index]
 
         default:
-            throw EvalError.malformedExpression
+            throw EvalError.invalidExpression("expression not allowed in member initializer")
         }
     }
 }
