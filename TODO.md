@@ -12,3 +12,5 @@
 - show tutorials
 
 - offers and accept command. rescind offer when leaving location.
+
+- when evaluating member initializers, disallow many expressions (calls, subscripts) that don't make sense in that context. restrict dot expressions and identifiers to be ValueRefs. make ref value representable. Defer lookup until required, e.g. clone operator, lhs of portal operator, or if setting into an entity/quest/race. This allows members to be (arrays of) ValueRef that aren't necessarily resolvable yet. In the context of a function body nothing needs to change since all defs will have been performed.
