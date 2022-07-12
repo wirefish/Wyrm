@@ -166,7 +166,15 @@ extension World {
                 ip += 2
 
             case .lookupMember:
-                fatalError("lookupMember not yet implemented")
+                let index = code.getUInt16(at: ip); ip += 2
+                guard case let .symbol(name) = code.constants[Int(index)],
+                      let dict = stack.removeLast().asValueDictionary else {
+                    throw ExecError.typeMismatch
+                }
+                guard let value = dict[name] else {
+                    throw ExecError.undefinedSymbol(name)
+                }
+                stack.append(value)
 
             case .assignMember:
                 let index = code.getUInt16(at: ip)
@@ -288,6 +296,8 @@ extension World {
             } else {
                 return String(describing: e)
             }
+        case let .race(r):
+            return r.describeBriefly(format)
         default:
             return String(describing: value)
         }

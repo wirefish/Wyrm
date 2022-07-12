@@ -44,6 +44,7 @@ indirect enum ParseNode {
     case entity(name: String, prototype: ValueRef, members: [Member],
                 handlers: [Handler], startable: Bool)
     case quest(name: String, members: [Member], phases: [QuestPhase])
+    case race(name: String, members: [Member])
 
     // True if this node can syntactically be on the left side of an assignment.
     var isAssignable: Bool {
@@ -154,6 +155,8 @@ class Parser {
             return parseEntity()
         case .defquest:
             return parseQuest()
+        case .defrace:
+            return parseRace()
         default:
             error("invalid token \(currentToken) at top level")
             advance()
@@ -398,6 +401,38 @@ class Parser {
         return (label, members)
     }
 
+    // MARK: - parsing races
+
+    private func parseRace() -> ParseNode? {
+        advance()
+
+        guard case let .identifier(name) = consume() else {
+            error("expected identifier after defrace")
+            return nil
+        }
+
+        guard match(.lbrace) else {
+            error("expected { at start of race body")
+            return nil
+        }
+
+        var members = [ParseNode.Member]()
+        while !(match(.rbrace)) {
+            switch currentToken {
+            case .identifier:
+                if let member = parseMember() {
+                    members.append(member)
+                }
+            default:
+                error("unexpected token \(currentToken) in race body")
+                advance()
+                break
+            }
+        }
+
+        return .race(name: name, members: members)
+    }
+    
     // MARK: - parsing statements
 
     private func parseStatement() -> ParseNode? {

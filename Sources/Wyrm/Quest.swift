@@ -5,6 +5,8 @@
 //  Created by Craig Becker on 6/28/22.
 //
 
+import CoreFoundation
+
 struct QuestState: Encodable {
     enum State: ValueRepresentable, Encodable {
         case `nil`
@@ -68,8 +70,6 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
         "level": accessor(\Quest.level),
     ]
 
-    var handlers = [EventHandler]()
-
     var debugDescription: String { "<Quest \(ref)>" }
 
     func phase(_ label: String) -> QuestPhase? {
@@ -84,8 +84,10 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
     }
 
     func completeableBy(_ avatar: Avatar) -> Bool {
-        // TODO: what determines this? A specific state value I guess?
-        return false
+        guard let state = avatar.activeQuests[ref] else {
+            return false
+        }
+        return state.phase == phases.last!.label
     }
 }
 
@@ -171,9 +173,10 @@ extension Avatar {
         return true
     }
 
-    func completeQuest(_ quest: Quest) -> Bool {
-        // TODO:
-        return false
+    func completeQuest(_ quest: Quest) {
+        activeQuests[quest.ref] = nil
+        completedQuests[quest.ref] = Int(CFAbsoluteTimeGetCurrent() / 60)
+        showNotice("You have completed the quest \"\(quest.name)\"!")
     }
 
     func didCompleteQuest(_ quest: Quest) -> Bool {
@@ -183,6 +186,8 @@ extension Avatar {
 
 struct QuestScriptFunctions: ScriptProvider {
     static let functions = [
+        ("advance_quest", advanceQuest),
+        ("complete_quest", completeQuest),
         ("offer_quest", offerQuest),
     ]
 
@@ -200,6 +205,18 @@ struct QuestScriptFunctions: ScriptProvider {
 
         return .boolean(b)
     }
+
+    static func advanceQuest(_ args: [Value]) throws -> Value {
+        let (avatar, quest, phase) = try unpack(args, Avatar.self, Quest.self, String.self)
+        _ = avatar.advanceQuest(quest, to: phase)
+        return .nil
+    }
+
+    static func completeQuest(_ args: [Value]) throws -> Value {
+        let (avatar, quest) = try unpack(args, Avatar.self, Quest.self)
+        avatar.completeQuest(quest)
+        return .nil
+    }
 }
 
 let questHelp = """
@@ -214,6 +231,10 @@ it and begin again if you decide to complete it in the future.
 """
 
 let questCommand = Command("quest 1:subcommand *:name", help: questHelp) { actor, verb, clauses in
+
+    print(actor.activeQuests)
+    print(actor.completedQuests)
+
     let descriptions: [String] = actor.activeQuests.compactMap {
         let (ref, state) = $0
         guard case let .quest(quest) = world.lookup(ref, context: nil) else {

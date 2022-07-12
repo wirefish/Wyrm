@@ -249,6 +249,9 @@ extension World {
             case .quest:
                 loadQuest(def, into: module)
 
+            case .race:
+                loadRace(def, into: module)
+
             default:
                 fatalError("unexpected definition at top level")
             }
@@ -305,6 +308,26 @@ extension World {
         }
 
         module.bindings[name] = .quest(quest)
+    }
+
+    private func loadRace(_ node: ParseNode, into module: Module) {
+        guard case let .race(name, members) = node else {
+            fatalError("invalid call to loadRace")
+        }
+
+        let race = Race(ref: .absolute(module.name, name))
+        let context: [ValueDictionary] = [race, module]
+
+        // Initialize the members.
+        for (name, initialValue) in members {
+            do {
+                race[name] = try eval(initialValue, context: context)
+            } catch {
+                print("\(race.ref) \(name): \(error)")
+            }
+        }
+
+        module.bindings[name] = .race(race)
     }
 
     private func initializeEntity(_ entity: Entity,

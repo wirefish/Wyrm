@@ -170,7 +170,7 @@ def officious_kobold: lib.npc {
     when talk(actor: .quest(choose_a_race, done), self, topic) {
         tell(self, actor) |
             A fine choice! I had no doubt you would choose to become
-            {actor.race}. I am something of an expert in these matters, after
+            {actor.race:i}. I am something of an expert in these matters, after
             all.
 
             I can't help but notice that your new body, while quite lovely, is
@@ -178,7 +178,7 @@ def officious_kobold: lib.npc {
             friend Dhalia, the seamstress; talk to her and she will make sure
             you go forth in style.
 
-        complete_quest(actor, choose_a_race, self)
+        complete_quest(actor, choose_a_race)
     }
 
     when talk(actor, self, topic) {

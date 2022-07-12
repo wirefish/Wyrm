@@ -370,7 +370,7 @@ class Compiler {
             compile(expr, &block)
             block.emit(.pop)
 
-        case .entity, .quest:
+        case .entity, .quest, .race:
             fatalError("invalid attempt to compile object definition")
         }
     }

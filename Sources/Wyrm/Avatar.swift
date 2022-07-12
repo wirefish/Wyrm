@@ -18,8 +18,30 @@ enum EquippedSlot: String, CodingKeyRepresentable, Hashable, Encodable {
     case ears, neck, wrists, leftFinger, rightFinger
 }
 
+final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
+    let ref: ValueRef
+    var brief: NounPhrase?
+
+    init(ref: ValueRef) {
+        self.ref = ref
+    }
+
+    static let accessors = [
+        "brief": accessor(\Race.brief),
+    ]
+
+    func describeBriefly(_ format: Text.Format) -> String {
+        // FIXME:
+        return brief!.format(format)
+    }
+
+    var debugDescription: String { "<Race \(ref)>" }
+}
+
 final class Avatar: PhysicalEntity {
     var level = 1
+
+    var race: Race?
 
     // Equipped items.
     var equipped = [EquippedSlot:Item?]()
@@ -52,13 +74,26 @@ final class Avatar: PhysicalEntity {
         get { container as! Location }
         set { container = newValue }
     }
+
+    private static let accessors = [
+        "race": accessor(\Avatar.race),
+    ]
+
+    override subscript(member: String) -> Value? {
+        get { Self.accessors[member]?.get(self) ?? super[member] }
+        set {
+            if Self.accessors[member]?.set(self, newValue!) == nil {
+                super[member] = newValue
+            }
+        }
+    }
 }
 
 // MARK: - as Codable
 
 extension Avatar: Codable {
     enum CodingKeys: CodingKey {
-        case level, location, equipped, activeQuests, completedQuests, skills
+        case level, location, race, equipped, activeQuests, completedQuests, skills
     }
 
     convenience init(from decoder: Decoder) throws {
@@ -74,6 +109,16 @@ extension Avatar: Codable {
         } else {
             logger.warning("cannot find location \(locationRef), using start location")
             self.container = World.instance.startLocation
+        }
+
+        if let raceRef = try container.decodeIfPresent(ValueRef.self, forKey: .race) {
+            if case let .race(race) = World.instance.lookup(raceRef, context: nil) {
+                self.race = race
+            } else {
+                logger.warning("cannot find race \(raceRef)")
+            }
+        } else {
+            logger.warning("avatar has no race")
         }
 
         // TODO: other fields

@@ -53,6 +53,7 @@ extension ScriptProvider {
 
 struct ScriptLibrary: ScriptProvider {
     static let functions = [
+        ("change_race", changeRace),
         ("log_debug", logDebug),
         ("trunc", trunc),
         ("show", show),
@@ -85,6 +86,13 @@ struct ScriptLibrary: ScriptProvider {
     static func tell(_ args: [Value]) throws -> Value {
         let (actor, avatar, message) = try unpack(args, PhysicalEntity.self, Avatar.self, String.self)
         avatar.showSay(actor, "says", message, false)
+        return .nil
+    }
+
+    static func changeRace(_ args: [Value]) throws -> Value {
+        let (avatar, race) = try unpack(args, Avatar.self, Race.self)
+        avatar.race = race
+        avatar.showNotice("You are now \(race.describeBriefly([.indefinite]))!")
         return .nil
     }
 }

@@ -15,6 +15,7 @@ enum Value: Equatable {
     case symbol(String)
     case entity(Entity)
     case quest(Quest)
+    case race(Race)
     case list(ValueList)
     case function(Callable)
     case module(Module)
@@ -289,5 +290,18 @@ extension Quest: ValueRepresentable {
 
     func toValue() -> Value {
         return .quest(self)
+    }
+}
+
+extension Race: ValueRepresentable {
+    static func fromValue(_ value: Value) -> Race? {
+        guard case let .race(race) = value else {
+            return nil
+        }
+        return race
+    }
+
+    func toValue() -> Value {
+        return .race(self)
     }
 }

@@ -1,5 +1,9 @@
 // Core prototype definitions.
 
+defrace human {
+    brief = "a human"
+}
+
 def avatar: avatar {
     size = 'medium
 }
