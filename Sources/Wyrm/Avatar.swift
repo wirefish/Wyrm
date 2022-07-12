@@ -18,11 +18,6 @@ enum EquippedSlot: String, CodingKeyRepresentable, Hashable, Encodable {
     case ears, neck, wrists, leftFinger, rightFinger
 }
 
-protocol Offer {
-    func accept(_ avatar: Avatar)
-    func decline(_ avatar: Avatar)
-}
-
 final class Avatar: PhysicalEntity {
     var level = 1
 
@@ -53,18 +48,6 @@ final class Avatar: PhysicalEntity {
     var location: Location {
         get { container as! Location }
         set { container = newValue }
-    }
-
-    func receiveOffer(_ offer: Offer) {
-        cancelOffer()
-        self.offer = offer
-    }
-
-    func cancelOffer() {
-        if let oldOffer = self.offer {
-            oldOffer.decline(self)
-            self.offer = nil
-        }
     }
 }
 
@@ -202,45 +185,8 @@ extension Avatar {
                     .list(links.map { ClientValue.string($0) }))
     }
 
-    // Bits in the location state sent to the client. Lower bits are derived from
-    // the raw values of the exit directions.
-    static let questAvailableBit = 1 << 12
-    static let questAdvanceableBit = 1 << 13
-    static let vendorBit = 1 << 15
-    static let trainerBit = 1 << 16
-
-    func showMap() {
-        let map = Map(at: location, radius: 3)
-        sendMessage("showMap",
-                    .string(location.name),
-                    .string("Region Name"), .string("Subregion Name"),  // FIXME:
-                    .integer(map.radius),
-                    .list(map.cells.map { cell -> ClientValue in
-
-                        var state = 0
-                        for portal in cell.location.exits {
-                            state |= (1 << portal.direction.rawValue)
-                        }
-
-                        if cell.location.contents.contains(where: {
-                            if let q = $0 as? Questgiver {
-                                return q.offersQuests.contains { $0.acceptableBy(self) }
-                            } else {
-                                return false
-                            }
-                        }) {
-                            state |= Self.questAvailableBit
-                        }
-
-                        return .list([.integer(cell.offset.x),
-                                      .integer(cell.offset.y),
-                                      .string(cell.location.name),
-                                      .string(nil),  // FIXME: icon
-                                      .integer(state),
-                                      .string(cell.location.surface),
-                                      .string(nil),  // FIXME: surrounding
-                                      .string(cell.location.domain)])
-                    }))
+    func showList(_ heading: String, _ items: [String]) {
+        sendMessage("showList", .string(heading), .list(items.map { ClientValue.string($0) }))
     }
 }
 
@@ -306,25 +252,5 @@ let talkCommand = Command("talk to:target about:topic") { actor, verb, clauses i
 
     triggerEvent("talk", in: actor.location, participants: [actor, target],
                  args: [actor, target, topic]) {
-    }
-}
-
-// MARK: - accept and decline
-
-let acceptCommand = Command("accept") { actor, verb, clauses in
-    if let offer = actor.offer {
-        actor.offer = nil
-        offer.accept(actor)
-    } else {
-        actor.show("You haven't been offered anything to accept.")
-    }
-}
-
-let declineCommand = Command("decline") { actor, verb, clauses in
-    if let offer = actor.offer {
-        actor.offer = nil
-        offer.decline(actor)
-    } else {
-        actor.show("You haven't been offered anything to decline.")
     }
 }

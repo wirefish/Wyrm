@@ -41,3 +41,46 @@ class Map {
         }
     }
 }
+
+extension Avatar {
+    // Bits in the location state sent to the client. Lower bits are derived from
+    // the raw values of the exit directions.
+    static let questAvailableBit = 1 << 12
+    static let questAdvanceableBit = 1 << 13
+    static let vendorBit = 1 << 15
+    static let trainerBit = 1 << 16
+
+    func showMap() {
+        let map = Map(at: location, radius: 3)
+        sendMessage("showMap",
+                    .string(location.name),
+                    .string("Region Name"), .string("Subregion Name"),  // FIXME:
+                    .integer(map.radius),
+                    .list(map.cells.map { cell -> ClientValue in
+
+                        var state = 0
+                        for portal in cell.location.exits {
+                            state |= (1 << portal.direction.rawValue)
+                        }
+
+                        if cell.location.contents.contains(where: {
+                            if let q = $0 as? Questgiver {
+                                return q.offersQuests.contains { $0.acceptableBy(self) }
+                            } else {
+                                return false
+                            }
+                        }) {
+                            state |= Self.questAvailableBit
+                        }
+
+                        return .list([.integer(cell.offset.x),
+                                      .integer(cell.offset.y),
+                                      .string(cell.location.name),
+                                      .string(nil),  // FIXME: icon
+                                      .integer(state),
+                                      .string(cell.location.surface),
+                                      .string(nil),  // FIXME: surrounding
+                                      .string(cell.location.domain)])
+                    }))
+    }
+}

@@ -317,5 +317,6 @@ let allCommands = [
     goCommand,
     helpCommand,
     lookCommand,
+    questCommand,
     talkCommand,
 ]
