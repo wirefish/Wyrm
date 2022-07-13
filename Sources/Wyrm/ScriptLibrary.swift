@@ -98,8 +98,12 @@ struct ScriptLibrary: ScriptProvider {
     }
 
     static func spawn(_ args: [Value]) throws -> Value {
-        let (entity, location, delay) = try unpack(args, PhysicalEntity.self, Location.self, Int.self)
-        print("spawn", entity, location, delay)
+        let (entity, location, delay) = try unpack(args, PhysicalEntity.self, Location.self, Double.self)
+        World.schedule(delay: delay) {
+            // FIXME:
+            location.insert(entity.clone())
+        }
+
         return .nil
     }
 }
