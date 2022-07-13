@@ -61,17 +61,23 @@ class Equipment: Item {
 class Weapon: Equipment {
     var damageType = DamageType.crushing
     var speed = 3.0
+    var attackVerb = "hits"
+    var criticalVerb = "critically hits"
 
     override func copyProperties(from other: Entity) {
         let other = other as! Weapon
         damageType = other.damageType
         speed = other.speed
+        attackVerb = other.attackVerb
+        criticalVerb = other.criticalVerb
         super.copyProperties(from: other)
     }
 
     private static let accessors = [
         "damage_type": accessor(\Weapon.damageType),
         "speed": accessor(\Weapon.speed),
+        "attack_verb": accessor(\Weapon.attackVerb),
+        "critical_verb": accessor(\Weapon.criticalVerb),
     ]
 
     override subscript(member: String) -> Value? {

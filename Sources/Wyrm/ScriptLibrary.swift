@@ -55,16 +55,22 @@ struct ScriptLibrary: ScriptProvider {
     static let functions = [
         ("change_race", changeRace),
         ("log_debug", logDebug),
-        ("trunc", trunc),
+        ("random", random),
         ("show", show),
         ("show_tutorial", showTutorial),
         ("spawn", spawn),
         ("tell", tell),
+        ("trunc", trunc),
     ]
 
     static func trunc(_ args: [Value]) throws -> Value {
         let x = try unpack(args, Double.self)
         return .number(x.rounded(.towardZero))
+    }
+
+    static func random(_ args: [Value]) throws -> Value {
+        let (min, max) = try unpack(args, Double.self, Double.self)
+        return .number(Double.random(in: min...max))
     }
 
     static func logDebug(_ args: [Value]) throws -> Value {
