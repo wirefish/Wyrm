@@ -58,6 +58,7 @@ struct ScriptLibrary: ScriptProvider {
         ("trunc", trunc),
         ("show", show),
         ("show_tutorial", showTutorial),
+        ("spawn", spawn),
         ("tell", tell),
     ]
 
@@ -93,6 +94,12 @@ struct ScriptLibrary: ScriptProvider {
         let (avatar, race) = try unpack(args, Avatar.self, Race.self)
         avatar.race = race
         avatar.showNotice("You are now \(race.describeBriefly([.indefinite]))!")
+        return .nil
+    }
+
+    static func spawn(_ args: [Value]) throws -> Value {
+        let (entity, location, delay) = try unpack(args, PhysicalEntity.self, Location.self, Int.self)
+        print("spawn", entity, location, delay)
         return .nil
     }
 }

@@ -38,10 +38,14 @@ final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
     var debugDescription: String { "<Race \(ref)>" }
 }
 
-final class Avatar: PhysicalEntity {
+final class Avatar: PhysicalEntity, Container {
     var level = 1
-
     var race: Race?
+
+    // Container.
+    static let baseCapacity = 5  // without equipment that increases capacity
+    var capacity = baseCapacity
+    var contents = [PhysicalEntity]()
 
     // Equipped items.
     var equipped = [EquippedSlot:Item?]()

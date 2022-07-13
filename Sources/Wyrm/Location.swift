@@ -20,12 +20,15 @@ class Location: Entity, Container {
 
     override func copyProperties(from other: Entity) {
         let other = other as! Location
+        name = other.name
+        description = other.description
         size = other.size
         capacity = other.capacity
         tutorial = other.tutorial
         domain = other.domain
         surface = other.surface
-        // do not copy contents or exits
+        contents = other.contents.map { $0.clone() }
+        // do not copy exits
         super.copyProperties(from: other)
     }
 

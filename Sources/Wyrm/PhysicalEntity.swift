@@ -51,7 +51,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     }
 
     func isObvious(to observer: Avatar) -> Bool {
-        return isObvious
+        return isObvious && isVisible(to: observer)
     }
 
     static let defaultBrief = NounPhrase("an entity")
@@ -72,5 +72,15 @@ class PhysicalEntity: Entity, Viewable, Matchable {
 
     func match(_ tokens: ArraySlice<String>) -> MatchQuality {
         return alts.reduce(brief?.match(tokens) ?? .none) { max($0, $1.match(tokens)) }
+    }
+
+    // MARK: - inserting into a container
+
+    func canInsert(into container: Container) -> Bool {
+        return false
+    }
+
+    func canMerge(into stack: PhysicalEntity) -> Bool {
+        return false
     }
 }

@@ -329,9 +329,11 @@ let allCommands = [
     declineCommand,
     goCommand,
     helpCommand,
+    inventoryCommand,
     lookCommand,
     meditateCommand,
     questCommand,
+    takeCommand,
     talkCommand,
     tutorialCommand,
 ]

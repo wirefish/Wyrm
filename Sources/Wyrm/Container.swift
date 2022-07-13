@@ -25,6 +25,12 @@ extension Container {
         return true
     }
 
+    func canInsert(_ entity: PhysicalEntity) -> Bool {
+        return (entity.canInsert(into: self) &&
+                (contents.count < capacity ||
+                 contents.contains(where: { entity.canMerge(into: $0) })))
+    }
+
     // Attempts to insert an entity into the container, possibly combining it into a
     // stack already within the container. Returns the resulting entity on success or
     // nil if the entity cannot be added because the container is full.

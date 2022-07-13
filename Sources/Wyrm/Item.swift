@@ -10,7 +10,7 @@ class Item: PhysicalEntity {
     var count = 1
     var level = 0
     var useVerbs = [String]()
-    var questId: String?  // FIXME: questRef: ValueRef
+    var quest: ValueRef?
 
     override func copyProperties(from other: Entity) {
         let other = other as! Item
@@ -18,6 +18,7 @@ class Item: PhysicalEntity {
         count = other.count
         level = other.level
         useVerbs = other.useVerbs
+        quest = other.quest
         super.copyProperties(from: other)
     }
 
@@ -26,6 +27,7 @@ class Item: PhysicalEntity {
         "count": accessor(\Item.count),
         "level": accessor(\Item.level),
         "use_verbs": accessor(\Item.useVerbs),
+        "quest": accessor(\Item.quest),
     ]
 
     override subscript(member: String) -> Value? {
@@ -37,6 +39,17 @@ class Item: PhysicalEntity {
                 super[member] = newValue
             }
         }
+    }
+
+    override func isVisible(to observer: Avatar) -> Bool {
+        if let quest = quest, observer.activeQuests[quest] == nil {
+            return false
+        }
+        return super.isVisible(to: observer)
+    }
+
+    override func canInsert(into container: Container) -> Bool {
+        return container.size >= size
     }
 }
 

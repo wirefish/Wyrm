@@ -195,6 +195,7 @@ deflocation wildflower_field: isle_location {
     description = |
         Flowers of every color and description bloom in the expansive fields
         along the sides of the path. The air is heavy with their fragrance.
+    surface = 'flowers
 
     tutorial = |
         The ! symbol on the map means that a creature wants to talk to you about
@@ -707,4 +708,51 @@ deflocation clothing_stall: isle_location {
     contents = [seamstress!]
     exits = [gravel_path -> 'north to wildflower_field, gravel_path -> 'south to fountain_plaza,
              gravel_path -> 'east to tulip_field_sw]
+}
+
+// tulip_field
+
+def white_tulip: item {
+    brief = "a white tulip"
+    pose = "draws your attention."
+    description = |
+        The tulip is quite lovely; you can see why Dhalia prizes them.
+    size = 'small  // FIXME:
+    entry_pose = "catches your eye."
+    quest = get_some_clothes
+
+    when take(actor, self, source) {
+        spawn(white_tulip, source, 15)
+        advance_quest(actor, get_some_clothes, 'done)
+    }
+}
+
+def tulip_field: isle_location {
+    name = "Field of Tulips"
+    description = |
+        Tulips in myriad colors have been planted here.
+    surface = 'flowers
+    contents = [white_tulip]
+}
+
+deflocation tulip_field_sw: tulip_field {
+    tutorial = |
+        Some items can be picked up using the `take` command. For example, type
+        `take tulip` to take a white tulip when you see one. Picking up an item
+        places it into your inventory. Use the `inventory` command to list the
+        items you are carrying.
+    exits = [gravel_path -> 'west to clothing_stall, gravel_path -> 'east to tulip_field_se,
+             gravel_path -> 'north to tulip_field_nw]
+}
+
+deflocation tulip_field_se: tulip_field {
+    exits = [gravel_path -> 'west to tulip_field_sw, gravel_path -> 'north to tulip_field_ne]
+}
+
+deflocation tulip_field_nw: tulip_field {
+    exits = [gravel_path -> 'east to tulip_field_ne, gravel_path -> 'south to tulip_field_sw]
+}
+
+deflocation tulip_field_ne: tulip_field {
+    exits = [gravel_path -> 'west to tulip_field_nw, gravel_path -> 'south to tulip_field_se]
 }
