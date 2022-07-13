@@ -1152,3 +1152,139 @@ deflocation guard_station: isle_location {
     exits = [gravel_path -> 'north to circle_of_names, gravel_path -> 'west to overgrown_field_se,
              iron_gate -> 'south to cobbled_square]
 }
+
+// overgrown_field
+
+def lashling_tendril: lib.natural_weapon {
+    brief = "a thorny tendril"
+    damage_type = 'slashing
+    attack_verb = "whips"
+    critical_verb = "lashes"
+}
+
+def lashling: creature {
+    brief = "a lashling"
+    pose = "flails its tendrils in a menacing display."
+    description = |
+        The lashling is a small mass of writhing vines and weeds that has
+        somehow gained the ability to move, albeit very slowly. Sharp thorns
+        protrude from the ends of its leafy, tentacle-like appendages.
+    entry_message = "A lashling emerges from beneath the weeds."
+
+    // FIXME:
+    // default_attack = lashling_tendril
+    // defense_coeff = 0.5
+
+    before kill(actor, self, weapon) {
+        spawn(lashling, self.location, 15)
+    }
+
+    after kill(actor, self, weapon) {
+        advance_quest(actor, kill_some_plants, 'done)
+    }
+}
+
+def overgrown_field: isle_location {
+    name = "Overgrown Field"
+    description = "Tangled vines and weeds make it difficult to move through this area."
+    surface = 'weeds
+    contents = [lashling]
+}
+
+deflocation overgrown_field_se: overgrown_field {
+    tutorial = |
+        To begin attacking a lashling, type `attack lashling`. You will
+        automatically perform basic attacks with the weapon in your main hand.
+        Combat ends when you or your opponent is dead!
+
+        Depending on the skills you choose to learn as you explore the world,
+        you will gain access to a variety of special maneuvers that you can use
+        during combat. Type `help combat` to learn more.
+
+    exits = [gravel_path -> 'west to overgrown_field_sw,
+             gravel_path -> 'north to overgrown_field_ne,
+             gravel_path -> 'east to guard_station]
+}
+
+deflocation overgrown_field_sw: overgrown_field {
+    exits = [gravel_path -> 'east to overgrown_field_se,
+             gravel_path -> 'north to overgrown_field_nw]
+}
+
+deflocation overgrown_field_ne: overgrown_field {
+    exits = [gravel_path -> 'west to overgrown_field_nw,
+             gravel_path -> 'south to overgrown_field_se]
+}
+
+deflocation overgrown_field_nw: overgrown_field {
+    exits = [gravel_path -> 'east to overgrown_field_ne,
+             gravel_path -> 'south to overgrown_field_sw]
+}
+
+// cobbled_square
+
+def sandy_path: portal {
+    brief = "a sandy path"
+}
+
+def cobbled_lane: portal {
+    brief = "a cobbled lane"
+}
+
+deflocation cobbled_square: isle_location {
+    name = "Cobbled Square"
+    description = |
+        The fresh smell of the sea pleasantly fills this small seaside plaza.
+
+    tutorial = |
+        Completing quests has given you enough experience to gain a level! By
+        doing so you have also gained `help:karma`, which you can use to join
+        `help:guilds` and learn `help:skills`. Skills grant you access to
+        special actions. As you travel the world, be on the lookout for trainers
+        who can induct you into their guilds and teach you a variety of skills."
+
+    surface = 'stone
+    exits = [iron_gate -> 'north to guard_station, sandy_path -> 'west to beach_east,
+             cobbled_lane -> 'east to pier, lib.entry_doorway -> 'south to dockmaster_shack]
+}
+
+// beach
+
+def shiny_seashell: item {
+    brief = "a shiny seashell"
+    description = |
+        The seashell's polished surface is covered with an intricate pattern of
+        white and orange whorls.
+    alts = ["a shiny shell"]
+    stack_limit = 10
+    size = 'tiny
+
+    when take(actor, self, source) {
+        spawn(shiny_seashell, source, random(1800, 7200))
+    }
+}
+
+def beach_portal: portal {
+    brief = "the beach"
+    // FIXME: pose = "continues to the %s."
+}
+
+def beach_location: isle_location {
+    name = "Rocky Beach"
+    description = "The sand on this narrow beach is full of pebbles and shell fragments."
+    domain = 'outdoor
+    surface = 'sand
+}
+
+deflocation beach_east: beach_location {
+    exits = [beach_portal -> 'west to beach_center, sandy_path -> 'east to cobbled_square]
+}
+
+deflocation beach_center: beach_location {
+    exits = [beach_portal -> 'west to beach_west, beach_portal -> 'east to beach_east]
+}
+
+deflocation beach_west: beach_location {
+    exits = [beach_portal -> 'east to beach_center]
+    contents = [shiny_seashell!]
+}

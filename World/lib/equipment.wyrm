@@ -30,3 +30,27 @@ def dagger: weapon {
     damage_type = 'piercing
     speed = 1.5
 }
+
+// natural weapons
+
+def natural_weapon: weapon {
+    speed = 3.0
+}
+
+def fist: natural_weapon {
+    damage_type = 'crushing
+    attack_verb = "bashes"
+    critical_verb = "crushes"
+}
+
+def claw: natural_weapon {
+    damage_type = 'slashing
+    attack_verb = "swipes"
+    critical_verb = "slashes"
+}
+
+def bite: natural_weapon {
+    damage_type = 'piercing
+    attack_verb = "bites"
+    critical_verb = "tears"
+}

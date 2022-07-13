@@ -13,3 +13,7 @@ def npc: creature {
         show(actor) "{self:D} has nothing to say to you."
     }
 }
+
+def entry_doorway: portal {
+    brief = "a doorway"
+}
