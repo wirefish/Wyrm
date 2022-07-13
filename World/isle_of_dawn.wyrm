@@ -1126,6 +1126,7 @@ def guard: lib.npc {
                 pass.
             return false
         }
+        return true
     }
 }
 
