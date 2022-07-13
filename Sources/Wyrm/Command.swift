@@ -136,7 +136,7 @@ class Command {
         fn(actor, verb, parseClauses(&rest))
     }
 
-    func parseClauses(_ tokens: inout TokenSequence) -> [Clause?] {
+    private func parseClauses(_ tokens: inout TokenSequence) -> [Clause?] {
         var clauses = [Clause?]()
         var needsPrep = false
 
@@ -193,7 +193,11 @@ class Command {
 
         return clauses
     }
+}
 
+// MARK: - processing input
+
+extension Command {
     struct VerbAction: Comparable {
         enum Action {
             case none
