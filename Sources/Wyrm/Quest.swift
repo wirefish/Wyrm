@@ -88,11 +88,8 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
                 && avatar.completedQuests[ref] == nil)
     }
 
-    func completeableBy(_ avatar: Avatar) -> Bool {
-        guard let state = avatar.activeQuests[ref] else {
-            return false
-        }
-        return state.phase == phases.last!.label
+    func completableBy(_ avatar: Avatar) -> Bool {
+        return avatar.activeQuests[ref]?.phase == phases.last!.label
     }
 }
 
@@ -102,20 +99,45 @@ protocol Questgiver {
     func advancesQuest(_ quest: Quest, phase: String) -> Bool
 }
 
+extension Questgiver {
+    func offersQuestFor(_ avatar: Avatar) -> Bool {
+        offersQuests.contains { $0.acceptableBy(avatar) }
+    }
+
+    func advancesQuestFor(_ avatar: Avatar) -> Bool {
+        return avatar.activeQuests.contains { (ref, state) in
+            guard case let .quest(quest) = ref.deref() else {
+                return false
+            }
+            return advancesQuest(quest, phase: state.phase)
+        }
+    }
+
+    func completesQuestFor(_ avatar: Avatar) -> Bool {
+        return avatar.activeQuests.contains { (ref, state) in
+            guard case let .quest(quest) = ref.deref(),
+                  state.phase == quest.phases.last!.label else {
+                return false
+            }
+            return advancesQuest(quest, phase: state.phase)
+        }
+    }
+}
+
 extension Entity {
     // Returns true if this entity has an event handler constrained to a
     // specific quest and phase, indicating that it is involved in advancing the
     // quest. This is used to mark entities on the map, etc.
     func advancesQuest(_ quest: Quest, phase: String) -> Bool {
-        return handlers.contains {
-            $0.fn.parameters.contains {
+        return handlers.contains { handler in
+            handler.fn.parameters.contains {
                 if case let .quest(r, p) = $0.constraint {
-                    return quest.ref == r && phase == p
+                    return quest.ref == r.toAbsolute(in: handler.fn.module) && phase == p
                 } else {
                     return false
                 }
             }
-        }
+        } || (prototype?.advancesQuest(quest, phase: phase) == true)
     }
 }
 
@@ -135,6 +157,9 @@ struct QuestOffer: Offer {
             avatar.activeQuests[quest.ref] = QuestState(phase: phase.label, state: phase.initialState)
             avatar.showNotice("You have accepted the quest \"\(quest.name)\".")
         }
+
+        // FIXME:
+        avatar.showMap()
     }
 
     func decline(_ avatar: Avatar) {
@@ -144,21 +169,6 @@ struct QuestOffer: Offer {
 
 // Avatar methods related to managing quests.
 extension Avatar {
-    // Called when the player types `accept` after having been offered a quest.
-    func acceptQuest(_ quest: Quest, from npc: PhysicalEntity?) {
-        guard quest.acceptableBy(self) && npc != nil else {
-            showNotice("You can no longer accept the quest \(quest.name).")
-            return
-        }
-
-        triggerEvent("accept_quest", in: location, participants: [self, npc!],
-                             args: [self, quest, npc!]) {
-            let phase = quest.phases.first!
-            activeQuests[quest.ref] = QuestState(phase: phase.label, state: phase.initialState)
-            showNotice("You have accepted the quest \(quest.name).")
-        }
-    }
-
     func advanceQuest(_ quest: Quest, to phaseLabel: String) -> Bool {
         guard let phase = quest.phases.first(where: { $0.label == phaseLabel }) else {
             logger.warning("cannot advance quest \(quest.name) to unknown phase \(phaseLabel)")
@@ -166,6 +176,10 @@ extension Avatar {
         }
         activeQuests.updateValue(QuestState(phase: phaseLabel, state: phase.initialState),
                                  forKey: quest.ref)
+
+        // FIXME:
+        showMap()
+
         return true
     }
 
@@ -175,6 +189,10 @@ extension Avatar {
             return false
         }
         // TODO: remove quest items
+
+        // FIXME:
+        showMap()
+
         return true
     }
 
@@ -182,6 +200,9 @@ extension Avatar {
         activeQuests[quest.ref] = nil
         completedQuests[quest.ref] = Int(CFAbsoluteTimeGetCurrent() / 60)
         showNotice("You have completed the quest \"\(quest.name)\"!")
+
+        // FIXME:
+        showMap()
     }
 
     func didCompleteQuest(_ quest: Quest) -> Bool {

@@ -63,6 +63,9 @@ final class Avatar: PhysicalEntity {
     // Current activity, if any.
     var activity: Activity?
 
+    // Cached copy of last map displayed to the player.
+    var map: Map?
+
     // Open WebSocket used to communicate with the client.
     var handler: WebSocketHandler?
 

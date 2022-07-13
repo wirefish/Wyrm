@@ -11,4 +11,12 @@
 
 - show tutorials. implement tutorial command to force show and reset.
 
-- update map icons when quest state changes.
+- nice to have: lighter weight message to update specific map locations.
+
+- pick up items
+
+- respawn after delay
+
+- inventory
+
+- optional exit message for portals, replaces "You head east."

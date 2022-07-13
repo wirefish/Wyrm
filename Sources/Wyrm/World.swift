@@ -60,6 +60,19 @@ enum ValueRef: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
     func toValue() -> Value {
         return .ref(self)
     }
+
+    func deref() -> Value? {
+        World.instance.lookup(self, context: nil)
+    }
+
+    func toAbsolute(in module: Module) -> ValueRef {
+        switch self {
+        case .absolute:
+            return self
+        case let .relative(name):
+            return .absolute(module.name, name)
+        }
+    }
 }
 
 enum WorldError: Error {
