@@ -36,13 +36,16 @@ struct TokenSequence: Sequence, IteratorProtocol {
         return token
     }
 
-    mutating func rest() -> Substring? {
+    mutating func rest() -> String? {
+        /*
         guard let start = input.firstIndex(where: { !$0.isWhitespace }) else {
             return nil
         }
         let rest = input[start...]
         input.removeAll()
         return rest
+         */
+        return peek() != nil ? joined(separator: " ") : nil
     }
 }
 
@@ -107,8 +110,21 @@ struct Grammar {
 // MARK: - Command
 
 class Command {
-    typealias Clause = [String]
-    typealias RunFunction = (Avatar, String, [Clause?]) -> Void
+    enum Clause {
+        case empty
+        case tokens([String])
+        case string(String)
+
+        var asString: String {
+            switch self {
+            case .empty: return ""
+            case let .tokens(tokens): return tokens.joined(separator: " ")
+            case let .string(s): return s
+            }
+        }
+    }
+
+    typealias RunFunction = (Avatar, String, [Clause]) -> Void
 
     let grammar: Grammar
     let aliases: [(String,String)]
@@ -136,8 +152,8 @@ class Command {
         fn(actor, verb, parseClauses(&rest))
     }
 
-    private func parseClauses(_ tokens: inout TokenSequence) -> [Clause?] {
-        var clauses = [Clause?]()
+    private func parseClauses(_ tokens: inout TokenSequence) -> [Clause] {
+        var clauses = [Clause]()
         var needsPrep = false
 
         // Each iteration of this loop attempts to match the remaining input against
@@ -146,16 +162,16 @@ class Command {
             switch clause {
             case .word:
                 if let word = tokens.next() {
-                    clauses.append([word.lowercased()])
+                    clauses.append(.string(word.lowercased()))
                 } else {
-                    clauses.append(nil)
+                    clauses.append(.empty)
                 }
 
             case .rest:
                 if let rest = tokens.rest() {
-                    clauses.append([String(rest)])
+                    clauses.append(.string(rest))
                 } else {
-                    clauses.append(nil)
+                    clauses.append(.empty)
                 }
 
             case let .phrase(preps, _):
@@ -165,7 +181,7 @@ class Command {
                 // clause matches the text until that position.
                 var prep = tokens.peek()?.lowercased()
                 if prep == nil {
-                    clauses.append(nil)
+                    clauses.append(.empty)
                     break
                 }
                 var found = false
@@ -185,7 +201,7 @@ class Command {
                         phraseTokens.append(token)
                         tokens.consume()
                     }
-                    clauses.append(phraseTokens.isEmpty ? nil : phraseTokens)
+                    clauses.append(phraseTokens.isEmpty ? .empty : .tokens(phraseTokens))
                 }
                 needsPrep = true
             }
@@ -282,13 +298,9 @@ func primaryCommandVerbs() -> [String] {
     allCommands.map({ $0.grammar.verbs.first! }).sorted()
 }
 
-let helpCommand = Command("help topic") { actor, verb, clauses in
-    let topic = clauses[0]
-    if topic == nil {
-        let verbs = primaryCommandVerbs()
-        actor.showLinks(helpIntro, "help", verbs)
-    } else {
-        let actions = Command.matchVerb(topic!.first!)
+let helpCommand = Command("help 1:topic 1:subtopic") { actor, verb, clauses in
+    if case let .string(topic) = clauses[0] {
+        let actions = Command.matchVerb(topic)
         if actions.isEmpty {
             actor.show("There is no help available for that topic.")
         } else if actions.count > 1 {
@@ -309,6 +321,9 @@ let helpCommand = Command("help topic") { actor, verb, clauses in
                 break
             }
         }
+    } else {
+        let verbs = primaryCommandVerbs()
+        actor.showLinks(helpIntro, "help", verbs)
     }
 }
 
@@ -324,4 +339,5 @@ let allCommands = [
     meditateCommand,
     questCommand,
     talkCommand,
+    tutorialCommand,
 ]

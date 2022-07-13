@@ -99,7 +99,7 @@ let goCommand = Command("go|head direction", aliases: goAliases, help: goHelp) {
         return
     }
 
-    guard let tokens = clauses[0] else {
+    guard case let .tokens(tokens) = clauses[0] else {
         actor.show("Where do you want to go?")
         return
     }

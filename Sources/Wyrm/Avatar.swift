@@ -52,10 +52,12 @@ final class Avatar: PhysicalEntity {
     // A mapping from identifiers of completed quests to the time of completion.
     var completedQuests = [ValueRef:Int]()
 
-    var tutorialsSeen = Set<String>()
-
     // Current rank in all known skills.
     var skills = [ValueRef:Int]()
+
+    // Tutorials.
+    var tutorialsOn = true
+    var tutorialsSeen = Set<String>()
 
     // Pending offer, if any.
     var offer: Offer?
@@ -208,7 +210,7 @@ extension Avatar {
     }
 
     func showTutorial(_ key: String, _ message: String) {
-        if tutorialsSeen.insert(key).inserted {
+        if tutorialsOn && tutorialsSeen.insert(key).inserted {
             sendMessage("showTutorial", .string(message))
         }
     }
@@ -244,18 +246,9 @@ extension Avatar {
 // MARK: - look command
 
 let lookCommand = Command("look at:target with|using|through:tool") { actor, verb, clauses in
-    let target = clauses[0], tool = clauses[1]
-
-    if target == nil {
-        if tool == nil {
-            actor.describeLocation()
-            return
-        } else {
-            // TODO:
-        }
-    } else {
+    if case let .tokens(target) = clauses[0] {
         let location = actor.container as! Location
-        guard let targetMatch = match(target!, against: location.contents, location.exits, where: {
+        guard let targetMatch = match(target, against: location.contents, location.exits, where: {
             $0.isVisible(to: actor)
         }) else {
             actor.show("You don't see anything like that here.")
@@ -266,6 +259,12 @@ let lookCommand = Command("look at:target with|using|through:tool") { actor, ver
 
         for target in targetMatch {
             actor.show(target.describeFully())
+        }
+    } else {
+        if case let .tokens(tool) = clauses[1] {
+            // TODO:
+        } else {
+            actor.describeLocation()
         }
     }
 }
@@ -278,7 +277,7 @@ let talkCommand = Command("talk to:target about:topic") { actor, verb, clauses i
     }
 
     var targets: [PhysicalEntity]
-    if let targetPhrase = clauses[0] {
+    if case let .tokens(targetPhrase) = clauses[0] {
         guard let match = match(targetPhrase, against: candidates) else {
             actor.show("There's nobody like that here to talk to.")
             return
@@ -299,9 +298,52 @@ let talkCommand = Command("talk to:target about:topic") { actor, verb, clauses i
     }
 
     let target = targets.first!
-    let topic = clauses[1]?.joined(separator: " ") ?? ""
+    let topic = clauses[1].asString
 
     triggerEvent("talk", in: actor.location, participants: [actor, target],
                  args: [actor, target, topic]) {
+    }
+}
+
+// MARK: - tutorial command
+
+let tutorialHelp = """
+Use the `tutorial` command to control how you see tutorial messages associated
+with locations or actions. Tutorials are used to introduce new players to game
+concepts and commands.
+
+The command can be used in several ways:
+
+- Type `tutorial` to see the tutorial associated with the current location, if any.
+
+- Type `tutorial off` to disable display of tutorials.
+
+- Type `tutorial on` to re-enable display of tutorials. Tutorials are on by default.
+
+- Type `tutorial reset` to clear your memory of the tutorials you've already
+seen. You will see them again the next time you encounter them.
+"""
+
+let tutorialCommand = Command("tutorial 1:subcommand", help: tutorialHelp) { actor, verb, clauses in
+    if case let .string(subcommand) = clauses[0] {
+        switch subcommand {
+        case "on":
+            actor.tutorialsOn = true
+            actor.show("Tutorials are enabled.")
+        case "off":
+            actor.tutorialsOn = false
+            actor.show("Tutorials are disabled.")
+        case "reset":
+            actor.tutorialsSeen = []
+            actor.show("Tutorials have been reset.")
+        default:
+            actor.show("Unrecognized subcommand \"\(subcommand)\".")
+        }
+    } else {
+        if let tutorial = actor.location.tutorial {
+            actor.sendMessage("showTutorial", .string(tutorial))
+        } else {
+            actor.show("There is no tutorial associated with this location.")
+        }
     }
 }
