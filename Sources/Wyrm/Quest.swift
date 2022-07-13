@@ -85,7 +85,8 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
         // TODO: other requirements
         return (avatar.level >= level
                 && avatar.activeQuests[ref] == nil
-                && avatar.completedQuests[ref] == nil)
+                && avatar.completedQuests[ref] == nil
+                && avatar.didCompleteQuests(requiredQuests))
     }
 
     func completableBy(_ avatar: Avatar) -> Bool {
@@ -207,6 +208,10 @@ extension Avatar {
 
     func didCompleteQuest(_ quest: Quest) -> Bool {
         return completedQuests[quest.ref] != nil
+    }
+
+    func didCompleteQuests(_ refs: [ValueRef]) -> Bool {
+        refs.allSatisfy { completedQuests[$0] != nil }
     }
 }
 
