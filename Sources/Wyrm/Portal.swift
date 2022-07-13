@@ -21,6 +21,7 @@ class Portal: PhysicalEntity {
     var isCloseable = false
     var lockableWith: Item?
     var state = PortalState.open
+    var exitMessage: String?
     weak var twin: Portal?
 
     override func copyProperties(from other: Entity) {
@@ -37,6 +38,7 @@ class Portal: PhysicalEntity {
         "is_closeable": accessor(\Portal.isCloseable),
         "lockable_with": accessor(\Portal.lockableWith),
         "state": accessor(\Portal.state),
+        "exit_message": accessor(\Portal.exitMessage),
         "twin": accessor(\Portal.twin),
     ]
 
@@ -159,7 +161,7 @@ extension Avatar {
         // define the prep to use.
         cancelActivity()
         cancelOffer()
-        show("You head \(portal.direction).")
+        show(portal.exitMessage ?? "You head \(portal.direction).")
     }
 
     func didEnterLocation(via portal: Portal) {

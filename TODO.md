@@ -18,5 +18,3 @@
 - respawn after delay
 
 - inventory
-
-- optional exit message for portals, replaces "You head east."
