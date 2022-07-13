@@ -35,6 +35,7 @@ class Portal: PhysicalEntity {
     }
 
     static let accessors = [
+        "direction": accessor(\Portal.direction),
         "is_closeable": accessor(\Portal.isCloseable),
         "lockable_with": accessor(\Portal.lockableWith),
         "state": accessor(\Portal.state),
@@ -79,8 +80,8 @@ let goAliases = [
     ["nw", "northwest"]: "go northwest",
     ["in", "enter"]: "go in",
     ["out", "exit"]: "go out",
-    ["up"]: "go up",
-    ["down"]: "go down",
+    ["u", "up"]: "go up",
+    ["d", "down"]: "go down",
 ]
 
 let goHelp = """

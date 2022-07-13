@@ -1121,8 +1121,8 @@ def guard: lib.npc {
         if portal.direction == 'south {
             show(actor) "The guard moves with unexpected agility to block your path."
             tell(self, actor) |
-                Stop right there, friend. You need to perform the tasks set for
-                you by myself and my comrades to the north before I will let you
+                Stop right there, friend. You need to complete the tasks set for
+                you by myself and my comrades to the north before I can let you
                 pass.
             return false
         }
@@ -1287,4 +1287,168 @@ deflocation beach_center: beach_location {
 deflocation beach_west: beach_location {
     exits = [beach_portal -> 'east to beach_center]
     contents = [shiny_seashell!]
+}
+
+// dockmaster_shack
+
+def bundle_of_documents: item {
+    brief = "a bundle[s] of documents"
+    description = |
+        The documents are rather mundane shipping records. A scrawled note on
+        top reads, "Pay the messenger 10 silver. Q.M."
+    quest = document_delivery
+}
+
+defquest document_delivery {
+    name = "On to Arwyck"
+    summary = |
+        Deliver the dockmaster's documents to the surly stevedore at the
+        Arwyck docks.
+    required_quests = [kill_some_plants]
+
+    phase active {
+        summary = "Collect the dockmaster's documents."
+    }
+
+    phase done {
+        summary = "Give the dockmaster's documents to the surly stevedore in Arwyck."
+    }
+}
+
+def dockmaster: lib.npc {
+    brief = "the dockmaster"
+    pose = "sits behind the desk."
+    description = |
+        The dockmaster is a grizzled man with a short salt-and-pepper beard. His
+        left eye is covered with a leather patch, but his right eye harbors a
+        dangerous gleam.
+    offers_quests = [document_delivery]
+
+    when talk(actor: .quest(document_delivery, available), self, topic) {
+        tell(self, actor) |
+            You there. I've an errand that needs doing if you've a mind to earn
+            some coin.
+        offer_quest(self, document_delivery, actor)
+    }
+
+    after accept_quest(actor, quest: document_delivery, self) {
+        tell(self, actor) "Good, good. Take these."
+
+        receive(actor, bundle_of_documents!, self)
+
+        tell(self, actor) |
+            I need you to deliver those to my man in Arwyck. Surly fellow near
+            the docks. Can't miss him. He'll pay you once he has the documents.
+            The ship to Arwyck leaves from the dock outside.
+    }
+
+    when talk(actor: .quest(document_delivery, active), self, topic) {
+        tell(self, actor) |
+            What are you doing here? My man needs those documents. The *Siren*
+            departs for Arwyck from the dock just east of here.
+    }
+
+    when talk(actor: .quest(document_delivery, complete), self, topic) {
+        tell(self, actor) |
+            Thanks for helping me out before. I might have more errands for you
+            in the future; be sure to check back.
+    }
+}
+
+def desktop_documents: fixture {
+    brief = "document"
+    description = |
+        You discreetly scan the papers on top of the pile. They appear to be
+        schedules, manifests, and other such shipping-related documents.
+    is_obvious = false
+}
+
+def wine_bottles: fixture {
+    brief = "wine bottle"
+    description = |
+        You may have been dead for hundreds of years, but wine hasn't changed
+        all that much; you still recognize the cheap stuff when you see it.
+    is_obvious = false
+}
+
+deflocation dockmaster_shack: isle_location {
+    name = "Dockmaster's Shack"
+    description = |
+        This one-room structure is dominated by a large desk that is piled with
+        documents and empty wine bottles.
+    domain = 'indoor
+    surface = 'wood
+    contents = [dockmaster!, desktop_documents, wine_bottles]
+    exits = [lib.exit_doorway -> 'north to cobbled_square,
+             lib.stairway -> 'down to dockmaster_basement]
+}
+
+// dockmaster_basement
+
+deflocation dockmaster_basement: isle_location {
+    name = "Basement of the Dockmaster's Shack"
+    description = |
+        This low, damp space is more of a crawlspace than a basement. Several
+        barrels and crates have been pushed into one corner of the dirt floor.
+    domain = 'indoor
+    surface = 'dirt
+    exits = [lib.stairway -> 'up to dockmaster_shack]
+}
+
+// pier
+
+def dock_sign: fixture {
+    brief = "an informative sign"
+    pose = "is posted here."
+    description = |
+        The sign indicates that a ship frequently arrives here to carry
+        passengers across the sea to the village of Arwyck.
+}
+
+deflocation pier: isle_location {
+    name = "Sturdy Pier"
+    description = |
+        This stone pier juts out into the sea, giving ships that visit the
+        isle a safe place to dock.
+
+    tutorial = |
+        To board a ship for Arwyck, wait until it arrives and then move `east`.
+        Once the ship reaches its destination, move `south` to disembark.
+
+    surface = 'stone
+    contents = [dock_sign]
+    exits = [cobbled_lane -> 'west to cobbled_square]
+}
+
+def gangplank: portal {
+    brief = "a gangplank"
+}
+
+def sailor: lib.npc {
+    brief = "a grizzled sailor"
+    description = |
+        The sailor has a short, salt-and-pepper beard and wears a faded uniform.
+        His forearms are unusually burly.
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Ahoy! Welcome aboard the *Siren*. Every few moments we make the
+            short run between Arwyck and the Isle of Dawn. Relax and enjoy the
+            trip!
+    }
+}
+
+// FIXME:
+deflocation the_siren: location {
+    name = "The *Siren*"
+    description = |
+        This sturdy single-masted vessel makes frequent trips between the Isle
+        of Dawn and the village of Arwyck on the mainland.
+    domain = 'outdoor
+    surface = 'wood
+    surrounding = 'water
+    icon = 'boat
+    contents = [sailor]
+
+    route = [gangplank -> 'west to pier, gangplank -> 'south to arwyck.west_dock]
 }

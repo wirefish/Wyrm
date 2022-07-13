@@ -110,6 +110,16 @@ extension World {
                     default: break
                     }
 
+                case let .symbol(a):
+                    guard case let .symbol(b) = rhs else {
+                        throw ExecError.typeMismatch
+                    }
+                    switch op {
+                    case .equal: stack.append(.boolean(a == b))
+                    case .notEqual: stack.append(.boolean(a != b))
+                    default: break
+                    }
+
                 default:
                     throw ExecError.typeMismatch
                 }

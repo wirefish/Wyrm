@@ -14,6 +14,16 @@ def npc: creature {
     }
 }
 
+// Portals
+
 def entry_doorway: portal {
     brief = "a doorway"
+}
+
+def exit_doorway: portal {
+    brief = "a doorway"
+}
+
+def stairway: portal {
+    brief = "a stairway"
 }
