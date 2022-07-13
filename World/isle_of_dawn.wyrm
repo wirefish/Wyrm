@@ -931,7 +931,7 @@ def mistress_of_names: lib.npc {
     description = |
         The mistress of names is a short, slender woman of indeterminate age.
         Her long auburn hair is bound in a loose ponytail. She wears a pair of
-        horn-rimmed spectacles and her clothing is rumpled and ink_stained.
+        horn-rimmed spectacles and her clothing is rumpled and ink-stained.
     offers_quests = [choose_a_name]
 
     when talk(actor: .quest(choose_a_name, available), self, topic) {
