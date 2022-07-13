@@ -261,27 +261,33 @@ lose all progress and items associated with the quest. You will need to accept
 it and begin again if you decide to complete it in the future.
 """
 
-let questCommand = Command("quest 1:subcommand *:name", help: questHelp) { actor, verb, clauses in
-
-    print(actor.activeQuests)
-    print(actor.completedQuests)
-
-    let descriptions: [String] = actor.activeQuests.compactMap {
-        let (ref, state) = $0
-        guard case let .quest(quest) = world.lookup(ref, context: nil) else {
-            logger.warning("\(actor) has invalid active quest \(ref)")
-            return nil
+let questCommand = Command("quest 1:subcommand name", help: questHelp) { actor, verb, clauses in
+    if case let .string(subcommand) = clauses[0] {
+        switch subcommand {
+        case "drop":
+            // FIXME:
+            break
+        default:
+            actor.show("Unrecognized subcommand \"\(subcommand)\".")
         }
-        guard let phase = quest.phase(state.phase) else {
-            logger.warning("\(actor) has invalid phase \(state.phase) for quest \(ref)")
-            return nil
-        }
-        return "\(quest.name): \(phase.summary)"
-    }
-
-    if descriptions.isEmpty {
-        actor.show("You have no active quests.")
     } else {
-        actor.showList("You are on the following quests:", descriptions)
+        let descriptions: [String] = actor.activeQuests.compactMap {
+            let (ref, state) = $0
+            guard case let .quest(quest) = world.lookup(ref, context: nil) else {
+                logger.warning("\(actor) has invalid active quest \(ref)")
+                return nil
+            }
+            guard let phase = quest.phase(state.phase) else {
+                logger.warning("\(actor) has invalid phase \(state.phase) for quest \(ref)")
+                return nil
+            }
+            return "\(quest.name): \(phase.summary)"
+        }
+
+        if descriptions.isEmpty {
+            actor.show("You have no active quests.")
+        } else {
+            actor.showList("You are on the following quests:", descriptions)
+        }
     }
 }

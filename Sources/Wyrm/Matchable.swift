@@ -2,8 +2,6 @@
 //  Matchable.swift
 //  Wyrm
 //
-//  Created by Craig Becker on 6/29/22.
-//
 
 enum MatchQuality: Comparable {
     case none, partial, exact
@@ -30,6 +28,7 @@ extension String: Matchable {
             guard let token = tokens.first else {
                 break
             }
+            let selfToken = selfToken.lowercased()
             if selfToken == token {
                 quality = min(quality, .exact)
                 tokens.removeFirst()

@@ -37,14 +37,6 @@ struct TokenSequence: Sequence, IteratorProtocol {
     }
 
     mutating func rest() -> String? {
-        /*
-        guard let start = input.firstIndex(where: { !$0.isWhitespace }) else {
-            return nil
-        }
-        let rest = input[start...]
-        input.removeAll()
-        return rest
-         */
         return peek() != nil ? joined(separator: " ") : nil
     }
 }
@@ -78,14 +70,16 @@ struct Grammar {
         self.verbs = verbs.split(separator: "|").map { String($0) }
 
         var clauses = [Clause]()
+        var hasPhraseClause = false
         while let clause = it.next() {
             let parts = clause.split(separator: ":", maxSplits: 1)
             switch parts.count {
             case 1:
-                if clauses.isEmpty {
+                if !hasPhraseClause {
                     clauses.append(.phrase([], String(parts[0])))
+                    hasPhraseClause = true
                 } else {
-                    logger.error("clauses after the first must specify at least one preposition")
+                    logger.error("phrase clauses after the first must specify at least one preposition")
                 }
             case 2:
                 let name = String(parts[1])
