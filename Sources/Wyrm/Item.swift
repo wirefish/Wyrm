@@ -8,7 +8,7 @@
 class Item: PhysicalEntity {
     var stackLimit = 1
     var count = 1
-    var level = 0
+    var level = 1
     var useVerbs = [String]()
     var quest: ValueRef?
 

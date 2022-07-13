@@ -121,7 +121,8 @@ class World {
                               ("fixture", Fixture(withPrototype: nil)),
                               ("item", Item(withPrototype: nil)),
                               ("location", Location(withPrototype: nil)),
-                              ("portal", Portal(withPrototype: nil))] {
+                              ("portal", Portal(withPrototype: nil)),
+                              ("weapon", Weapon(withPrototype: nil))] {
             proto.ref = .absolute(builtins.name, name)
             builtins[name] = .entity(proto)
         }

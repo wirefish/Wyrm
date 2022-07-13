@@ -47,9 +47,37 @@ class Equipment: Item {
     ]
 
     override subscript(member: String) -> Value? {
-        get { return Equipment.accessors[member]?.get(self) ?? super[member] }
+        get { return Self.accessors[member]?.get(self) ?? super[member] }
         set {
-            if let acc = Equipment.accessors[member] {
+            if let acc = Self.accessors[member] {
+                acc.set(self, newValue!)
+            } else {
+                super[member] = newValue
+            }
+        }
+    }
+}
+
+class Weapon: Equipment {
+    var damageType = DamageType.crushing
+    var speed = 3.0
+
+    override func copyProperties(from other: Entity) {
+        let other = other as! Weapon
+        damageType = other.damageType
+        speed = other.speed
+        super.copyProperties(from: other)
+    }
+
+    private static let accessors = [
+        "damage_type": accessor(\Weapon.damageType),
+        "speed": accessor(\Weapon.speed),
+    ]
+
+    override subscript(member: String) -> Value? {
+        get { return Self.accessors[member]?.get(self) ?? super[member] }
+        set {
+            if let acc = Self.accessors[member] {
                 acc.set(self, newValue!)
             } else {
                 super[member] = newValue

@@ -40,6 +40,8 @@ struct EventHandler {
                     return (avatar.offer as? QuestOffer)?.quest === quest
                 } else if phase == "complete" {
                     return avatar.completedQuests[quest.ref] != nil
+                } else if phase == "incomplete" {
+                    return avatar.completedQuests[quest.ref] == nil
                 } else {
                     return avatar.activeQuests[quest.ref]?.phase == phase
                 }
