@@ -756,3 +756,399 @@ deflocation tulip_field_nw: tulip_field {
 deflocation tulip_field_ne: tulip_field {
     exits = [gravel_path -> 'west to tulip_field_nw, gravel_path -> 'south to tulip_field_se]
 }
+
+// fountain_plaza
+
+def fountain: fixture {
+    brief = "a stone fountain"
+    pose = "stands in the middle of the plaza."
+    description = |
+        This large fountain depicts a circle of men and women holding hands and
+        dancing around a central pillar. Water bursts forth from atop the
+        pillar, creating a delightful sound as it lands at the figures' feet.
+}
+
+defquest choose_a_gender {
+    name = "He or She?"
+    summary = |
+        Select your gender by meditating at one of the shrines near Fountain
+        Plaza, then return to the cherub.
+    required_quests = [get_some_clothes]
+
+    phase active {
+        summary = |
+            Meditate at one of the two gender shrines near Fountain Plaza.
+    }
+
+    phase done {
+        summary = "Return to the cherub at Fountain Plaza."
+    }
+}
+
+def cherub: lib.npc {
+    brief = "a cherub"
+    pose = "hovers nearby, its wings flapping madly."
+    description = |
+        The cherub is a small, chubby creature with white feathered wings.
+        Although its stature and harmless aspect are those of a child, its dark
+        and penetrating eyes make it clear this is a creature both ancient and
+        wise.
+    offers_quests = [choose_a_gender]
+
+    when talk(actor: .quest(choose_a_gender, available), self, topic) {
+        tell(self, actor) |
+            Another new arrival! Good to see you. We're certain to need more
+            heroes of your caliber before long. Right now, though, it's high
+            time you chose a gender. I assume you remember the difference
+            between males and females from your previous life?
+        offer_quest(self, choose_a_gender, actor)
+    }
+
+    after accept_quest(actor, quest: choose_a_gender, self) {
+        tell(self, actor) |
+            To the east and west you will find statues that symbolize the two
+            sexes. Simply `meditate` near the statue that represents your
+            preferred gender. Come back to me when you're done.
+    }
+
+    when talk(actor: .quest(choose_a_gender, active), self, topic) {
+        tell(self, actor) "Did you find the statues? They're hard to miss!"
+    }
+
+    when talk(actor: .quest(choose_a_gender, done), self, topic) {
+        tell(self, actor) |
+            You did it! I must admit I'm somewhat surprised by your
+            choice. No matter; I'm sure I'll get used to it. Eventually.
+        complete_quest(actor, choose_a_gender)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Hello there! Do you like my wings? I recently had them waxed.
+    }
+}
+
+deflocation fountain_plaza: isle_location {
+    name = "Fountain Plaza"
+    description = |
+        This hexagonal plaza is paved with multi-colored stone tiles.
+    surface = 'stone
+    contents = [fountain!, cherub!]
+    exits = [gravel_path -> 'north to clothing_stall, gravel_path -> 'south to circle_of_names,
+             gravel_path -> 'west to male_shrine, gravel_path -> 'east to female_shrine]
+}
+
+// male_shrine
+
+def male_statue: fixture {
+    brief = "a large marble statue"
+    pose = "stands in the center of the plaza."
+    description = |
+        The statue stands over twelve feet tall. Its form subtly shifts as you
+        view it, taking on properties of different races and embodying various
+        masculine virtues. It somehow reflects your own personal concept of the
+        perfect male.
+}
+
+deflocation male_shrine: isle_location {
+    name = "Shrine of Masculinity"
+    descrpiton = |
+        Low shrubs, cut in complex geometric patterns, surround a plaza covered
+        with white gravel.
+    contents = [male_statue!]
+    exits = [gravel_path -> 'east to fountain_plaza]
+
+    when meditate(actor: .quest(choose_a_gender, active)) {
+        show(actor) |
+            The statue's mouth begins to move and a deep voice intones several
+            archaic words you don't understand.
+        change_gender(actor, 'male)
+        complete_quest(actor, choose_a_gender)
+    }
+}
+
+// female_shrine
+
+def female_statue: fixture {
+    brief = "a large jade statue"
+    pose = "stands in the center of the area."
+    description = |
+        The statue stands over twelve feet tall. Its eyes seem to follow you. As
+        you consider the statue, your thoughts wander; its features change in
+        your mind's eye to reflect your personal ideal of femininity.
+}
+
+deflocation female_shrine: isle_location {
+    name = "Shrine of Femininity"
+    description = |
+        A multitude of flowering vines have been trained to ornate trellises
+        that surround a bowl_shaped area covered with a carpet of blossoming
+        clover.
+    contents =  [female_statue!]
+    exits = [gravel_path -> 'west to fountain_plaza]
+
+    when meditate(actor: .quest(choose_a_gender, active)) {
+        show(actor) |
+            The statue slowly turns its head to face you and says several arcane
+            words in a powerful, mellifluous voice.
+        change_gender(actor, 'female)
+        complete_quest(actor, choose_a_gender)
+    }
+}
+
+// circle_of_names
+
+def tree_of_names: fixture {
+    brief = "a beautiful tree"
+    pose = "grows in the center of the lawn."
+    description = |
+        The tree has smooth, silvery bark and broad leaves of the deepest green.
+        Thousands of names have been written in luminous ink upon its trunk, all
+        using the same flowing script.
+}
+
+defquest choose_a_name {
+    name = "Nameless No More"
+    summary = |
+        Choose your name by saying it in the presence of the orb of naming, then
+        return to the mistress of names."
+    required_quests = [choose_a_gender]
+
+    phase active {
+        summary = |
+            Find the orb of naming and say your chosen name in its presence.
+    }
+
+    phase done {
+        summary = |
+            Return to the mistress of names.
+    }
+}
+
+def mistress_of_names: lib.npc {
+    brief = "the mistress of names"
+    pose = "stands beneath the tree."
+    description = |
+        The mistress of names is a short, slender woman of indeterminate age.
+        Her long auburn hair is bound in a loose ponytail. She wears a pair of
+        horn-rimmed spectacles and her clothing is rumpled and ink_stained.
+    offers_quests = [choose_a_name]
+
+    when talk(actor: .quest(choose_a_name, available), self, topic) {
+        tell(self, actor) |
+            Oh, hello. I didn't see you standing there. I hope you haven't been
+            waiting long. How can I help you?
+
+            Ah! You need a name, don't you. You've come to the right place; I'd
+            be happy to help you out.
+        offer_quest(self, choose_a_name, actor)
+    }
+
+    after accept_quest(actor, quest: choose_a_name, self) {
+        tell(self, actor) |
+            Just to the east you'll see a magical orb. Find it and say the word.
+            Literally! Stand next to the orb and `say` the word you want to have
+            as your name. The orb's power is truly remarkable.
+
+            Once your anonymity has been cured, come back to me so I can record
+            your new name on the trunk of this tree with the names of all the
+            other heroes who have passed this way.
+    }
+
+    when talk(actor: .quest(choose_a_name, active), self, topic) {
+        tell(self, actor) |
+            Still going incognito? You'll find the orb of naming just to the
+            east.
+    }
+
+    when talk(actor: .quest(choose_a_name, done), self, topic) {
+        tell(self, actor) |
+            Yes, what is it? Of course, you've chosen your name! Let
+            me see, where is my pen? Ah, there it is. And now to write your name...how
+            did you spell it, again? Just a few strokes of the pen, and...done!
+
+        complete_quest(actor, choose_a_name)
+
+        tell(self, actor) |
+            {actor} is a fine name. Wear it proudly.
+    }
+
+    when talk(actor: .quest(choose_a_name, complete), self, topic) {
+        tell(self, actor) |
+            Ah, {actor}. I just love the sound of your name! It simply rolls off
+            the tongue.
+    }
+
+    when talk(actor, self, topic) {
+        show(actor) "The mistress of names frowns at you over her glasses."
+    }
+}
+
+deflocation circle_of_names: isle_location {
+    name = "Circle of Names"
+    description = |
+        You stand within a wide circle of well-tended lawn surrounded by a low
+        stone wall.
+    contents = [tree_of_names!, mistress_of_names!]
+    exits = [gravel_path -> 'north to fountain_plaza, gravel_path -> 'east to clifftop,
+             gravel_path -> 'south to guard_station]
+}
+
+// clifftop
+
+def orb_of_naming: fixture {
+    brief = "the orb of naming"
+    pose = "hovers a few feet above the ground."
+    description = |
+        The orb is a spherical stone about two feet in diameter. Its surface is
+        smooth and cloudy. If a creature speaks a word within its presence, the
+        orb has the power to make that word the creature's name.
+
+    after say(actor: .quest(choose_a_name, active), message) {
+        show(actor) |
+            The orb begins to glow, dimly at first, but then more brightly.
+            Sparks skitter across its smooth surface and you feel an
+            uncomfortable tingle beneath your skin.
+        if change_name(actor, message) {
+            advance_quest(actor, choose_a_name, 'done)
+        } else {
+            show(actor) |
+                The sparks subside and the orb's glow dims; nothing seems to
+                happen.
+        }
+    }
+}
+
+deflocation clifftop: isle_location {
+    name = "Windy Clifftop"
+    description = |
+        You stand atop a rocky cliff that falls perhaps a hundred feet to a
+        narrow beach. The wind is brisk and smells of the sea.
+
+    tutorial = |
+        To speak, use the `say` command. For example, to say "hello", you could
+        type `say hello`. Everyone (and everything!) in your location will hear
+        what you say.
+
+        In this room, the `look:orb of naming` is always listening, so be
+        careful what you say! If you speak a single word that the orb deems
+        suitable, that word will become your name. Choose wisely.
+
+    surface = 'stone
+    contents = [orb_of_naming!]
+    exits = [gravel_path -> 'west to circle_of_names]
+}
+
+// guard_station
+
+def worn_dagger: lib.dagger {
+    brief = "a worn dagger"
+    description = |
+        The dagger has a pitted copper blade and a smooth wooden handle.
+    level = 1
+}
+
+defquest kill_some_plants {
+    name = "Weed Control"
+    summary = |
+        Prove your worth to the guard by killing a vineling. Lashleaf? Whatever.
+    required_quests = [choose_a_name]
+
+    phase active {
+        summary = "Kill a vineling. Lashleaf? Whatever."
+    }
+
+    phase done {
+        summary = "Return to the guard."
+    }
+}
+
+def guard: lib.npc {
+    brief = "a burly guard"
+    pose = "stands nearby."
+    description = |
+        The guard wears a long chainmail shirt and carries a double-bladed axe.
+        His bristly red beard spills out across his ample belly.
+    offers_quests = [kill_some_plants]
+
+    when talk(actor: .quest(kill_some_plants, available), self, topic) {
+        tell(self, actor) |
+            Greetings, {actor}. It seems you're nearly ready to leave this
+            place, but I have my doubts. Before I allow you to venture further,
+            I'm going to teach you how to fight! You'll need to be able to
+            handle a weapon if you want to survive in the real world.
+        offer_quest(self, kill_some_plants, actor)
+    }
+
+    after accept_quest(actor, quest: kill_some_plants, self) {
+        tell(self, actor) |
+            West of here you'll find some...plants. Not normal plants, but
+            vicious killers! Vinelings, I think they're called. Or maybe
+            lashleaves? Whatever. The name's not important.
+
+            I have a weapon for you. Here, take this.
+
+        receive(actor, worn_dagger!, self)
+
+        tell(self, actor) |
+            Go ahead, `equip` that dagger and kill one of those plants. Strike
+            fast and true! If you can overcome such a fearsome foe, I'll happily
+            let you pass.
+    }
+
+    when talk(actor: .quest(kill_some_plants, active), self, topic) {
+        tell(self, actor) |
+            Any progress so far? Kill one of those plant things and we'll talk.
+    }
+
+    when talk(actor: .quest(kill_some_plants, done), self, topic) {
+        tell(self, actor) |
+            Great job! I'll confess, those things give me the heebie jeebies.
+            Plants shouldn't writhe around like that. Please, feel free to head
+            south whenever you like.
+    }
+
+    when talk(actor: .quest(kill_some_plants, complete), self, topic) {
+        show(actor) "The guard salutes smartly."
+        tell(self, actor) "Good to see you again, plant-slayer."
+    }
+
+    when talk(actor, self, topic) {
+        show(actor) "The guard grunts in your general direction."
+    }
+
+    allow exit_location(actor: .quest(kill_some_plants, incomplete), location, portal) {
+        if portal.direction == 'south {
+            show(actor) "The guard moves with unexpected agility to block your path."
+            tell(self, actor) |
+                Stop right there, friend. You need to perform the tasks set for
+                you by myself and my comrades to the north before I will let you
+                pass.
+            return false
+        }
+    }
+}
+
+def iron_gate: portal {
+    brief = "an iron gate"
+}
+
+deflocation guard_station: isle_location {
+    name = "Guard Station"
+    description = "A small guard post stands alongside the path."
+
+    tutorial = |
+        In your adventures you will have the chance to learn many different
+        `help:skills`. Each skill allows you to perform a certain type of
+        action, such as fighting with weapons, casting magic spells, or crafting
+        items. The more you use a skill, the more your rank in that skill will
+        increase. A higher rank allows you to succeed at more difficult tasks.
+
+        The guard here has a quest that will teach you your first weapon skill.
+        Talk to him to get started. You can also type `help skills` to learn
+        more about skills in general.
+
+    contents = [guard!]
+    exits = [gravel_path -> 'north to circle_of_names, gravel_path -> 'west to overgrown_field_se,
+             iron_gate -> 'south to cobbled_square]
+}

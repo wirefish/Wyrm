@@ -1,3 +1,5 @@
+// clothing
+
 def clothing: equipment {
 }
 
@@ -20,4 +22,11 @@ def backpack: equipment {
     brief = "a backpack"
     slot = 'backpack
     capacity = 20
+}
+
+// weapons
+
+def dagger: weapon {
+    damage_type = 'piercing
+    speed = 1.5
 }
