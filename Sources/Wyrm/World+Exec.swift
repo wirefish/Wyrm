@@ -6,7 +6,9 @@
 enum ExecError: Error {
     case typeMismatch
     case undefinedSymbol(String)
+    case undefinedReference(ValueRef)
     case indexOutOfBounds
+    case referenceRequired
     case expectedCallable
     case expectedFuture
     case invalidResult
@@ -80,6 +82,15 @@ extension World {
                     throw ExecError.typeMismatch
                 }
                 stack.append(.number(-n))
+
+            case .deref:
+                guard case let .ref(ref) = stack.removeLast() else {
+                    throw ExecError.typeMismatch
+                }
+                guard let value = World.instance.lookup(ref, context: context) else {
+                    throw ExecError.undefinedReference(ref)
+                }
+                stack.append(value)
 
             case .add, .subtract, .multiply, .divide, .modulus:
                 let rhs = stack.removeLast()
@@ -261,9 +272,12 @@ extension World {
                       let portalProto = stack.removeLast().asEntity(Portal.self) else {
                     throw ExecError.typeMismatch
                 }
+                guard let destinationRef = destination.ref else {
+                    throw ExecError.referenceRequired
+                }
                 let portal = portalProto.clone()
                 portal.direction = direction
-                portal.destination = destination.ref!
+                portal.destination = destinationRef
                 stack.append(.entity(portal))
 
             case .clone:

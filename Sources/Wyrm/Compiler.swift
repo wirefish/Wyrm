@@ -36,6 +36,9 @@ enum Opcode: UInt8 {
     // Replace the numeric value on the top of the stack with its negation.
     case negate
 
+    // Replace the reference on the top of the stack with the value it references.
+    case deref
+
     // Replace the two numeric values on the top of the stack with the result of
     // a binary operation.
     case add, subtract, multiply, divide, modulus
@@ -245,6 +248,7 @@ class Compiler {
             switch op {
             case .not: block.emit(.not)
             case .minus: block.emit(.negate)
+            case .star: block.emit(.deref)
             default:
                 break
             }

@@ -614,7 +614,7 @@ class Parser {
 
     private func lookingAtExpr() -> Bool {
         switch currentToken {
-        case .boolean, .number, .string, .symbol, .identifier, .minus, .not, .lparen, .lsquare:
+        case .boolean, .number, .string, .symbol, .identifier, .minus, .not, .star, .lparen, .lsquare:
             return true
         default:
             return false
@@ -641,7 +641,7 @@ class Parser {
         case let .identifier(s):
             node = .identifier(s)
             advance()
-        case .minus, .not:
+        case .minus, .not, .star:
             node = parseUnary()
         case .lparen:
             node = parseGroup()

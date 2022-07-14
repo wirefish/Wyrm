@@ -1450,14 +1450,23 @@ deflocation the_siren: location {
     contents = [sailor]
 
     route = [gangplank -> 'west to pier, gangplank -> 'south to arwyck.west_dock]
+    stopped_at = nil
+    entry_portal = nil
 
     when start_world() {
-        log_debug("starting the boat")
-        var i = 0
+        var pos = 0
         while true {
+            log_debug("arriving at", *route[pos].destination)
+            log_debug(gangplank -> 'north to self)
+
             await sleep(1)
-            log_debug("moving the boat", i, route[i].direction, route[i].destination)
-            i = (i + 1) % len(route)
+            log_debug("announcing departure from", *route[pos].destination)
+
+            await sleep(1)
+            log_debug("departing from from", *route[pos].destination)
+
+            await sleep(1)
+            pos = (pos + 1) % len(route)
         }
     }
 }

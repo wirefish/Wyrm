@@ -467,7 +467,7 @@ extension World {
                 }
                 return .boolean(!b)
             default:
-                throw EvalError.invalidExpression("unknown unary operator")
+                throw EvalError.invalidExpression("unary operator not allowed in member initializer")
             }
 
         case let .binaryExpr(lhs, op, rhs):
