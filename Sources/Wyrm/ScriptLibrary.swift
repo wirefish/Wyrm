@@ -53,10 +53,14 @@ extension ScriptProvider {
 
 struct ScriptLibrary: ScriptProvider {
     static let functions = [
+        ("add_exit", addExit),
+        ("announce", announce),
         ("change_race", changeRace),
         ("len", len),
         ("log_debug", logDebug),
+        ("opposite_direction", oppositeDirection),
         ("random", random),
+        ("remove_exit", removeExit),
         ("show", show),
         ("show_tutorial", showTutorial),
         ("sleep", sleep),
@@ -125,5 +129,37 @@ struct ScriptLibrary: ScriptProvider {
         return .future { fn in
             World.schedule(delay: delay) { fn() }
         }
+    }
+
+    static func addExit(_ args: [Value]) throws -> Value {
+        let (portal, location) = try unpack(args, Portal.self, Location.self)
+        return .boolean(location.addExit(portal))
+    }
+
+    static func removeExit(_ args: [Value]) throws -> Value {
+        let (direction, location) = try unpack(args, Direction.self, Location.self)
+        if let portal = location.removeExit(direction) {
+            return .entity(portal)
+        } else {
+            return .nil
+        }
+    }
+
+    static func oppositeDirection(_ args: [Value]) throws -> Value {
+        let direction = try unpack(args, Direction.self)
+        return direction.opposite.toValue()
+    }
+
+    static func announce(_ args: [Value]) throws -> Value {
+        let (location, radius, message) = try unpack(args, Location.self, Int.self, String.self)
+        let map = Map(at: location, radius: radius)
+        for cell in map.cells {
+            for entity in cell.location.contents {
+                if let avatar = entity as? Avatar {
+                    avatar.showNotice(message)
+                }
+            }
+        }
+        return .nil
     }
 }

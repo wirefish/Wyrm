@@ -309,7 +309,7 @@ class Compiler {
 
         case let .exit(portal, direction, destination):
             compile(portal, &block)
-            block.emit(.pushConstant, block.addConstant(direction.toValue()))
+            compile(direction, &block)
             compile(destination, &block)
             block.emit(.makePortal)
 

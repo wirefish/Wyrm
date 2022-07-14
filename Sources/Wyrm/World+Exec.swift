@@ -267,15 +267,15 @@ extension World {
                 ip += 2
 
             case .makePortal:
-                guard case let .entity(destination) = stack.removeLast(),
+                guard let destination = stack.removeLast().asEntity(Location.self),
                       let direction = Direction.fromValue(stack.removeLast()),
-                      let portalProto = stack.removeLast().asEntity(Portal.self) else {
+                      let proto = stack.removeLast().asEntity(Portal.self) else {
                     throw ExecError.typeMismatch
                 }
                 guard let destinationRef = destination.ref else {
                     throw ExecError.referenceRequired
                 }
-                let portal = portalProto.clone()
+                let portal = proto.clone()
                 portal.direction = direction
                 portal.destination = destinationRef
                 stack.append(.entity(portal))

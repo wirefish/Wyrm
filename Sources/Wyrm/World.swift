@@ -543,13 +543,20 @@ extension World {
             let values = try nodes.map { try evalInitializer($0, in: module) }
             return .list(ValueList(values))
 
-        case let .exit(portalRef, direction, destination):
-            guard let proto = lookup(portalRef, context: module)?.asEntity(Portal.self) else {
-                throw EvalError.typeMismatch("invalid exit portal")
+        case let .exit(portal, direction, destination):
+            guard let portalRef = portal.asValueRef,
+                  let proto = lookup(portalRef, context: module)?.asEntity(Portal.self) else {
+                throw EvalError.typeMismatch("invalid portal prototype")
+            }
+            guard let direction = Direction.fromValue(try evalInitializer(direction, in: module)) else {
+                throw EvalError.typeMismatch("invalid portal direction")
+            }
+            guard let destinationRef = destination.asValueRef else {
+                throw EvalError.typeMismatch("invalid portal destination")
             }
             let portal = proto.clone()
             portal.direction = direction
-            portal.destination = destination
+            portal.destination = destinationRef
             return .entity(portal)
 
         case let .clone(lhs):

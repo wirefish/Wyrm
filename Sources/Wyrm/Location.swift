@@ -57,6 +57,24 @@ class Location: Entity, Container {
     func findExit(_ direction: Direction) -> Portal? {
         return exits.first { $0.direction == direction }
     }
+
+    func addExit(_ portal: Portal) -> Bool {
+        if findExit(portal.direction) == nil {
+            exits.append(portal)
+            // TODO: update the maps of any nearby players.
+            return true
+        } else {
+            return false
+        }
+    }
+
+    func removeExit(_ direction: Direction) -> Portal? {
+        if let i = exits.firstIndex(where: { $0.direction == direction }) {
+            return exits.remove(at: i)
+        } else {
+            return nil
+        }
+    }
 }
 
 // MARK: - meditate command

@@ -273,10 +273,7 @@ extension ValueRepresentableEnum {
         guard case let .symbol(name) = value else {
             return nil
         }
-        guard let v = Self.names[name] else {
-            return nil
-        }
-        return v
+        return Self.names[name]
     }
 
     func toValue() -> Value {

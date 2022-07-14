@@ -28,7 +28,7 @@ indirect enum ParseNode {
     case call(ParseNode, [ParseNode])
     case dot(ParseNode, String)
     case `subscript`(ParseNode, ParseNode)
-    case exit(ValueRef, Direction, ValueRef)
+    case exit(ParseNode, ParseNode, ParseNode)
 
     // Statements.
     case `var`(String, ParseNode)
@@ -783,13 +783,7 @@ class Parser {
     private func parseExit(lhs: ParseNode) -> ParseNode? {
         assert(match(.leads))
 
-        guard case let .symbol(name) = consume() else {
-            error("expected symbol after ->")
-            return nil
-        }
-
-        guard let direction = Direction.fromValue(.symbol(name)) else {
-            error("invalid direction \(name) after ->")
+        guard let direction = parseExpr() else {
             return nil
         }
 
@@ -800,16 +794,11 @@ class Parser {
             return nil
         }
 
-        guard let destination = parseValueRef() else {
+        guard let destination = parseExpr() else {
             return nil
         }
 
-        guard let portal = lhs.asValueRef else {
-            error("invalid portal prototype in exit")
-            return nil
-        }
-
-        return .exit(portal, direction, destination)
+        return .exit(lhs, direction, destination)
     }
 
     private func parseSequence<T>(from start: Token, to end: Token,
