@@ -29,6 +29,7 @@ indirect enum ParseNode {
     case dot(ParseNode, String)
     case `subscript`(ParseNode, ParseNode)
     case exit(ParseNode, ParseNode, ParseNode)
+    case comprehension(ParseNode, String, ParseNode)
 
     // Statements.
     case `var`(String, ParseNode)
@@ -692,10 +693,48 @@ class Parser {
     }
 
     private func parseList() -> ParseNode? {
-        guard let list = parseSequence(from: .lsquare, to: .rsquare, using: { parseExpr() }) else {
+        assert(match(.lsquare))
+        if match(.rsquare) {
+            return .list([])
+        }
+
+        guard let first = parseExpr() else {
             return nil
         }
-        return .list(list)
+
+        if match(.for) {
+            // This is a list comprehension.
+            guard case let .identifier(name) = consume() else {
+                error("expected identifier after 'for' in list comprehension")
+                return nil
+            }
+            guard match(.in) else {
+                error("expected 'in' after variable name in list comprehension")
+                return nil
+            }
+            guard let sequence = parseExpr() else {
+                return nil
+            }
+            guard match(.rsquare) else {
+                error("expected ] at end of list comprehension")
+                return nil
+            }
+            return .comprehension(first, name, sequence)
+        } else {
+            // This is a list literal.
+            var list = [first]
+            while !match(.rsquare) {
+                if !match(.comma) {
+                    error(", expected between list values")
+                    return nil
+                }
+                guard let next = parseExpr() else {
+                    return nil
+                }
+                list.append(next)
+            }
+            return .list(list)
+        }
     }
 
     private func parseClone(lhs: ParseNode) -> ParseNode? {

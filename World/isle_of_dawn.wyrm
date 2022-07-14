@@ -1453,6 +1453,8 @@ deflocation the_siren: location {
 
     when start_world() {
         var pos = 0
+        // var entries = [exit -> opposite_direction(exit.direction) to self for exit in route]
+        // log_debug(entries)
         while true {
             // Arrive at the destination.
             var dest = *route[pos].destination

@@ -346,6 +346,9 @@ class Compiler {
             compile(destination, &block)
             block.emit(.makePortal)
 
+        case .comprehension:
+            fatalError("list comprehensions not implemented")
+
         case let .var(name, initialValue):
             if locals[scopeLocals.last!...].contains(name) {
                 logger.warning("ignoring duplicate declaration of local variable \(name)")
