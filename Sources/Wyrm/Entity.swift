@@ -82,7 +82,6 @@ extension Entity {
                     case let .value(value):
                         return value
                     case .await:
-                        logger.error("await not implemented")
                         return .nil
                     case .fallthrough:
                         break

@@ -65,9 +65,11 @@ def spirit_warden: lib.npc {
         tall. His long white hair and wispy beard frame a wrinkled, grinning
         face. He wears dark blue robes with gold embroidered trim.
 
-    after enter_location(actor, location, entry) {
-        // FIXME: await sleep(3)
-        show(actor, "The spirit warden beckons in your direction.")
+    after enter_location(actor: .quest(choose_a_race, available), location, entry) {
+        await sleep(1)
+        if actor.location == location {
+            show(actor, "The spirit warden beckons in your direction.")
+        }
     }
 
     when talk(actor, target: self, topic) {

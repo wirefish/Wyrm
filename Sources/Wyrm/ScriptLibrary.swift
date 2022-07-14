@@ -58,6 +58,7 @@ struct ScriptLibrary: ScriptProvider {
         ("random", random),
         ("show", show),
         ("show_tutorial", showTutorial),
+        ("sleep", sleep),
         ("spawn", spawn),
         ("tell", tell),
         ("trunc", trunc),
@@ -111,5 +112,12 @@ struct ScriptLibrary: ScriptProvider {
         }
 
         return .nil
+    }
+
+    static func sleep(_ args: [Value]) throws -> Value {
+        let delay = try unpack(args, Double.self)
+        return .future { fn in
+            World.schedule(delay: delay) { fn() }
+        }
     }
 }

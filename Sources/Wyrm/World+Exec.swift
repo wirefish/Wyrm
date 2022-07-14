@@ -7,6 +7,7 @@ enum ExecError: Error {
     case typeMismatch
     case undefinedSymbol(String)
     case expectedCallable
+    case expectedFuture
     case invalidResult
 }
 
@@ -22,9 +23,13 @@ extension World {
         // Subsequent locals start with no value.
         var locals = args
         locals += Array<Value>(repeating: .nil, count: code.locals.count - args.count)
-
         var stack = [Value]()
-        var ip = 0
+        return try resume(code, context, &locals, &stack, 0)
+    }
+
+    func resume(_ code: ScriptFunction, _ context: [ValueDictionary], _ locals: inout [Value],
+                _ stack: inout [Value], _ ip: Int) throws -> CallableResult {
+        var ip = ip
         loop: while ip < code.bytecode.count {
             let op = Opcode(rawValue: code.bytecode[ip])!
             ip += 1
@@ -112,6 +117,16 @@ extension World {
 
                 case let .symbol(a):
                     guard case let .symbol(b) = rhs else {
+                        throw ExecError.typeMismatch
+                    }
+                    switch op {
+                    case .equal: stack.append(.boolean(a == b))
+                    case .notEqual: stack.append(.boolean(a != b))
+                    default: break
+                    }
+
+                case let .entity(a):
+                    guard case let .entity(b) = rhs else {
                         throw ExecError.typeMismatch
                     }
                     switch op {
@@ -283,7 +298,19 @@ extension World {
                 ip += 1
 
             case .await:
-                fatalError("await not yet implemented")
+                guard case let .future(future) = stack.removeLast() else {
+                    throw ExecError.expectedFuture
+                }
+                var futureLocals = locals.map { $0 }
+                var futureStack = stack.map { $0 }
+                future {
+                    do {
+                        _ = try self.resume(code, context, &futureLocals, &futureStack, ip)
+                    } catch {
+                        logger.warning("error in resumed function: \(error)")
+                    }
+                }
+                return .await
 
             case .return:
                 break loop

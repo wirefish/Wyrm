@@ -20,6 +20,7 @@ enum Value: Equatable {
     case list(ValueList)
     case function(Callable)
     case module(Module)
+    case future((@escaping () -> Void) -> Void)
 
     func asEntity<T: Entity>(_ t: T.Type) -> T? {
         if case let .entity(entity) = self {
@@ -49,6 +50,7 @@ enum Value: Equatable {
         case let .ref(a): if case let .ref(b) = rhs { return a == b }
         case let .entity(a): if case let .entity(b) = rhs { return a == b }
         case let .quest(a): if case let .quest(b) = rhs { return a === b }
+        case let .race(a): if case let .race(b) = rhs { return a === b }
         default: break
         }
         return false

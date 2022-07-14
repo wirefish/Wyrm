@@ -86,6 +86,7 @@ final class Avatar: PhysicalEntity, Container {
 
     private static let accessors = [
         "race": accessor(\Avatar.race),
+        "location": accessor(\Avatar.location),
     ]
 
     override subscript(member: String) -> Value? {
