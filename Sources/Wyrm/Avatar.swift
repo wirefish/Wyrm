@@ -200,7 +200,7 @@ extension Avatar {
 
     func showSay(_ actor: PhysicalEntity, _ verb: String, _ message: String, _ isChat: Bool) {
         sendMessage("showSay",
-                    .string(actor.describeBriefly([.capitalized, .indefinite])),
+                    .string(actor.describeBriefly([.capitalized, .definite])),
                     .string(verb),
                     .string(message),
                     .boolean(isChat))
