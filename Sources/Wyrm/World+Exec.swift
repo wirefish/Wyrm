@@ -177,14 +177,22 @@ extension World {
 
             case .lookupMember:
                 let index = code.getUInt16(at: ip); ip += 2
+                let lhs = stack.removeLast()
                 guard case let .symbol(name) = code.constants[Int(index)],
-                      let dict = stack.removeLast().asValueDictionary else {
+                      let dict = lhs.asValueDictionary else {
                     throw ExecError.typeMismatch
                 }
                 guard let value = dict[name] else {
                     throw ExecError.undefinedSymbol(name)
                 }
-                stack.append(value)
+                if case let .function(fn) = value {
+                    guard case let .entity(entity) = lhs else {
+                        throw ExecError.typeMismatch
+                    }
+                    stack.append(.function(BoundMethod(entity: entity, method: fn)))
+                } else {
+                    stack.append(value)
+                }
 
             case .assignMember:
                 let index = code.getUInt16(at: ip)

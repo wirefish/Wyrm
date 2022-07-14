@@ -64,3 +64,17 @@ class ScriptFunction: Callable {
         return try World.instance.exec(self, args: args, context: context + [module])
     }
 }
+
+class BoundMethod: Callable {
+    let entity: Entity
+    let method: Callable
+
+    init(entity: Entity, method: Callable) {
+        self.entity = entity
+        self.method = method
+    }
+
+    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {
+        return try method.call([.entity(entity)] + args, context: context)
+    }
+}

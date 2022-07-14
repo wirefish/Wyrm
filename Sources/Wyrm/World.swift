@@ -285,7 +285,7 @@ extension World {
     }
 
     private func loadEntity(_ node: ParseNode, into module: Module) {
-        guard case let .entity(name, prototypeRef, members, handlers, startable) = node else {
+        guard case let .entity(name, prototypeRef, members, handlers, methods, startable) = node else {
             fatalError("invalid call to loadEntity")
         }
 
@@ -296,9 +296,34 @@ extension World {
         }
         let entity = prototype.clone()
         entity.ref = .absolute(module.name, name)
-        initializeEntity(entity, members: members, handlers: handlers, module: module)
-        module.bindings[name] = .entity(entity)
 
+        // Initialize the members.
+        for (name, initialValue) in members {
+            do {
+                entity[name] = try evalInitializer(initialValue, in: module)
+            } catch {
+                print("\(entity.ref!) \(name) \(error)")
+            }
+        }
+
+        // Compile the event handlers.
+        let compiler = Compiler()
+        for (phase, event, parameters, body) in handlers {
+            let parameters = [Parameter(name: "self", constraint: .none)] + parameters
+            if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
+                entity.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
+            }
+        }
+
+        // Compile the methods.
+        for (name, parameters, body) in methods {
+            let parameters = [Parameter(name: "self", constraint: .none)] + parameters
+            if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
+                entity.extraMembers[name] = .function(fn)
+            }
+        }
+
+        module.bindings[name] = .entity(entity)
         if startable {
             startableEntities.append(entity)
         }
@@ -354,28 +379,6 @@ extension World {
         module.bindings[name] = .race(race)
     }
 
-    private func initializeEntity(_ entity: Entity,
-                                  members: [ParseNode.Member], handlers: [ParseNode.Handler],
-                                  module: Module) {
-        // Initialize the members.
-        for (name, initialValue) in members {
-            do {
-                entity[name] = try evalInitializer(initialValue, in: module)
-            } catch {
-                print("\(entity.ref!) \(name) \(error)")
-            }
-        }
-
-        // Compile the event handlers.
-        let compiler = Compiler()
-        for (phase, event, parameters, body) in handlers {
-            let parameters = [Parameter(name: "self", constraint: .none)] + parameters
-            if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-                entity.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
-            }
-        }
-    }
-    
     private func moduleName(for relativePath: String) -> String {
         if let sep = relativePath.lastIndex(of: "/") {
             return relativePath[..<sep].replacingOccurrences(of: "/", with: "_")

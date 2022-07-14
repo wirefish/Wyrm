@@ -18,7 +18,7 @@ enum Token: Hashable {
     case and, or
 
     case def, deflocation, defquest, defrace
-    case allow, before, when, after, phase
+    case allow, before, when, after, phase, `func`
     case `if`, `else`, `for`, `in`, `let`, `var`, await, `return`, `fallthrough`
     case leads, oneway, to
 
@@ -233,6 +233,7 @@ class Scanner {
         "when": .when,
         "after": .after,
         "phase": .phase,
+        "func": .func,
         "if": .if,
         "else": .else,
         "for": .for,

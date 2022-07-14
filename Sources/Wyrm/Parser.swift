@@ -8,6 +8,7 @@
 indirect enum ParseNode {
     typealias Member = (name: String, initialValue: ParseNode)
     typealias Handler = (EventPhase, String, [Parameter], ParseNode)
+    typealias Method = (String, [Parameter], ParseNode)
     typealias QuestPhase = (String, [Member])
 
     // Literal values.
@@ -42,7 +43,7 @@ indirect enum ParseNode {
 
     // Top-level definitions.
     case entity(name: String, prototype: ValueRef, members: [Member],
-                handlers: [Handler], startable: Bool)
+                handlers: [Handler], methods: [Method], startable: Bool)
     case quest(name: String, members: [Member], phases: [QuestPhase])
     case race(name: String, members: [Member])
 
@@ -190,6 +191,7 @@ class Parser {
 
         var members = [ParseNode.Member]()
         var handlers = [ParseNode.Handler]()
+        var methods = [ParseNode.Method]()
         while !match(.rbrace) {
             switch currentToken {
             case .identifier:
@@ -200,6 +202,10 @@ class Parser {
                 if let handler = parseHandler() {
                     handlers.append(handler)
                 }
+            case .func:
+                if let method = parseMethod() {
+                    methods.append(method)
+                }
             default:
                 error("invalid token \(currentToken) within entity body")
                 advance()
@@ -209,7 +215,7 @@ class Parser {
 
         let startable = def == .deflocation
         return .entity(name: name, prototype: prototype, members: members,
-                       handlers: handlers, startable: startable)
+                       handlers: handlers, methods: methods, startable: startable)
     }
 
     private func parseMember() -> ParseNode.Member? {
@@ -277,6 +283,35 @@ class Parser {
         }
 
         return (phase, event, params, block)
+    }
+
+    private func parseMethod() -> ParseNode.Method? {
+        advance()  // over func
+
+        guard case let .identifier(name) = consume() else {
+            error("expected identifier after func")
+            return nil
+        }
+
+        guard let params = parseSequence(from: .lparen, to: .rparen, using: { () -> Parameter? in
+            guard case let .identifier(name) = consume() else {
+                error("parameter name must be an identifier")
+                return nil
+            }
+            if match(.colon) {
+                error("method parameters cannot have constraints")
+                return nil
+            }
+            return Parameter(name: name, constraint: .none)
+        }) else {
+            return nil
+        }
+
+        guard let block = parseBlock() else {
+            return nil
+        }
+
+        return (name, params, block)
     }
 
     private func parseConstraint() -> Constraint? {
