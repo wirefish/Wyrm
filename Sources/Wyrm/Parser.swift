@@ -33,6 +33,7 @@ indirect enum ParseNode {
     // Statements.
     case `var`(String, ParseNode)
     case `if`(ParseNode, ParseNode, ParseNode?)
+    case `while`(ParseNode, ParseNode)
     case `for`(String, ParseNode, ParseNode)
     case await(ParseNode)
     case `return`(ParseNode?)
@@ -476,6 +477,8 @@ class Parser {
             return parseVar()
         case .if:
             return parseIf()
+        case .while:
+            return parseWhile()
         case .for:
             return parseFor()
         case .await:
@@ -535,27 +538,27 @@ class Parser {
         return .if(predicate, whenTrue, whenFalse)
     }
 
+    private func parseWhile() -> ParseNode? {
+        assert(match(.while))
+        guard let pred = parseExpr(), let body = parseBlock() else {
+            return nil
+        }
+        return .while(pred, body)
+    }
+
     private func parseFor() -> ParseNode? {
         assert(match(.for))
-
         guard case let .identifier(variable) = consume() else {
             error("invalid loop variable")
             return nil
         }
-
         guard case .in = consume() else {
             error("expected 'in' after loop variable name")
             return nil
         }
-
-        guard let sequence = parseExpr() else {
+        guard let sequence = parseExpr(), let body = parseBlock() else {
             return nil
         }
-
-        guard let body = parseBlock() else {
-            return nil
-        }
-
         return .for(variable, sequence, body)
     }
 

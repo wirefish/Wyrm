@@ -44,7 +44,7 @@ enum Opcode: UInt8 {
     // the result of a comparison.
     case equal, notEqual, less, lessEqual, greater, greaterEqual
 
-    // Change the instruction pointer. The next two bytes are an unsigned offset.
+    // Change the instruction pointer. The next two bytes are a signed offset.
     case jump
 
     // Like jump, but only if the value on the top of the stack is true or
@@ -123,13 +123,22 @@ extension ScriptFunction {
         bytecode.append(UInt8(arg >> 8))
     }
 
+    func emit(_ op: Opcode, _ arg: Int16) {
+        emit(op, UInt16(bitPattern: arg))
+    }
+
     func emitJump(_ op: Opcode) -> Int {
-        emit(op, UInt16(0xffff))
+        emit(op, Int16(0))
         return bytecode.count - 2
     }
 
+    func emitJump(_ op: Opcode, to dest: Int) {
+        let offset = Int16(dest - (bytecode.count + 3))
+        emit(op, offset)
+    }
+
     func patchJump(at pos: Int) {
-        let offset = UInt16(bytecode.count - pos - 2)
+        let offset = Int16(bytecode.count - (pos + 2))
         bytecode[pos] = UInt8(offset & 0xff)
         bytecode[pos + 1] = (UInt8(offset >> 8))
     }
@@ -319,6 +328,16 @@ class Compiler {
             } else {
                 block.patchJump(at: skipThen)
             }
+
+        case let .while(pred, body):
+            let start = block.bytecode.count
+            compile(pred, &block)
+            let endJump = block.emitJump(.jumpIfNot)
+            block.emit(.pop)
+            compile(body, &block)
+            block.emitJump(.jump, to: start)
+            block.patchJump(at: endJump)
+            block.emit(.pop)
 
         case .for:
             fatalError("for loop not yet implemented")

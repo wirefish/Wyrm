@@ -15,6 +15,10 @@ extension ScriptFunction {
     func getUInt16(at offset: Int) -> UInt16 {
         UInt16(bytecode[offset]) | (UInt16(bytecode[offset + 1]) << 8)
     }
+
+    func getInt16(at offset: Int) -> Int16 {
+        Int16(bitPattern: getUInt16(at: offset))
+    }
 }
 
 extension World {
@@ -154,7 +158,7 @@ extension World {
                 }
 
             case .jump:
-                let offset = code.getUInt16(at: ip)
+                let offset = code.getInt16(at: ip)
                 ip += 2 + Int(offset)
 
             case .jumpIf:
@@ -162,7 +166,7 @@ extension World {
                     throw ExecError.typeMismatch
                 }
                 if (b) {
-                    let offset = code.getUInt16(at: ip)
+                    let offset = code.getInt16(at: ip)
                     ip += 2 + Int(offset)
                 } else {
                     ip += 2
@@ -173,7 +177,7 @@ extension World {
                     throw ExecError.typeMismatch
                 }
                 if (!b) {
-                    let offset = code.getUInt16(at: ip)
+                    let offset = code.getInt16(at: ip)
                     ip += 2 + Int(offset)
                 } else {
                     ip += 2
