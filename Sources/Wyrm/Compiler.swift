@@ -84,8 +84,11 @@ enum Opcode: UInt8 {
     // Assign an element of a list.
     case assignSubscript
 
-    // The next two bytes are the number of values to pop from the stack.
-    // Replace them with a value representing a list of those values.
+    // Mark the current stack position as the beginning of a list of values.
+    case beginList
+
+    // Replace the stack values from the last position marked by beginList with
+    // a single value representing a list of the removed values.
     case makeList
 
     // Create a Portal from the three values on the top of the stack.
@@ -206,10 +209,6 @@ extension ScriptFunction {
                 print(String(format: "%5d: %@ %5d  ; %@",
                              ip, opname, index, String(describing: constants[index])))
                 ip += 3
-            case .makeList:
-                let count = getUInt16(at: ip + 1)
-                print(String(format: "%5d: %@ %5d", ip, opname, count))
-                ip += 3
             case .jump, .jumpIf, .jumpIfNot:
                 let offset = Int(getInt16(at: ip + 1))
                 print(String(format: "%5d: %@ %5d  ; -> %d", ip, opname, offset, ip + 3 + offset))
@@ -319,8 +318,9 @@ class Compiler {
             block.patchJump(at: jump)
 
         case let .list(elements):
+            block.emit(.beginList)
             elements.forEach { compile($0, &block) }
-            block.emit(.makeList, UInt16(elements.count))
+            block.emit(.makeList)
 
         case let .clone(lhs):
             compile(lhs, &block)

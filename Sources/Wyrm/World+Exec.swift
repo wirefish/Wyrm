@@ -25,6 +25,7 @@ extension World {
 
     func resume(_ code: ScriptFunction, _ context: [ValueDictionary], _ locals: inout [Value],
                 _ stack: inout [Value], _ ip: Int) throws -> CallableResult {
+        var lists = [Int]()
         var ip = ip
         loop: while ip < code.bytecode.count {
             let op = Opcode(rawValue: code.bytecode[ip])!
@@ -253,12 +254,14 @@ extension World {
                 }
                 list.values[index] = rhs
 
+            case .beginList:
+                lists.append(stack.count)
+
             case .makeList:
-                let count = Int(code.getUInt16(at: ip))
-                let values = Array<Value>(stack[(stack.count - count)..<stack.count])
-                stack.removeLast(count)
+                let start = lists.removeLast()
+                let values = Array<Value>(stack[start...])
+                stack.removeSubrange(start...)
                 stack.append(.list(ValueList(values)))
-                ip += 2
 
             case .makePortal:
                 guard let destination = stack.removeLast().asEntity(Location.self),

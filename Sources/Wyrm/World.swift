@@ -311,6 +311,10 @@ extension World {
             let parameters = [Parameter(name: "self", constraint: .none)] + parameters
             if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
                 entity.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
+
+                if event == "start_world" {
+                    fn.dump()
+                }
             }
         }
 
