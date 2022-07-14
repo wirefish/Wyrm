@@ -29,7 +29,6 @@ extension World {
         // The arguments are always the first locals, and self is always the first argument.
         // Subsequent locals start with no value.
         var locals = args
-        locals += Array<Value>(repeating: .nil, count: code.locals.count - args.count)
         var stack = [Value]()
         return try resume(code, context, &locals, &stack, 0)
     }
@@ -62,14 +61,19 @@ extension World {
                 let _ = stack.removeLast()
 
             case .pushLocal:
-                let index = Int(code.bytecode[ip])
-                stack.append(locals[index])
-                ip += 1
+                locals.append(stack.removeLast())
 
-            case .popLocal:
-                let index = Int(code.bytecode[ip])
+            case .popLocals:
+                let count = Int(code.bytecode[ip]); ip += 1
+                locals.removeLast(count)
+
+            case .lookupLocal:
+                let index = Int(code.bytecode[ip]); ip += 1
+                stack.append(locals[index])
+
+            case .assignLocal:
+                let index = Int(code.bytecode[ip]); ip += 1
                 locals[index] = stack.removeLast()
-                ip += 1
 
             case .not:
                 guard case let .boolean(b) = stack.removeLast() else {

@@ -48,16 +48,12 @@ struct Parameter {
 class ScriptFunction: Callable {
     weak var module: Module!
     let parameters: [Parameter]
-    var locals = [String]()
     var constants = [Value]()
     var bytecode = [UInt8]()
 
     init(module: Module, parameters: [Parameter]) {
         self.module = module
         self.parameters = parameters
-
-        // The parameters are always the first locals, although more may be added later.
-        locals = parameters.map(\.name)
     }
 
     func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {

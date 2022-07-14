@@ -3,6 +3,8 @@
 //  Wyrm
 //
 
+// MARK: - Opcode
+
 // Bytecode operations. Each operation is one byte followed by 0, 1, or 2 bytes
 // describing an optional argument. Two-byte arguments are stored in
 // little-endian order.
@@ -23,12 +25,18 @@ enum Opcode: UInt8 {
     // Pop and discard the value on the top of the stack.
     case pop
 
-    // The next byte is the index of a local. Push its value onto the stack.
+    // Pop the top of the stack and create a new local variable.
     case pushLocal
+
+    // The next byte is an unsigned integer. Remove that many locals.
+    case popLocals
+
+    // The next byte is the index of a local. Push its value onto the stack.
+    case lookupLocal
 
     // The next byte is the index of a local. Pop the top of the stack and store
     // it in the local.
-    case popLocal
+    case assignLocal
 
     // Replace the boolean value on the top of the stack with its inverse.
     case not
@@ -109,6 +117,8 @@ enum Opcode: UInt8 {
     case `fallthrough`
 }
 
+// MARK: - ScriptFunction extensions
+
 // Methods used to generate bytecode.
 extension ScriptFunction {
     func emit(_ op: Opcode) {
@@ -163,11 +173,6 @@ extension ScriptFunction {
             print(String(format: "%5d %@", i, String(describing: value)))
         }
 
-        print("locals:")
-        for (i, name) in locals.enumerated() {
-            print(String(format: "%5d %@", i, name))
-        }
-
         print("bytecode:")
         var iter = bytecode.makeIterator()
         while let b = iter.next() {
@@ -178,9 +183,9 @@ extension ScriptFunction {
             case .pushSmallInt, .call:
                 let i = Int8(bitPattern: iter.next()!)
                 print(String(format: "  %@ %5d", opname, i))
-            case .pushLocal, .popLocal:
+            case .lookupLocal, .assignLocal:
                 let i = iter.next()!
-                print(String(format: "  %@ %5d  ; %@", opname, i, locals[Int(i)]))
+                print(String(format: "  %@ %5d", opname, i))
             case .pushConstant, .assignMember, .lookupMember, .lookupSymbol:
                 var offset = Int(iter.next()!)
                 offset |= Int(iter.next()!) << 8
@@ -200,9 +205,20 @@ extension ScriptFunction {
     }
 }
 
+// MARK: - Compiler
+
 class Compiler {
+    // The names of local variables (including parameters) that are currently in scope.
+    var locals = [String]()
+
+    // The stack that maintains the number of locals that were defined before
+    // the start of each nested scope.
+    var scopeLocals = [Int]()
+
     func compileFunction(parameters: [Parameter], body: ParseNode,
                          in module: Module) -> ScriptFunction? {
+        locals = parameters.map(\.name)
+        scopeLocals = [locals.count]
         var block = ScriptFunction(module: module, parameters: parameters)
         compile(body, &block)
         return block
@@ -237,8 +253,8 @@ class Compiler {
             block.emit(.pushConstant, block.addConstant(.symbol(s)))
 
         case let .identifier(s):
-            if let localIndex = block.locals.firstIndex(of: s) {
-                block.emit(.pushLocal, UInt8(localIndex))
+            if let localIndex = locals.lastIndex(of: s) {
+                block.emit(.lookupLocal, UInt8(localIndex))
             } else {
                 block.emit(.lookupSymbol, block.addConstant(.symbol(s)))
             }
@@ -314,20 +330,23 @@ class Compiler {
             block.emit(.makePortal)
 
         case let .var(name, initialValue):
-            let index = UInt8(block.locals.count)
-            block.locals.append(name)
-            compile(initialValue, &block)
-            block.emit(.popLocal, index)
+            if locals[scopeLocals.last!...].contains(name) {
+                logger.warning("ignoring duplicate declaration of local variable \(name)")
+            } else {
+                compile(initialValue, &block)
+                block.emit(.pushLocal)
+                locals.append(name)
+            }
 
         case let .if(predicate, thenBlock, elseBlock):
             compile(predicate, &block)
             let skipThen = block.emitJump(.jumpIfNot)
             block.emit(.pop)
-            compile(thenBlock, &block)
+            compileScope(thenBlock, &block)
             if let elseBlock = elseBlock {
                 let skipElse = block.emitJump(.jump)
                 block.patchJump(at: skipThen)
-                compile(elseBlock, &block)
+                compileScope(elseBlock, &block)
                 block.patchJump(at: skipElse)
             } else {
                 block.patchJump(at: skipThen)
@@ -338,7 +357,7 @@ class Compiler {
             compile(pred, &block)
             let endJump = block.emitJump(.jumpIfNot)
             block.emit(.pop)
-            compile(body, &block)
+            compileScope(body, &block)
             block.emitJump(.jump, to: start)
             block.patchJump(at: endJump)
             block.emit(.pop)
@@ -368,11 +387,11 @@ class Compiler {
             // TODO: += and friends
             switch lhs {
             case let .identifier(s):
-                guard let localIndex = block.locals.firstIndex(of: s) else {
+                guard let localIndex = locals.lastIndex(of: s) else {
                     fatalError("undefined local \(s)")
                 }
                 compile(rhs, &block)
-                block.emit(.popLocal, UInt8(localIndex))
+                block.emit(.assignLocal, UInt8(localIndex))
 
             case let .subscript(expr, index):
                 compile(expr, &block)
@@ -395,6 +414,17 @@ class Compiler {
 
         case .entity, .quest, .race:
             fatalError("invalid attempt to compile object definition")
+        }
+    }
+
+    func compileScope(_ scope: ParseNode, _ block: inout ScriptFunction) {
+        scopeLocals.append(locals.count)
+        compile(scope, &block)
+        let prevLocals = scopeLocals.removeLast()
+        if locals.count > prevLocals {
+            // The block defined some local variables. Pop them from the locals array.
+            block.emit(.popLocals, UInt8(locals.count - prevLocals))
+            locals.removeLast(locals.count - prevLocals)
         }
     }
 
