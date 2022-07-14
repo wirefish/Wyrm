@@ -89,7 +89,7 @@ enum Opcode: UInt8 {
 
     // Replace the stack values from the last position marked by beginList with
     // a single value representing a list of the removed values.
-    case makeList
+    case endList
 
     // Create a Portal from the three values on the top of the stack.
     case makePortal
@@ -97,8 +97,8 @@ enum Opcode: UInt8 {
     // Replace the entity on the top of the stack with a clone.
     case clone
 
-    // Call a function. The top of the stack contains the function and the
-    // arguments. The next byte is the number of arguments.
+    // Call a function. The top of the stack is a list of the arguments; the
+    // next value on the stack is the function to call.
     case call
 
     // Convert the value at the top of the stack into a string. The following
@@ -196,7 +196,7 @@ extension ScriptFunction {
             let opname = String(describing: op).padding(toLength: 12, withPad: " ",
                                                         startingAt: 0)
             switch op {
-            case .pushSmallInt, .call:
+            case .pushSmallInt:
                 let i = Int8(bitPattern: bytecode[ip + 1])
                 print(String(format: "%5d: %@ %5d", ip, opname, i))
                 ip += 2
@@ -320,7 +320,7 @@ class Compiler {
         case let .list(elements):
             block.emit(.beginList)
             elements.forEach { compile($0, &block) }
-            block.emit(.makeList)
+            block.emit(.endList)
 
         case let .clone(lhs):
             compile(lhs, &block)
@@ -328,8 +328,10 @@ class Compiler {
 
         case let .call(fn, args):
             compile(fn, &block)
+            block.emit(.beginList)
             args.forEach { compile($0, &block ) }
-            block.emit(.call, UInt8(args.count))
+            block.emit(.endList)
+            block.emit(.call)
 
         case let .dot(lhs, member):
             compile(lhs, &block)

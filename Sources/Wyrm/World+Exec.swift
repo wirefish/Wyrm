@@ -257,7 +257,7 @@ extension World {
             case .beginList:
                 lists.append(stack.count)
 
-            case .makeList:
+            case .endList:
                 let start = lists.removeLast()
                 let values = Array<Value>(stack[start...])
                 stack.removeSubrange(start...)
@@ -285,18 +285,17 @@ extension World {
                 stack.append(.entity(e.clone()))
 
             case .call:
-                let argCount = Int(code.bytecode[ip])
-                let args = Array<Value>(stack[(stack.count - argCount)..<stack.count])
-                stack.removeLast(argCount)
+                guard case let .list(args) = stack.removeLast() else {
+                    throw ExecError.typeMismatch
+                }
                 guard case let .function(fn) = stack.removeLast() else {
                     throw ExecError.expectedCallable
                 }
-                guard case let .value(value) = try fn.call(args, context: []) else {
+                guard case let .value(value) = try fn.call(args.values, context: []) else {
                     // await and fallthrough are not supported results from nested calls.
                     throw ExecError.invalidResult
                 }
                 stack.append(value)
-                ip += 1
 
             case .stringify:
                 let format = Text.Format(rawValue: code.bytecode[ip])
