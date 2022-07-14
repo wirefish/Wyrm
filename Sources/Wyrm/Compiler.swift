@@ -26,10 +26,10 @@ enum Opcode: UInt8 {
     case pop
 
     // Pop the top of the stack and create a new local variable.
-    case pushLocal
+    case createLocal
 
     // The next byte is an unsigned integer. Remove that many locals.
-    case popLocals
+    case removeLocals
 
     // The next byte is the index of a local. Push its value onto the stack.
     case lookupLocal
@@ -167,39 +167,56 @@ extension ScriptFunction {
 }
 
 extension ScriptFunction {
+    func getUInt16(at pos: Int) -> UInt16 {
+        UInt16(bytecode[pos]) | (UInt16(bytecode[pos + 1]) << 8)
+    }
+
+    func getInt16(at pos: Int) -> Int16 {
+        Int16(bitPattern: getUInt16(at: pos))
+    }
+
     func dump() {
         print("constants:")
         for (i, value) in constants.enumerated() {
             print(String(format: "%5d %@", i, String(describing: value)))
         }
 
+        print("parameters:")
+        for (i, parameter) in parameters.enumerated() {
+            print(String(format: "%5d %@", i, parameter.name))
+        }
+
         print("bytecode:")
-        var iter = bytecode.makeIterator()
-        while let b = iter.next() {
-            let op = Opcode(rawValue: b)!
+        var ip = 0
+        while ip < bytecode.count {
+            let op = Opcode(rawValue: bytecode[ip])!
             let opname = String(describing: op).padding(toLength: 12, withPad: " ",
                                                         startingAt: 0)
             switch op {
             case .pushSmallInt, .call:
-                let i = Int8(bitPattern: iter.next()!)
-                print(String(format: "  %@ %5d", opname, i))
-            case .lookupLocal, .assignLocal:
-                let i = iter.next()!
-                print(String(format: "  %@ %5d", opname, i))
+                let i = Int8(bitPattern: bytecode[ip + 1])
+                print(String(format: "%5d: %@ %5d", ip, opname, i))
+                ip += 2
+            case .removeLocals, .lookupLocal, .assignLocal, .stringify, .joinStrings:
+                let i = bytecode[ip + 1]
+                print(String(format: "%5d: %@ %5d", ip, opname, i))
+                ip += 2
             case .pushConstant, .assignMember, .lookupMember, .lookupSymbol:
-                var offset = Int(iter.next()!)
-                offset |= Int(iter.next()!) << 8
-                print(String(format: "  %@ %5d  ; %@",
-                             opname, offset, String(describing: constants[offset])))
+                let index = Int(getUInt16(at: ip + 1))
+                print(String(format: "%5d: %@ %5d  ; %@",
+                             ip, opname, index, String(describing: constants[index])))
+                ip += 3
             case .makeList:
-                var count: UInt16 = UInt16(iter.next()!)
-                count |= UInt16(iter.next()!) << 8
-                print(String(format: "  %@ %5d", opname, count))
-            case .stringify, .joinStrings:
-                let i = iter.next()!
-                print(String(format: "  %@ %5d", opname, i))
+                let count = getUInt16(at: ip + 1)
+                print(String(format: "%5d: %@ %5d", ip, opname, count))
+                ip += 3
+            case .jump, .jumpIf, .jumpIfNot:
+                let offset = Int(getInt16(at: ip + 1))
+                print(String(format: "%5d: %@ %5d  ; -> %d", ip, opname, offset, ip + 3 + offset))
+                ip += 3
             default:
-                print(String(format: "  %@", opname))
+                print(String(format: "%5d: %@", ip, opname))
+                ip += 1
             }
         }
     }
@@ -334,7 +351,7 @@ class Compiler {
                 logger.warning("ignoring duplicate declaration of local variable \(name)")
             } else {
                 compile(initialValue, &block)
-                block.emit(.pushLocal)
+                block.emit(.createLocal)
                 locals.append(name)
             }
 
@@ -423,7 +440,7 @@ class Compiler {
         let prevLocals = scopeLocals.removeLast()
         if locals.count > prevLocals {
             // The block defined some local variables. Pop them from the locals array.
-            block.emit(.popLocals, UInt8(locals.count - prevLocals))
+            block.emit(.removeLocals, UInt8(locals.count - prevLocals))
             locals.removeLast(locals.count - prevLocals)
         }
     }

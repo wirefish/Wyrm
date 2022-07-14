@@ -14,16 +14,6 @@ enum ExecError: Error {
     case invalidResult
 }
 
-extension ScriptFunction {
-    func getUInt16(at offset: Int) -> UInt16 {
-        UInt16(bytecode[offset]) | (UInt16(bytecode[offset + 1]) << 8)
-    }
-
-    func getInt16(at offset: Int) -> Int16 {
-        Int16(bitPattern: getUInt16(at: offset))
-    }
-}
-
 extension World {
     func exec(_ code: ScriptFunction, args: [Value], context: [ValueDictionary]) throws -> CallableResult {
         // The arguments are always the first locals, and self is always the first argument.
@@ -60,10 +50,10 @@ extension World {
             case .pop:
                 let _ = stack.removeLast()
 
-            case .pushLocal:
+            case .createLocal:
                 locals.append(stack.removeLast())
 
-            case .popLocals:
+            case .removeLocals:
                 let count = Int(code.bytecode[ip]); ip += 1
                 locals.removeLast(count)
 
