@@ -196,7 +196,6 @@ extension World {
 
     func start() {
         for entity in startableEntities {
-            logger.debug("starting \(entity)")
             entity.handleEvent(.when, "start_world", args: [])
         }
     }

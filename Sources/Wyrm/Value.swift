@@ -59,7 +59,7 @@ enum Value: Equatable {
 
 // MARK: - ValueList
 
-class ValueList: CustomDebugStringConvertible {
+final class ValueList: CustomDebugStringConvertible {
     var values: [Value]
 
     init<S>(_ elements: S) where S: Sequence, S.Element: ValueRepresentable {
@@ -236,6 +236,19 @@ extension NounPhrase: ValueRepresentable {
     func toValue() -> Value {
         // FIXME: This isn't right but it really doesn't matter.
         return .string(singular)
+    }
+}
+
+extension ValueList: ValueRepresentable {
+    static func fromValue(_ value: Value) -> ValueList? {
+        guard case let .list(list) = value else {
+            return nil
+        }
+        return list
+    }
+
+    func toValue() -> Value {
+        return .list(self)
     }
 }
 

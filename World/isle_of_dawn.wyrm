@@ -49,10 +49,6 @@ deflocation hilltop: isle_location {
 
     contents = [standing_stones!]
     exits = [gravel_path -> 'south to pavilion]
-
-    when start_world() {
-        log_debug(self, "it's happening!")
-    }
 }
 
 // pavilion
@@ -1454,4 +1450,14 @@ deflocation the_siren: location {
     contents = [sailor]
 
     route = [gangplank -> 'west to pier, gangplank -> 'south to arwyck.west_dock]
+
+    when start_world() {
+        log_debug("starting the boat")
+        var i = 0
+        while true {
+            await sleep(1)
+            log_debug("moving the boat", i, route[i].direction, route[i].destination)
+            i = (i + 1) % len(route)
+        }
+    }
 }

@@ -54,6 +54,7 @@ extension ScriptProvider {
 struct ScriptLibrary: ScriptProvider {
     static let functions = [
         ("change_race", changeRace),
+        ("len", len),
         ("log_debug", logDebug),
         ("random", random),
         ("show", show),
@@ -72,6 +73,11 @@ struct ScriptLibrary: ScriptProvider {
     static func random(_ args: [Value]) throws -> Value {
         let (min, max) = try unpack(args, Double.self, Double.self)
         return .number(Double.random(in: min...max))
+    }
+
+    static func len(_ args: [Value]) throws -> Value {
+        let list = try unpack(args, ValueList.self)
+        return .number(Double(list.values.count))
     }
 
     static func logDebug(_ args: [Value]) throws -> Value {

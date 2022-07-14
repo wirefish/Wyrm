@@ -6,6 +6,7 @@
 enum ExecError: Error {
     case typeMismatch
     case undefinedSymbol(String)
+    case indexOutOfBounds
     case expectedCallable
     case expectedFuture
     case invalidResult
@@ -231,6 +232,9 @@ extension World {
                 }
                 guard case let .list(list) = stack.removeLast() else {
                     throw ExecError.typeMismatch
+                }
+                guard index >= 0 && index < list.values.count else {
+                    throw ExecError.indexOutOfBounds
                 }
                 stack.append(list.values[index])
 
