@@ -6,11 +6,11 @@
 class Container: PhysicalEntity {
     var capacity = 0
     var contents = [Item]()
-
-    var isFull: Bool { contents.count >= capacity }
 }
 
 extension Container {
+    var isFull: Bool { contents.count >= capacity }
+
     // Returns true if count of item can be inserted into the container.
     func canInsert(_ item: Item, count: Int? = nil) -> Bool {
         if let stack = contents.first(where: { item.isStackable(with: $0) }) {
@@ -25,17 +25,17 @@ extension Container {
     // item was merged. If the return value is not item, item's count is
     // modified to represent the remaining, un-inserted portion.
     @discardableResult
-    func insert(_ item: Item, count: Int? = nil) -> Item? {
+    func insert(_ item: Item, count: Int? = nil, force: Bool = false) -> Item? {
         let count = count ?? item.count
         if let stack = contents.first(where: { item.isStackable(with: $0) }) {
-            if count + stack.count <= stack.stackLimit {
+            if count + stack.count <= stack.stackLimit || force {
                 item.count -= count
                 stack.count += count
                 return stack
             } else {
                 return nil
             }
-        } else if !isFull {
+        } else if !isFull || force {
             if count == item.count {
                 contents.append(item)
                 item.container = self

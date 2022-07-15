@@ -38,13 +38,6 @@ final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
     var debugDescription: String { "<Race \(ref)>" }
 }
 
-final class Inventory: Container {
-    required init(withPrototype proto: Entity? = nil) {
-        super.init(withPrototype: proto)
-        self.capacity = 5
-    }
-}
-
 final class Avatar: PhysicalEntity {
     var level = 1
     var race: Race?
@@ -52,7 +45,7 @@ final class Avatar: PhysicalEntity {
     var inventory = Inventory()
 
     // Equipped items.
-    var equipped = [EquippedSlot:Item?]()
+    var equipped = [EquippedSlot:Equipment]()
 
     // A mapping from identifiers of active quests to their current state.
     var activeQuests = [ValueRef:QuestState]()

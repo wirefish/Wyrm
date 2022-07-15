@@ -39,8 +39,15 @@ struct QuestState: Encodable {
 }
 
 final class QuestPhase: ValueDictionaryObject {
+    // The label that identifies the phase when defining the quest and when
+    // calling advance_quest().
     let label: String
+
+    // The summary shown to the player when they list active quests and are
+    // currently in this phase.
     var summary = ""
+
+    // The initial value of the quest state upon entering this phase.
     var initialState = QuestState.State.nil
 
     init(_ label: String) {
@@ -59,7 +66,7 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
     var summary = ""
     var level = 1
     var requiredQuests = [ValueRef]()
-    var awardedItems = [Item]()
+    var questItems = [ValueRef]()
 
     var phases = [QuestPhase]()
 
@@ -72,7 +79,7 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
         "summary": accessor(\Quest.summary),
         "level": accessor(\Quest.level),
         "required_quests": accessor(\Quest.requiredQuests),
-        "awarded_items": accessor(\Quest.awardedItems),
+        "quest_items": accessor(\Quest.questItems),
     ]
 
     var debugDescription: String { "<Quest \(ref)>" }
@@ -171,7 +178,7 @@ struct QuestOffer: Offer {
 // Avatar methods related to managing quests.
 extension Avatar {
     func advanceQuest(_ quest: Quest, to phaseLabel: String) -> Bool {
-        guard let phase = quest.phases.first(where: { $0.label == phaseLabel }) else {
+        guard let phase = quest.phase(phaseLabel) else {
             logger.warning("cannot advance quest \(quest.name) to unknown phase \(phaseLabel)")
             return false
         }
@@ -189,7 +196,8 @@ extension Avatar {
             logger.warning("cannot drop quest \(quest.name) that is not active")
             return false
         }
-        // TODO: remove quest items
+
+        quest.questItems.forEach { discardAll(withPrototype: $0) }
 
         // FIXME:
         showMap()
@@ -201,6 +209,9 @@ extension Avatar {
         activeQuests[quest.ref] = nil
         completedQuests[quest.ref] = Int(CFAbsoluteTimeGetCurrent() / 60)
         showNotice("You have completed the quest \"\(quest.name)\"!")
+
+        // Clean up forgotten quest items.
+        quest.questItems.forEach { discardAll(withPrototype: $0) }
 
         // FIXME:
         showMap()
@@ -219,7 +230,9 @@ struct QuestScriptFunctions: ScriptProvider {
     static let functions = [
         ("advance_quest", advanceQuest),
         ("complete_quest", completeQuest),
+        ("give_item", giveItem),
         ("offer_quest", offerQuest),
+        ("receive_items", receiveItems),
     ]
 
     static func offerQuest(_ args: [Value]) throws -> Value {
@@ -246,6 +259,19 @@ struct QuestScriptFunctions: ScriptProvider {
     static func completeQuest(_ args: [Value]) throws -> Value {
         let (avatar, quest) = try unpack(args, Avatar.self, Quest.self)
         avatar.completeQuest(quest)
+        return .nil
+    }
+
+    static func giveItem(_ args: [Value]) throws -> Value {
+        let (avatar, proto, target) = try unpack(args, Avatar.self, Item.self, PhysicalEntity.self)
+        avatar.giveItems(to: target) { $0.prototype == proto }
+        return .nil
+    }
+
+    static func receiveItems(_ args: [Value]) throws -> Value {
+        let (avatar, items, source) = try unpack(args, Avatar.self, [Item].self, PhysicalEntity.self)
+        print(items)
+        avatar.receiveItems(items, from: source)
         return .nil
     }
 }

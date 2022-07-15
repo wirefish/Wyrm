@@ -11,6 +11,69 @@
 // - give: inventory -> npc
 // - equip: inventory -> equipped
 // - unequip: equipped -> inventory
+// - discard: inventory -> nowhere
+
+final class Inventory: Container {
+    static let baseCapacity = 5
+
+    required init(withPrototype proto: Entity? = nil) {
+        super.init(withPrototype: proto)
+        self.capacity = Self.baseCapacity
+    }
+
+    func updateCapacity(_ avatar: Avatar) {
+        self.capacity = avatar.equipped.reduce(Self.baseCapacity) {
+            return $0 + $1.1.capacity
+        }
+    }
+}
+
+// MARK: - Avatar methods
+
+extension Avatar {
+    func discard(_ item: Item, count: Int? = nil) {
+        if let removed = inventory.remove(item, count: count) {
+            if removed == item {
+                // TODO: remove item from inventory pane
+            } else {
+                // TODO: update inventory pane with item's new count
+            }
+            show("You discard \(removed.describeBriefly([.indefinite])).")
+        }
+    }
+
+    func discardAll(withPrototype ref: ValueRef) {
+        let first = inventory.contents.partition { $0.prototype?.ref == ref }
+        for item in inventory.contents[first...] {
+            // TODO: remove item from inventory pane
+            show("You discard \(item.describeBriefly([.indefinite])).")
+        }
+        inventory.contents.remove(from: first)
+    }
+
+    func giveItems(to target: PhysicalEntity, where pred: (Item) -> Bool ) {
+        let first = inventory.contents.partition(by: pred)
+        if first != inventory.contents.endIndex {
+            let desc = inventory.contents[first...].map { $0.describeBriefly([.indefinite]) }
+            show("You give \(desc.conjunction(using: "and")) to \(target.describeBriefly([.definite])).")
+            for item in inventory.contents[first...] {
+                triggerEvent("give_item", in: location, participants: [self, item, target],
+                             args: [self, item, target]) {}
+            }
+            inventory.contents.remove(from: first)
+        }
+    }
+
+    func receiveItems(_ items: [Item], from source: PhysicalEntity) {
+        let items = items.map { $0.clone() }
+        for item in items {
+            inventory.insert(item, force: true)
+        }
+        // TODO: update inventory pane
+        let desc = items.map { $0.describeBriefly([.indefinite]) }
+        show("\(source.describeBriefly([.capitalized, .definite])) gives you \(desc.conjunction(using: "and")).")
+    }
+}
 
 // MARK: - inventory command
 

@@ -55,6 +55,10 @@ class Item: PhysicalEntity {
         return super.isVisible(to: observer)
     }
 
+    override func describeBriefly(_ format: Text.Format) -> String {
+        return (brief ?? Self.defaultBrief).format(format, count: count)
+    }
+
     func isStackable(with stack: Item) -> Bool {
         return stackLimit > 0 && prototype == stack.prototype
     }

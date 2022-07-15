@@ -635,7 +635,6 @@ defquest get_some_clothes {
     summary = |
         Pick a white tulip for Dhalia, then exchange it for a set of clothes.
     required_quests = [choose_a_race]
-    awarded_items = [simple_shirt, simple_pants, canvas_shoes, small_backpack]
 
     phase active {
         summary = "Pick a white tulip from the fields east of the clothing stall."
@@ -677,14 +676,18 @@ def seamstress: lib.npc {
     }
 
     when talk(actor: .quest(get_some_clothes, done), self, topic) {
+        give_item(actor, white_tulip, self)
+
         tell(self, actor) |
             Why thank you, this tulip is lovely! Your timing is perfect; I have
             just finished selecting an outfit for you.
 
+        receive_items(actor, [simple_shirt, simple_pants, canvas_shoes, small_backpack], self)
+
         complete_quest(actor, get_some_clothes)
 
         show_tutorial(actor, 'items) |
-            The seamstress have given you several items; type `inventory` or
+            The seamstress has given you several items; type `inventory` or
             `inv` to list them.
 
             To wear an item, use the `equip` command. For example, type `equip

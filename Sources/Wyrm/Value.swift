@@ -263,6 +263,19 @@ extension Value: ValueRepresentable {
     }
 }
 
+extension Array: ValueRepresentable where Element: ValueRepresentable {
+    static func fromValue(_ value: Value) -> Self? {
+        guard case let .list(list) = value else {
+            return nil
+        }
+        return list.values.compactMap { Element.fromValue($0) }
+    }
+
+    func toValue() -> Value {
+        return .list(ValueList(self.map { $0.toValue() }))
+    }
+}
+
 // MARK: - representing enums
 
 protocol ValueRepresentableEnum: CaseIterable, ValueRepresentable {

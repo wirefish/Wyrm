@@ -20,6 +20,10 @@ extension Array {
     func keep(where pred: (Element) -> Bool) -> [Element] {
         compactMap { pred($0) ? $0 : nil }
     }
+
+    mutating func remove(from pos: Int) {
+        removeLast(count - pos)
+    }
 }
 
 extension StringProtocol {
