@@ -18,6 +18,7 @@ enum Value: Equatable {
     case quest(Quest)
     case race(Race)
     case list(ValueList)
+    case iterator(Array<Value>.Iterator)
     case function(Callable)
     case module(Module)
     case future((@escaping () -> Void) -> Void)

@@ -25,6 +25,9 @@ enum Opcode: UInt8 {
     // Pop and discard the value on the top of the stack.
     case pop
 
+    // Swap the two top values on the stack.
+    case swap
+
     // Pop the top of the stack and create a new local variable.
     case createLocal
 
@@ -59,8 +62,8 @@ enum Opcode: UInt8 {
     case jump
 
     // Like jump, but only if the value on the top of the stack is true or
-    // false, respectively.
-    case jumpIf, jumpIfNot
+    // false or nil, respectively.
+    case jumpIf, jumpIfNot, jumpIfNil
 
     // Lookup the value of an identifier and push its value onto the stack. The
     // next two bytes are the index of a symbolic constant in the constants
@@ -90,6 +93,14 @@ enum Opcode: UInt8 {
     // Replace the stack values from the last position marked by beginList with
     // a single value representing a list of the removed values.
     case endList
+
+    // Replace the list on the top of the stack with an iterator over the list.
+    case iterate
+
+    // The next byte is the index of a local. Given an iterator on top of the
+    // stack, place the next list element (if any) into the local and advance
+    // the iterator, or replace it with .nil at the end of the list.
+    case advance
 
     // Create a Portal from the three values on the top of the stack.
     case makePortal
@@ -200,7 +211,7 @@ extension ScriptFunction {
                 let i = Int8(bitPattern: bytecode[ip + 1])
                 print(String(format: "%5d: %@ %5d", ip, opname, i))
                 ip += 2
-            case .removeLocals, .lookupLocal, .assignLocal, .stringify, .joinStrings:
+            case .removeLocals, .lookupLocal, .assignLocal, .advance, .stringify, .joinStrings:
                 let i = bytecode[ip + 1]
                 print(String(format: "%5d: %@ %5d", ip, opname, i))
                 ip += 2
@@ -209,7 +220,7 @@ extension ScriptFunction {
                 print(String(format: "%5d: %@ %5d  ; %@",
                              ip, opname, index, String(describing: constants[index])))
                 ip += 3
-            case .jump, .jumpIf, .jumpIfNot:
+            case .jump, .jumpIf, .jumpIfNot, .jumpIfNil:
                 let offset = Int(getInt16(at: ip + 1))
                 print(String(format: "%5d: %@ %5d  ; -> %d", ip, opname, offset, ip + 3 + offset))
                 ip += 3
@@ -348,8 +359,25 @@ class Compiler {
             compile(destination, &block)
             block.emit(.makePortal)
 
-        case .comprehension:
-            fatalError("list comprehensions not implemented")
+        case let .comprehension(transform, name, sequence):
+            block.emit(.beginList)
+            compile(sequence, &block)
+            block.emit(.iterate)
+            let listVar = locals.count
+            block.emit(.pushNil)
+            block.emit(.createLocal)
+            locals.append(name)
+            let start = block.bytecode.count
+            block.emit(.advance, UInt8(listVar))
+            let endJump = block.emitJump(.jumpIfNil)
+            compile(transform, &block)
+            block.emit(.swap)  // to bring the iterator to the top
+            block.emitJump(.jump, to: start)
+            block.patchJump(at: endJump)
+            block.emit(.pop)  // the iterator
+            block.emit(.endList)
+            block.emit(.removeLocals, UInt8(1))
+            locals.removeLast()
 
         case let .var(name, initialValue):
             if locals[scopeLocals.last!...].contains(name) {

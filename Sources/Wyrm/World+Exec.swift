@@ -51,6 +51,9 @@ extension World {
             case .pop:
                 let _ = stack.removeLast()
 
+            case .swap:
+                stack.swapAt(stack.count - 2, stack.count - 1)
+
             case .createLocal:
                 locals.append(stack.removeLast())
 
@@ -190,6 +193,14 @@ extension World {
                     ip += 2
                 }
 
+            case .jumpIfNil:
+                if case .nil = stack.last {
+                    let offset = code.getInt16(at: ip)
+                    ip += 2 + Int(offset)
+                } else {
+                    ip += 2
+                }
+
             case .lookupSymbol:
                 let index = code.getUInt16(at: ip)
                 guard case let .symbol(s) = code.constants[Int(index)] else {
@@ -262,6 +273,24 @@ extension World {
                 let values = Array<Value>(stack[start...])
                 stack.removeSubrange(start...)
                 stack.append(.list(ValueList(values)))
+
+            case .iterate:
+                guard case let .list(list) = stack.removeLast() else {
+                    throw ExecError.typeMismatch
+                }
+                stack.append(.iterator(list.values.makeIterator()))
+
+            case .advance:
+                let index = Int(code.bytecode[ip]); ip += 1
+                guard case var .iterator(iterator) = stack.last else {
+                    throw ExecError.typeMismatch
+                }
+                if let value = iterator.next() {
+                    locals[index] = value
+                    stack[stack.count - 1] = .iterator(iterator)
+                } else {
+                    stack[stack.count - 1] = .nil
+                }
 
             case .makePortal:
                 guard let destination = stack.removeLast().asEntity(Location.self),
