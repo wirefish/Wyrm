@@ -96,10 +96,10 @@ enum Precedence: Int, Comparable {
 }
 
 typealias InfixParserMethod = (Parser) -> (_ lhs: ParseNode) -> ParseNode?
-typealias ParseRule = (method: InfixParserMethod, prec: Precedence)
+typealias InfixParseRule = (method: InfixParserMethod, prec: Precedence)
 
 class Parser {
-    static let parseRules: [Token:ParseRule] = [
+    static let parseRules: [Token:InfixParseRule] = [
         .lparen: (method: parseCall, prec: .call),
         .lsquare: (method: parseSubscript, prec: .call),
         .leads: (method: parseExit, prec: .factor),
@@ -288,7 +288,7 @@ class Parser {
     }
 
     private func parseMethod() -> ParseNode.Method? {
-        advance()  // over func
+        assert(match(.func))
 
         guard case let .identifier(name) = consume() else {
             error("expected identifier after func")
@@ -368,7 +368,7 @@ class Parser {
     // MARK: - parsing quests
     
     private func parseQuest() -> ParseNode? {
-        advance()
+        assert(match(.defquest))
 
         guard case let .identifier(name) = consume() else {
             error("expected identifier after defquest")
@@ -409,7 +409,7 @@ class Parser {
     }
 
     private func parseQuestPhase() -> ParseNode.QuestPhase? {
-        advance()
+        assert(match(.phase))
 
         guard case let .identifier(label) = consume() else {
             error("expected identifier as name of quest phase")
@@ -441,7 +441,7 @@ class Parser {
     // MARK: - parsing races
 
     private func parseRace() -> ParseNode? {
-        advance()
+        assert(match(.defrace))
 
         guard case let .identifier(name) = consume() else {
             error("expected identifier after defrace")
@@ -522,21 +522,17 @@ class Parser {
 
     private func parseIf() -> ParseNode? {
         assert(match(.if))
-
-        guard let predicate = parseExpr() else {
+        guard let pred = parseExpr(), let whenTrue = parseBlock() else {
             return nil
         }
-
-        guard let whenTrue = parseBlock() else {
-            return nil
-        }
-
         var whenFalse: ParseNode?
         if match(.else) {
-            whenFalse = currentToken == .if ? parseIf() : parseBlock()
+            whenFalse = (currentToken == .if) ? parseIf() : parseBlock()
+            if whenFalse == nil {
+                return nil
+            }
         }
-
-        return .if(predicate, whenTrue, whenFalse)
+        return .if(pred, whenTrue, whenFalse)
     }
 
     private func parseWhile() -> ParseNode? {
@@ -568,7 +564,6 @@ class Parser {
             error("expected { at beginning of block")
             return nil
         }
-
         var stmts = [ParseNode]()
         while !match(.rbrace) {
             if let stmt = parseStatement() {
@@ -577,7 +572,6 @@ class Parser {
                 return nil
             }
         }
-
         return .block(stmts)
     }
 
