@@ -1,0 +1,32 @@
+def route_follower: location {
+    // A list of portals that will serve as exits leading from this location to
+    // the destinations along its route.
+    route = []
+
+    when start_world() {
+        var pos = 0
+        var entries = [exit -> opposite_direction(exit.direction) to self for exit in route]
+        while true {
+            // Arrive at the destination.
+            var dest = *route[pos].destination
+            add_exit(entries[pos], dest)
+            add_exit(route[pos], self)
+            announce(dest, 3, "{self.name} arrives at {dest.name}.")
+            await sleep(20)
+
+            // Announce departure to the next destination.
+            var next_pos = (pos + 1) % len(route)
+            var next_dest = *route[next_pos].destination
+            announce(dest, 3, "{self.name} will depart soon for {next_dest.name}. All aboard!")
+            await sleep(7)
+
+            // Depart.
+            announce(dest, 3, "{self.name} departs for {next_dest.name}.")
+            remove_exit(entries[pos].direction, dest)
+            remove_exit(route[pos].direction, self)
+            await sleep(3)
+
+            pos = next_pos
+        }
+    }
+}

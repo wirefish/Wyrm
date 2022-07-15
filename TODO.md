@@ -22,5 +22,3 @@
 - receive quest rewards/items
 
 - consume quest items
-
-- finish list comprehensions
