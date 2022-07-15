@@ -6,8 +6,15 @@
 //
 
 class Item: PhysicalEntity {
-    var stackLimit = 1
+    // If zero, this item cannot stack with other items inside a container and
+    // the container can contain more than one item with the same prototype. If
+    // positive, the item can stack with other items with the same prototype and
+    // a container can contain at most one such stack.
+    var stackLimit = 0
+
+    // The number of items stacked together.
     var count = 1
+    
     var level = 1
     var useVerbs = [String]()
     var quest: ValueRef?
@@ -46,6 +53,10 @@ class Item: PhysicalEntity {
             return false
         }
         return super.isVisible(to: observer)
+    }
+
+    func isStackable(with stack: Item) -> Bool {
+        return stackLimit > 0 && prototype == stack.prototype
     }
 
     override func canInsert(into container: Container) -> Bool {

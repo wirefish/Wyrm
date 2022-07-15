@@ -11,7 +11,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     var isObvious = true
     var alts = [NounPhrase]()
     var size = Size.huge
-    weak var container: Container?
+    weak var container: Entity?
 
     override func copyProperties(from other: Entity) {
         let other = other as! PhysicalEntity
@@ -42,6 +42,11 @@ class PhysicalEntity: Entity, Viewable, Matchable {
                 super[member] = newValue
             }
         }
+    }
+
+    var location: Location {
+        get { container as! Location }
+        set { container = newValue }
     }
 
     // MARK: - Viewable

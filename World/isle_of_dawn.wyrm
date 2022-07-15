@@ -718,6 +718,7 @@ def white_tulip: item {
     size = 'small  // FIXME:
     entry_pose = "catches your eye."
     quest = get_some_clothes
+    stack_limit = 1
 
     when take(actor, self, source) {
         spawn(white_tulip, source, 15)

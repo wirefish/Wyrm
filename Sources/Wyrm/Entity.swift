@@ -14,7 +14,7 @@ class Entity: ValueDictionary {
     var handlers = [EventHandler]()
     var extraMembers = [String:Value]()
 
-    required init(withPrototype prototype: Entity?) {
+    required init(withPrototype prototype: Entity? = nil) {
         self.prototype = prototype
     }
 

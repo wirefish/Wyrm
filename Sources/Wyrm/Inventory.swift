@@ -26,7 +26,7 @@ inspect that item.
 let inventoryCommand = Command("inventory 1:subcommand item", help: inventoryHelp) {
     actor, verb, clauses in
 
-    let items = actor.contents.map { $0.describeBriefly([.indefinite]) }
+    let items = actor.inventory.contents.map { $0.describeBriefly([.indefinite]) }
     if items.isEmpty {
         actor.show("You are not carrying anything.")
     } else {
@@ -49,24 +49,33 @@ let takeCommand = Command("take item from:container", help: takeHelp) {
     actor, verb, clauses in
     if case let .tokens(item) = clauses[0] {
         guard let matches = match(item, against: actor.location.contents, where: {
-            $0.isVisible(to: actor) && $0.canInsert(into: actor)
+            $0.isVisible(to: actor)
         }) else {
-            actor.show("You don't see anything like that here that you can take.")
+            actor.show("You don't see anything like that here.")
             return
         }
 
-        // TODO: handle quantity, check capacity and size, etc.
-        for item in matches {
-            if actor.canInsert(item) {
-                triggerEvent("take", in: actor.location, participants: [actor, item],
-                             args: [actor, item, actor.location]) {
-                    actor.location.remove(item)
-                    actor.insert(item)
-                    actor.show("You take \(item.describeBriefly([.indefinite])).")
+        for entity in matches {
+            if actor.inventory.isFull {
+                actor.show("Your inventory is full.")
+                break
+            } else if let item = entity as? Item {
+                if actor.inventory.canInsert(item) {
+                    triggerEvent("take", in: actor.location, participants: [actor, item],
+                                 args: [actor, item, actor.location]) {
+                        actor.location.remove(item)
+                        actor.inventory.insert(item)
+                        actor.show("You take \(item.describeBriefly([.definite])).")
+                    }
+                } else {
+                    actor.show("You cannot carry any more \(item.describeBriefly([.plural])).")
                 }
             } else {
-                actor.show("You cannot carry \(item.describeBriefly([.definite]))")
+                actor.show("You cannot take \(entity.describeBriefly([.definite])).")
             }
+        }
+
+        for item in matches {
         }
     } else {
         actor.show("What do you want to take?")

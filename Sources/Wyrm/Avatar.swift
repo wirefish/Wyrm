@@ -38,14 +38,18 @@ final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
     var debugDescription: String { "<Race \(ref)>" }
 }
 
-final class Avatar: PhysicalEntity, Container {
+final class Inventory: Container {
+    required init(withPrototype proto: Entity? = nil) {
+        super.init(withPrototype: proto)
+        self.capacity = 5
+    }
+}
+
+final class Avatar: PhysicalEntity {
     var level = 1
     var race: Race?
 
-    // Container.
-    static let baseCapacity = 5  // without equipment that increases capacity
-    var capacity = baseCapacity
-    var contents = [PhysicalEntity]()
+    var inventory = Inventory()
 
     // Equipped items.
     var equipped = [EquippedSlot:Item?]()
@@ -74,15 +78,6 @@ final class Avatar: PhysicalEntity, Container {
 
     // Open WebSocket used to communicate with the client.
     var handler: WebSocketHandler?
-
-    required init(withPrototype prototype: Entity?) {
-        super.init(withPrototype: prototype)
-    }
-
-    var location: Location {
-        get { container as! Location }
-        set { container = newValue }
-    }
 
     private static let accessors = [
         "race": accessor(\Avatar.race),
@@ -162,8 +157,7 @@ extension Avatar: WebSocketDelegate {
 
             triggerEvent("enter_location", in: location, participants: [self],
                          args: [self, location]) {
-                location.contents.append(self)
-                container = location
+                location.insert(self)
                 locationChanged()
             }
         }

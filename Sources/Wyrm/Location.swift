@@ -5,11 +5,9 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-class Location: Entity, Container {
+class Location: Entity {
     var name = ""
     var description = ""
-    var size = Size.huge
-    var capacity = Int.max
     var contents = [PhysicalEntity]()
     var exits = [Portal]()
     var tutorial: String?
@@ -22,8 +20,6 @@ class Location: Entity, Container {
         let other = other as! Location
         name = other.name
         description = other.description
-        size = other.size
-        capacity = other.capacity
         tutorial = other.tutorial
         domain = other.domain
         surface = other.surface
@@ -35,7 +31,6 @@ class Location: Entity, Container {
     static let accessors = [
         "name": accessor(\Location.name),
         "description": accessor(\Location.description),
-        "capacity": accessor(\Location.capacity),
         "contents": accessor(\Location.contents),
         "exits": accessor(\Location.exits),
         "tutorial": accessor(\Location.tutorial),
@@ -51,6 +46,18 @@ class Location: Entity, Container {
             } else {
                 super[member] = newValue
             }
+        }
+    }
+
+    func insert(_ entity: PhysicalEntity) {
+        contents.append(entity)
+        entity.container = self
+    }
+
+    func remove(_ entity: PhysicalEntity) {
+        if let index = contents.firstIndex(where: { $0 == entity }) {
+            contents.remove(at: index)
+            entity.container = nil
         }
     }
 
@@ -91,10 +98,8 @@ class Meditation: Activity {
 
     func finish(_ avatar: Avatar) {
         avatar.show("Your meditation is complete.")
-
         triggerEvent("meditate", in: avatar.location, participants: [avatar, avatar.location],
-                     args: [avatar]) {
-        }
+                     args: [avatar]) {}
     }
 }
 

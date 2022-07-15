@@ -2,105 +2,72 @@
 //  Container.swift
 //  Wyrm
 //
-//  Created by Craig Becker on 6/25/22.
-//
 
-protocol Container: AnyObject {
-    var size: Size { get }
-    var capacity: Int { get }
-    var contents: [PhysicalEntity] { get set }
+class Container: PhysicalEntity {
+    var capacity = 0
+    var contents = [Item]()
+
+    var isFull: Bool { contents.count >= capacity }
 }
 
 extension Container {
-    static func combine<T: Entity, U: Entity>(_ t: T, into u: U) -> Bool {
-        return false
-    }
-
-    static func combine<T: Item, U: Item>(_ t: T, into u: U) -> Bool {
-        guard (t.prototype != nil && t.prototype === u.prototype &&
-               t.count + u.count <= u.stackLimit) else {
-            return false
+    // Returns true if count of item can be inserted into the container.
+    func canInsert(_ item: Item, count: Int? = nil) -> Bool {
+        if let stack = contents.first(where: { item.isStackable(with: $0) }) {
+            return (count ?? item.count) + stack.count <= stack.stackLimit
+        } else {
+            return !isFull
         }
-        u.count += t.count
-        return true
     }
 
-    func canInsert(_ entity: PhysicalEntity) -> Bool {
-        return (entity.canInsert(into: self) &&
-                (contents.count < capacity ||
-                 contents.contains(where: { entity.canMerge(into: $0) })))
-    }
-
-    // Attempts to insert an entity into the container, possibly combining it into a
-    // stack already within the container. Returns the resulting entity on success or
-    // nil if the entity cannot be added because the container is full.
+    // Inserts count of item into the container and returns the contained item,
+    // which may be item itself or a stack into which the inserted portion of
+    // item was merged. If the return value is not item, item's count is
+    // modified to represent the remaining, un-inserted portion.
     @discardableResult
-    func insert(_ entity: PhysicalEntity) -> PhysicalEntity? {
-        if let stack = contents.first(where: { Self.combine(entity, into: $0) }) {
-            return stack
-        } else if contents.count < capacity {
-            contents.append(entity)
-            entity.container = self
-            return entity
+    func insert(_ item: Item, count: Int? = nil) -> Item? {
+        let count = count ?? item.count
+        if let stack = contents.first(where: { item.isStackable(with: $0) }) {
+            if count + stack.count <= stack.stackLimit {
+                item.count -= count
+                stack.count += count
+                return stack
+            } else {
+                return nil
+            }
+        } else if !isFull {
+            if count == item.count {
+                contents.append(item)
+                item.container = self
+                return item
+            } else {
+                let stack = item.clone()
+                stack.count = count
+                item.count -= count
+                contents.append(stack)
+                stack.container = self
+                return stack
+            }
         } else {
             return nil
         }
     }
 
     @discardableResult
-    func remove(_ entity: PhysicalEntity) -> Bool {
-        guard let index = contents.firstIndex(where: { $0 === entity }) else {
-            return false
-        }
-        contents.remove(at: index)
-        entity.container = nil
-        return true
-    }
-
-    @discardableResult
-    func remove(_ item: Item, count: Int) -> Item? {
-        guard let prototype = item.prototype else {
+    func remove(_ item: Item, count: Int? = nil) -> Item? {
+        guard let index = contents.firstIndex(of: item) else {
             return nil
         }
-
-        let candidates: [Item] = contents.compactMap({
-            if let item = $0 as? Item, item.prototype === prototype {
-                return item
-            } else {
-                return nil
-            }
-        }).sorted { $0.count < $1.count }
-
-        var result: Item?
-        var countRemaining = count
-        var itemsToRemove = [Item]()
-        for other in candidates {
-            if other.count <= countRemaining {
-                itemsToRemove.append(other)
-                if result != nil {
-                    result!.count += other.count
-                } else {
-                    result = other
-                }
-                countRemaining -= other.count
-                if countRemaining == 0 {
-                    break
-                }
-            } else {
-                result = result ?? other.clone()
-                result!.count = countRemaining
-                other.count -= countRemaining
-                break
-            }
-        }
-
-        contents = contents.filter { entity in
-            itemsToRemove.first(where: { $0 === entity }) == nil
-        }
-        for item in itemsToRemove {
+        let count = (count ?? item.count)
+        if count >= item.count {
+            contents.remove(at: index)
             item.container = nil
+            return item
+        } else {
+            let removed = item.clone()
+            removed.count = count
+            item.count -= count
+            return removed
         }
-
-        return result
     }
 }
