@@ -556,7 +556,7 @@ extension World {
             }
             let portal = proto.clone()
             portal.direction = direction
-            portal.destination = destinationRef
+            portal.destination = destinationRef.toAbsolute(in: module)
             return .entity(portal)
 
         case let .clone(lhs):
