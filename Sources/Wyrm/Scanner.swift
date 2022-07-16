@@ -219,6 +219,12 @@ class Scanner {
                 result.append(contentsOf: String(repeating: " ", count: indent - baseIndent))
             }
         }
+        while result.hasSuffix("\n\n") {
+            result.removeLast()
+        }
+        if !result.contains("\n\n") {
+            result.removeLast()
+        }
         return .string(result)
     }
 
