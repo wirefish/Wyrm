@@ -1090,7 +1090,7 @@ def guard: lib.npc {
 
             I have a weapon for you. Here, take this.
 
-        receive(actor, worn_dagger!, self)
+        receive_items(actor, [worn_dagger], self)
 
         tell(self, actor) |
             Go ahead, `equip` that dagger and kill one of those plants. Strike
@@ -1108,6 +1108,7 @@ def guard: lib.npc {
             Great job! I'll confess, those things give me the heebie jeebies.
             Plants shouldn't writhe around like that. Please, feel free to head
             south whenever you like.
+        complete_quest(actor, kill_some_plants)
     }
 
     when talk(actor: .quest(kill_some_plants, complete), self, topic) {
