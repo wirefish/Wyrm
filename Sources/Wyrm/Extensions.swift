@@ -5,7 +5,7 @@
 //  General-purpose extensions of standard library types.
 //
 
-extension Array {
+extension Sequence {
     // Returns the first non-nil value obtained by applying a transform to the
     // elements of the array.
     func firstMap<T>(_ transform: (Element) -> T?) -> T? {
@@ -19,10 +19,6 @@ extension Array {
 
     func keep(where pred: (Element) -> Bool) -> [Element] {
         compactMap { pred($0) ? $0 : nil }
-    }
-
-    mutating func remove(from pos: Int) {
-        removeLast(count - pos)
     }
 }
 

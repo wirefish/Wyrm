@@ -167,12 +167,26 @@ extension Avatar: WebSocketDelegate {
 
 // MARK: - sending client messages
 
+struct Message<Arg: Encodable>: Encodable {
+    let fn: String
+    let args: [Arg]
+}
+
 extension Avatar {
 
     func sendMessage(_ fn: String, _ args: ClientValue...) {
         if let handler = handler {
             let encoder = JSONEncoder()
             let data = try! encoder.encode(ClientCall(fn: fn, args: args))
+            handler.sendTextMessage(String(data: data, encoding: .utf8)!)
+        }
+    }
+
+    func sendMessage<Arg: Encodable>(_ fn: String, _ args: [Arg]) {
+        if let handler = handler {
+            let encoder = JSONEncoder()
+            encoder.keyEncodingStrategy = .convertToSnakeCase
+            let data = try! encoder.encode(Message(fn: fn, args: args))
             handler.sendTextMessage(String(data: data, encoding: .utf8)!)
         }
     }
@@ -194,8 +208,9 @@ extension Avatar {
     }
 
     func locationChanged() {
-        describeLocation()
         showMap()
+        setNeighbors()
+        describeLocation()
         if let tutorial = location.tutorial, let key = location.ref?.description {
             showTutorial(key, tutorial)
         }

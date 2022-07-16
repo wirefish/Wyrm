@@ -5,8 +5,8 @@
 // The commands in this file implement the various ways a player can interact
 // with their inventory:
 //
-// - take: environment -> inventory
-// - put: inventory -> environment
+// - take: location or container -> inventory
+// - put: inventory -> container at location
 // - receive: npc -> inventory
 // - give: inventory -> npc
 // - equip: inventory -> equipped
@@ -31,11 +31,6 @@ final class Inventory: Container {
 // MARK: - Avatar methods
 
 extension Avatar {
-    private func describeItems(_ items: ArraySlice<Item>) -> String {
-        return items.map { $0.describeBriefly([.indefinite]) }
-            .conjunction(using: "and")
-    }
-
     func discard(_ item: Item, count: Int? = nil) {
         if let removed = inventory.remove(item, count: count) {
             if removed == item {
@@ -48,23 +43,22 @@ extension Avatar {
     }
 
     func discardItems(where pred: (Item) -> Bool) {
-        let first = inventory.contents.partition(by: pred)
-        if first != inventory.contents.endIndex {
-            show("You discard \(describeItems(inventory.contents[first...])).")
-            inventory.contents.remove(from: first)
+        let first = inventory.partition(by: pred)
+        if first != inventory.endIndex {
+            show("You discard \(inventory[first...].describe()).")
+            inventory.remove(from: first)
         }
     }
 
     func giveItems(to target: PhysicalEntity, where pred: (Item) -> Bool) {
-        let first = inventory.contents.partition(by: pred)
-        if first != inventory.contents.endIndex {
-            let desc = inventory.contents[first...].map { $0.describeBriefly([.indefinite]) }
-            show("You give \(desc.conjunction(using: "and")) to \(target.describeBriefly([.definite])).")
+        let first = inventory.partition(by: pred)
+        if first != inventory.endIndex {
+            show("You give \(inventory[first...].describe()) to \(target.describeBriefly([.definite])).")
             for item in inventory.contents[first...] {
                 triggerEvent("give_item", in: location, participants: [self, item, target],
                              args: [self, item, target]) {}
             }
-            inventory.contents.remove(from: first)
+            inventory.remove(from: first)
         }
     }
 
@@ -74,8 +68,27 @@ extension Avatar {
             inventory.insert(item, force: true)
         }
         // TODO: update inventory pane
-        let desc = items.map { $0.describeBriefly([.indefinite]) }
-        show("\(source.describeBriefly([.capitalized, .definite])) gives you \(desc.conjunction(using: "and")).")
+        show("\(source.describeBriefly([.capitalized, .definite])) gives you \(items.describe()).")
+    }
+
+    func takeItem(_ item: Item, from source: Container? = nil) {
+        // TODO: handle case with source other than location.
+        // TODO: handle quantity.
+        guard !inventory.isFull else {
+            show("Your inventory is full.")
+            return
+        }
+        if inventory.canInsert(item) {
+            triggerEvent("take", in: location, participants: [self, item],
+                         args: [self, item, location]) {
+                location.remove(item)
+                inventory.insert(item)
+                removeNeighbor(item)
+                show("You take \(item.describeBriefly([.definite])).")
+            }
+        } else {
+            show("You cannot carry any more \(item.describeBriefly([.plural])).")
+        }
     }
 }
 
@@ -92,12 +105,10 @@ inspect that item.
 
 let inventoryCommand = Command("inventory 1:subcommand item", help: inventoryHelp) {
     actor, verb, clauses in
-
-    let items = actor.inventory.contents.map { $0.describeBriefly([.indefinite]) }
-    if items.isEmpty {
+    if actor.inventory.isEmpty {
         actor.show("You are not carrying anything.")
     } else {
-        actor.show("You are carrying \(items.conjunction(using: "and")).")
+        actor.show("You are carrying \(actor.inventory.describe()).")
     }
 }
 
@@ -123,26 +134,11 @@ let takeCommand = Command("take item from:container", help: takeHelp) {
         }
 
         for entity in matches {
-            if actor.inventory.isFull {
-                actor.show("Your inventory is full.")
-                break
-            } else if let item = entity as? Item {
-                if actor.inventory.canInsert(item) {
-                    triggerEvent("take", in: actor.location, participants: [actor, item],
-                                 args: [actor, item, actor.location]) {
-                        actor.location.remove(item)
-                        actor.inventory.insert(item)
-                        actor.show("You take \(item.describeBriefly([.definite])).")
-                    }
-                } else {
-                    actor.show("You cannot carry any more \(item.describeBriefly([.plural])).")
-                }
+            if let item = entity as? Item {
+                actor.takeItem(item)
             } else {
                 actor.show("You cannot take \(entity.describeBriefly([.definite])).")
             }
-        }
-
-        for item in matches {
         }
     } else {
         actor.show("What do you want to take?")

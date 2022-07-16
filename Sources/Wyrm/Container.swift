@@ -8,6 +8,28 @@ class Container: PhysicalEntity {
     var contents = [Item]()
 }
 
+extension Container: MutableCollection {
+    typealias Index = Int
+
+    var startIndex: Int { contents.startIndex }
+    var endIndex: Int { contents.endIndex }
+    func index(after i: Int) -> Int { i + 1 }
+
+    subscript(position: Int) -> Item {
+        get { contents[position] }
+        set { contents[position] = newValue }
+    }
+
+    subscript(bounds: Range<Index>) -> ArraySlice<Item> {
+        get { return contents[bounds] }
+        set { contents[bounds] = newValue }
+    }
+
+    func remove(from pos: Index) {
+        contents.removeLast(contents.count - pos)
+    }
+}
+
 extension Container {
     var isFull: Bool { contents.count >= capacity }
 

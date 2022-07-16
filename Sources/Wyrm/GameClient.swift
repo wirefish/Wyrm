@@ -66,6 +66,46 @@ enum ClientValue: Encodable {
     }
 }
 
+// MARK: - neighbors
+
+struct NeighborProperties: Encodable {
+    let key: Int
+    let brief: String
+    let icon: String?
+    let health: Int?
+    let maxHealth: Int?
+
+    init(_ entity: PhysicalEntity) {
+        key = entity.id
+        brief = entity.describeBriefly([])
+        icon = entity.icon
+        if let creature = entity as? Creature {
+            health = creature.currentHealth
+            maxHealth = creature.maxHealth
+        } else {
+            health = nil
+            maxHealth = nil
+        }
+    }
+}
+
+extension Avatar {
+    func setNeighbors() {
+        let args = location.contents.compactMap { entity -> NeighborProperties? in
+            entity != self && entity.isObvious(to: self) ? NeighborProperties(entity) : nil
+        }
+        sendMessage("setNeighbors", args)
+    }
+
+    func updateNeighbor(_ entity: PhysicalEntity) {
+        sendMessage("updateNeighbor", [NeighborProperties(entity)])
+    }
+
+    func removeNeighbor(_ entity: PhysicalEntity) {
+        sendMessage("removeNeighbor", [entity.id])
+    }
+}
+
 struct AvatarState {
     var name: String? {
         didSet {

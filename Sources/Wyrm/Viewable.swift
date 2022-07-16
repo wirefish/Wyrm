@@ -18,3 +18,9 @@ protocol Viewable {
 
     var icon: String? { get }
 }
+
+extension Sequence where Element: Viewable {
+    func describe(using conjunction: String = "and") -> String {
+        return map({ $0.describeBriefly([.indefinite]) }).conjunction(using: conjunction)
+    }
+}
