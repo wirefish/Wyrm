@@ -22,3 +22,5 @@
 - allow explicit slot in (un)equip.
 
 - icons.
+
+- save avatar. manually for now.
