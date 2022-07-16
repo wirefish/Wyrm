@@ -27,6 +27,7 @@ def backpack: equipment {
 // weapons
 
 def dagger: weapon {
+    slot = 'eitherHand
     damage_type = 'piercing
     speed = 1.5
 }
