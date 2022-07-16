@@ -58,6 +58,8 @@ extension Avatar {
                 triggerEvent("give_item", in: location, participants: [self, item, target],
                              args: [self, item, target]) {}
             }
+            // FIXME:
+            removeFromInventory(inventory[first...])
             inventory.remove(from: first)
         }
     }
@@ -65,7 +67,8 @@ extension Avatar {
     func receiveItems(_ items: [Item], from source: PhysicalEntity) {
         let items = items.map { $0.clone() }
         items.forEach { inventory.insert($0, force: true) }
-        // TODO: update inventory pane
+        // FIXME: if the items were merged this update is incorrect.
+        updateInventory(items)
         show("\(source.describeBriefly([.capitalized, .definite])) gives you \(items.describe()).")
     }
 
@@ -82,6 +85,8 @@ extension Avatar {
                 location.remove(item)
                 inventory.insert(item)
                 removeNeighbor(item)
+                // FIXME: if the item was merged this update is incorrect.
+                updateInventory([item])
                 show("You take \(item.describeBriefly([.definite])).")
             }
         } else {
@@ -133,6 +138,7 @@ extension Avatar {
         }
         inventory.remove(item)
         equipped[slot] = item
+        removeFromInventory([item])
         updateEquipment([slot])
         show("You equip \(item.describeBriefly([.definite])).")
     }
@@ -141,7 +147,7 @@ extension Avatar {
         if let item = equipped.removeValue(forKey: slot) {
             show("You return \(item.describeBriefly([.definite])) to your inventory.")
             inventory.insert(item, force: true)
-            // TODO: update equipment and inventory panes.
+            updateInventory([item])
             updateEquipment([slot])
         }
     }

@@ -132,6 +132,7 @@ extension Avatar: WebSocketDelegate {
         if reconnecting {
             sendMessage("showNotice", .string("Welcome back!"))
             // TODO: update entire UI state.
+            updateInventory(inventory)
             locationChanged()
         } else {
             // FIXME: figure out a portal to use.

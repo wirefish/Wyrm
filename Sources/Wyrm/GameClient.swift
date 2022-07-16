@@ -106,11 +106,11 @@ extension Avatar {
     }
 }
 
-struct EquippedItem: Encodable {
+struct ItemProperties: Encodable {
     let brief: String
     let icon: String?
 
-    init(_ item: Equipment) {
+    init(_ item: Item) {
         brief = item.describeBriefly([])
         icon = item.icon
     }
@@ -118,15 +118,29 @@ struct EquippedItem: Encodable {
 
 extension Avatar {
     func updateEquipment(_ slots: [EquipmentSlot]) {
-        let update = [EquipmentSlot:EquippedItem?].init(uniqueKeysWithValues: slots.map {
-            slot -> (EquipmentSlot, EquippedItem?) in
+        let update = [EquipmentSlot:ItemProperties?].init(uniqueKeysWithValues: slots.map {
+            slot -> (EquipmentSlot, ItemProperties?) in
             if let item = equipped[slot] {
-                return (slot, EquippedItem(item))
+                return (slot, ItemProperties(item))
             } else {
                 return (slot, nil)
             }
         })
         sendMessage("updateEquipment", [update])
+    }
+
+    func updateInventory<S: Sequence>(_ items: S) where S.Element: Item {
+        let update = [Int:ItemProperties].init(uniqueKeysWithValues: items.map {
+            ($0.id, ItemProperties($0))
+        })
+        sendMessage("updateInventory", [update])
+    }
+
+    func removeFromInventory<S: Sequence>(_ items: S) where S.Element: Item {
+        let update = [Int:ItemProperties?].init(uniqueKeysWithValues: items.map {
+            ($0.id, nil)
+        })
+        sendMessage("updateInventory", [update])
     }
 }
 
