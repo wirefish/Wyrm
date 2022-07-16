@@ -334,10 +334,18 @@ extension Quest: ValueRepresentable {
 
 extension Race: ValueRepresentable {
     static func fromValue(_ value: Value) -> Race? {
-        guard case let .race(race) = value else {
+        switch value {
+        case let .race(race):
+            return race
+        case let .ref(ref):
+            if case let .race(race) = World.instance.lookup(ref) {
+                return race
+            } else {
+                return nil
+            }
+        default:
             return nil
         }
-        return race
     }
 
     func toValue() -> Value {

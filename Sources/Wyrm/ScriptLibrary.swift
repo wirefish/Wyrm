@@ -55,6 +55,8 @@ struct ScriptLibrary: ScriptProvider {
     static let functions = [
         ("add_exit", addExit),
         ("announce", announce),
+        ("change_gender", changeGender),
+        ("change_name", changeName),
         ("change_race", changeRace),
         ("len", len),
         ("log_debug", logDebug),
@@ -112,6 +114,25 @@ struct ScriptLibrary: ScriptProvider {
         avatar.race = race
         avatar.showNotice("You are now \(race.describeBriefly([.indefinite]))!")
         return .nil
+    }
+
+    static func changeGender(_ args: [Value]) throws -> Value {
+        let (avatar, gender) = try unpack(args, Avatar.self, Gender.self)
+        avatar.gender = gender
+        avatar.showNotice("You are now \(gender)!")
+        return .nil
+    }
+
+    static func changeName(_ args: [Value]) throws -> Value {
+        let (avatar, name) = try unpack(args, Avatar.self, String.self)
+        // FIXME: more checks, capitalize
+        if name.count >= 3 && name.count <= 15 {
+            avatar.name = name
+            avatar.showNotice("Your name is now \"\(name)\"!")
+            return .boolean(true)
+        } else {
+            return .boolean(false)
+        }
     }
 
     static func spawn(_ args: [Value]) throws -> Value {

@@ -10,6 +10,7 @@ import Foundation
 final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
     let ref: ValueRef
     var brief: NounPhrase?
+    var description: String?
 
     init(ref: ValueRef) {
         self.ref = ref
@@ -17,6 +18,7 @@ final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
 
     static let accessors = [
         "brief": accessor(\Race.brief),
+        "description": accessor(\Race.description),
     ]
 
     func describeBriefly(_ format: Text.Format) -> String {
@@ -27,9 +29,19 @@ final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
     var debugDescription: String { "<Race \(ref)>" }
 }
 
+enum Gender: Codable, ValueRepresentableEnum {
+    case male, female
+
+    static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
+        (String(describing: $0), $0)
+    })
+}
+
 final class Avatar: PhysicalEntity {
     var level = 1
     var race: Race?
+    var gender: Gender?
+    var name: String?
 
     var inventory = Inventory()
 
@@ -63,6 +75,8 @@ final class Avatar: PhysicalEntity {
 
     private static let accessors = [
         "race": accessor(\Avatar.race),
+        "gender": accessor(\Avatar.gender),
+        "name": accessor(\Avatar.name),
         "location": accessor(\Avatar.location),
     ]
 
@@ -73,6 +87,10 @@ final class Avatar: PhysicalEntity {
                 super[member] = newValue
             }
         }
+    }
+
+    override func describeBriefly(_ format: Text.Format) -> String {
+        name ?? race?.describeBriefly(format) ?? super.describeBriefly(format)
     }
 }
 
@@ -342,5 +360,24 @@ let tutorialCommand = Command("tutorial 1:subcommand", help: tutorialHelp) { act
         } else {
             actor.show("There is no tutorial associated with this location.")
         }
+    }
+}
+
+// MARK: - say command
+
+let sayCommand = Command("say *:message") {
+    actor, verb, clauses in
+    if case let .string(message) = clauses[0] {
+        triggerEvent("say", in: actor.location, participants: [actor], args: [actor, message]) {
+            actor.show("You say, \"\(message)\"")
+            let speaker = actor.describeBriefly([.capitalized, .indefinite])
+            for entity in actor.location.contents {
+                if entity != actor, let avatar = entity as? Avatar {
+                    avatar.show("\(speaker) says, \"\(message)\"")
+                }
+            }
+        }
+    } else {
+        actor.show("What do you want to say?")
     }
 }

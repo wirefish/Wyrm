@@ -548,7 +548,7 @@ deflocation goblin_shrine: isle_location {
             stature and greenish skin now match those of the caretaker.
         change_race(actor, lib.goblin)
         tell(self, actor) "Huzzah! Welcome to the family!"
-        advance_quest(actor, choose_a_race)
+        advance_quest(actor, choose_a_race, 'done)
     }
 
     when meditate(actor) {
@@ -594,7 +594,7 @@ deflocation ogre_shrine: isle_location {
 
             Rocks fly around. Muscles grow. Brain shrink.
         change_race(actor, lib.ogre)
-        advance_quest(actor, choose_a_race)
+        advance_quest(actor, choose_a_race, 'done)
     }
 
     when meditate(actor) {
@@ -865,7 +865,7 @@ deflocation male_shrine: isle_location {
             The statue's mouth begins to move and a deep voice intones several
             archaic words you don't understand.
         change_gender(actor, 'male)
-        complete_quest(actor, choose_a_gender)
+        advance_quest(actor, choose_a_gender, 'done)
     }
 }
 
@@ -894,7 +894,7 @@ deflocation female_shrine: isle_location {
             The statue slowly turns its head to face you and says several arcane
             words in a powerful, mellifluous voice.
         change_gender(actor, 'female)
-        complete_quest(actor, choose_a_gender)
+        advance_quest(actor, choose_a_gender, 'done)
     }
 }
 
@@ -1008,7 +1008,7 @@ def orb_of_naming: fixture {
 
     after say(actor: .quest(choose_a_name, active), message) {
         show(actor) |
-            The orb begins to glow, dimly at first, but then more brightly.
+            The orb begins to glow, dimly at first, then much more brightly.
             Sparks skitter across its smooth surface and you feel an
             uncomfortable tingle beneath your skin.
         if change_name(actor, message) {

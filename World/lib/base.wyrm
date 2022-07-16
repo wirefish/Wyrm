@@ -1,12 +1,42 @@
-// Core prototype definitions.
+// Races and prototype for avatars.
+
+defrace reborn_hero {
+    brief = "a reborn hero"
+    description = |
+        You see a shimmering humanoid form that seems only partially corporeal,
+        with one foot in this world and the other still in the Dreamlands.
+}
 
 defrace human {
     brief = "a human"
 }
 
+defrace elf {
+    brief = "an el[f|ves]"
+}
+
+defrace sidhe {
+    brief = "a sidhe[]"
+}
+
+defrace dwarf {
+    brief = "a dwar[f|ves]"
+}
+
+defrace goblin {
+    brief = "a goblin"
+}
+
+defrace ogre {
+    brief = "an ogre"
+}
+
 def avatar: avatar {
     size = 'medium
+    race = reborn_hero
 }
+
+// Non-player characters.
 
 def npc: creature {
     when talk(actor, self, topic) {
