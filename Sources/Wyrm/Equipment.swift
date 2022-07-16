@@ -5,18 +5,21 @@
 //  Created by Craig Becker on 6/29/22.
 //
 
-enum EquippableSlot: ValueRepresentableEnum {
+enum EquipmentSlot: String, CodingKeyRepresentable, Hashable, Encodable, ValueRepresentableEnum {
     // Weapons and tools.
-    case mainHand, offHand, eitherHand, bothHands
+    case mainHand, offHand, tool
 
     // Clothing.
-    case head, torso, hands, waist, legs, feet
+    case head, torso, back, hands, waist, legs, feet
 
     // Accessories.
-    case ears, neck, wrists, eitherFinger
+    case ears, neck, leftWrist, rightWrist, leftFinger, rightFinger, trinket
 
     // Storage.
-    case backpack
+    case backpack, beltPouch
+
+    // Meta-slots.
+    case bothHands, eitherHand, eitherWrist, eitherFinger
 
     static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
         (String(describing: $0), $0)
@@ -24,7 +27,7 @@ enum EquippableSlot: ValueRepresentableEnum {
 }
 
 class Equipment: Item {
-    var slot: EquippableSlot?
+    var slot: EquipmentSlot?
     var trait: CombatTrait?
     var traitCoeff = 1.0
 

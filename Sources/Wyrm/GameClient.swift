@@ -106,6 +106,30 @@ extension Avatar {
     }
 }
 
+struct EquippedItem: Encodable {
+    let brief: String
+    let icon: String?
+
+    init(_ item: Equipment) {
+        brief = item.describeBriefly([])
+        icon = item.icon
+    }
+}
+
+extension Avatar {
+    func updateEquipment(_ slots: [EquipmentSlot]) {
+        let update = [EquipmentSlot:EquippedItem?].init(uniqueKeysWithValues: slots.map {
+            slot -> (EquipmentSlot, EquippedItem?) in
+            if let item = equipped[slot] {
+                return (slot, EquippedItem(item))
+            } else {
+                return (slot, nil)
+            }
+        })
+        sendMessage("updateEquipment", [update])
+    }
+}
+
 struct AvatarState {
     var name: String? {
         didSet {

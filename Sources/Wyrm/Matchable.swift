@@ -68,7 +68,7 @@ private func consumeQuantity(_ tokens: inout ArraySlice<String>) -> MatchQuantit
     }
 }
 
-struct MatchResult<T: Matchable> {
+struct MatchResult<T> {
     let quality: MatchQuality
     let quantity: MatchQuantity
     let matches: [T]
@@ -105,4 +105,24 @@ func match<T: Matchable>(_ tokens: [String], against subjectLists: [T]...) -> Ma
 
 func match<T: Matchable>(_ tokens: [String], against subjectLists: [T]..., where pred: (T) -> Bool) -> MatchResult<T>? {
     return match(tokens, against: subjectLists.flatMap({ $0.filter(pred) }))
+}
+
+func match<K, V: Matchable>(_ tokens: [String], against subjectDict: [K:V]) -> MatchResult<K>? {
+    var tokens = tokens[...]
+
+    let matchQuantity = consumeQuantity(&tokens)
+    var matchQuality = MatchQuality.partial
+    var matches = [K]()
+
+    for (key, subject) in subjectDict {
+        let quality = subject.match(tokens)
+        if quality > matchQuality {
+            matches = [key]
+            matchQuality = quality
+        } else if quality == matchQuality {
+            matches.append(key)
+        }
+    }
+
+    return matches.isEmpty ? nil : MatchResult(quality: matchQuality, quantity: matchQuantity, matches: matches)
 }

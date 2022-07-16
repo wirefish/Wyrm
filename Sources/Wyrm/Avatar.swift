@@ -7,17 +7,6 @@
 
 import Foundation
 
-enum EquippedSlot: String, CodingKeyRepresentable, Hashable, Encodable {
-    // Weapons and tools.
-    case mainHand, offHand
-
-    // Clothing.
-    case head, torso, hands, waist, legs, feet
-
-    // Accessories.
-    case ears, neck, wrists, leftFinger, rightFinger
-}
-
 final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
     let ref: ValueRef
     var brief: NounPhrase?
@@ -45,7 +34,7 @@ final class Avatar: PhysicalEntity {
     var inventory = Inventory()
 
     // Equipped items.
-    var equipped = [EquippedSlot:Equipment]()
+    var equipped = [EquipmentSlot:Equipment]()
 
     // A mapping from identifiers of active quests to their current state.
     var activeQuests = [ValueRef:QuestState]()

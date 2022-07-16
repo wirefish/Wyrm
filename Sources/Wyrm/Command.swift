@@ -327,6 +327,7 @@ let helpCommand = Command("help 1:topic 1:subtopic") { actor, verb, clauses in
 let allCommands = [
     acceptCommand,
     declineCommand,
+    equipCommand,
     goCommand,
     helpCommand,
     inventoryCommand,
@@ -336,4 +337,5 @@ let allCommands = [
     takeCommand,
     talkCommand,
     tutorialCommand,
+    unequipCommand,
 ]

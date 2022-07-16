@@ -64,9 +64,7 @@ extension Avatar {
 
     func receiveItems(_ items: [Item], from source: PhysicalEntity) {
         let items = items.map { $0.clone() }
-        for item in items {
-            inventory.insert(item, force: true)
-        }
+        items.forEach { inventory.insert($0, force: true) }
         // TODO: update inventory pane
         show("\(source.describeBriefly([.capitalized, .definite])) gives you \(items.describe()).")
     }
@@ -79,7 +77,7 @@ extension Avatar {
             return
         }
         if inventory.canInsert(item) {
-            triggerEvent("take", in: location, participants: [self, item],
+            triggerEvent("take", in: location, participants: [self, item, location],
                          args: [self, item, location]) {
                 location.remove(item)
                 inventory.insert(item)
@@ -88,6 +86,63 @@ extension Avatar {
             }
         } else {
             show("You cannot carry any more \(item.describeBriefly([.plural])).")
+        }
+    }
+
+    func putItem(_ item: Item, into container: Container) {
+        // TODO: handle quantity.
+        guard !container.isFull else {
+            show("\(container.describeBriefly([.capitalized, .definite])) is full.")
+            return
+        }
+        if container.canInsert(item) {
+            triggerEvent("put", in: location, participants: [self, item, container],
+                         args: [self, item, container]) {
+                inventory.remove(item)
+                container.insert(item)
+                show("You put \(item.describeBriefly([.indefinite])) into \(container.describeBriefly([.definite])).")
+            }
+        } else {
+            show("\(container.describeBriefly([.capitalized, .definite])) cannot accept any more \(item.describeBriefly([.plural])).")
+        }
+    }
+
+    func equip(_ item: Equipment) {
+        // TODO: deal with explicit slot
+        var slot: EquipmentSlot!
+        switch item.slot {
+        case .bothHands:
+            unequip(in: .mainHand)
+            unequip(in: .offHand)
+            slot = .mainHand
+        case .eitherHand:
+            if equipped[.mainHand] == nil {
+                slot = .mainHand
+            } else if equipped[.offHand] == nil {
+                slot = .offHand
+            } else {
+                unequip(in: .offHand)
+                slot = .offHand
+            }
+        case .eitherFinger:
+            // FIXME:
+            return
+        default:
+            unequip(in: item.slot!)
+            slot = item.slot!
+        }
+        inventory.remove(item)
+        equipped[slot] = item
+        updateEquipment([slot])
+        show("You equip \(item.describeBriefly([.definite])).")
+    }
+
+    func unequip(in slot: EquipmentSlot) {
+        if let item = equipped.removeValue(forKey: slot) {
+            show("You return \(item.describeBriefly([.definite])) to your inventory.")
+            inventory.insert(item, force: true)
+            // TODO: update equipment and inventory panes.
+            updateEquipment([slot])
         }
     }
 }
@@ -142,5 +197,63 @@ let takeCommand = Command("take item from:container", help: takeHelp) {
         }
     } else {
         actor.show("What do you want to take?")
+    }
+}
+
+// MARK: - equip command
+
+let wieldSlots: [EquipmentSlot] = [.mainHand, .offHand]
+
+let wearSlots: [EquipmentSlot] = [.head, .torso, .back, .hands, .waist, .legs, .feet,
+                                  .ears, .neck, .leftWrist, .rightWrist, .leftFinger, .rightFinger,
+                                  .backpack, .beltPouch]
+
+let toolSlots: [EquipmentSlot] = [.tool]
+
+let equipCommand = Command("equip item in|on:slot") {
+    actor, verb, clauses in
+    if case let .tokens(item) = clauses[0] {
+        guard let matches = match(item, against: actor.inventory.compactMap { $0 as? Equipment}) else {
+            actor.show("You aren't carrying any equipment like that.")
+            return
+        }
+        guard matches.count == 1 else {
+            actor.show("Do you want to equip \(matches.describe(using: "or"))?")
+            return
+        }
+        actor.equip(matches.first!)
+    } else {
+        let wielded = wieldSlots.compactMap { actor.equipped[$0] }
+        if wielded.isEmpty {
+            actor.show("You are not wielding any weapons.")
+        } else {
+            actor.show("You are wielding \(wielded.describe()).")
+        }
+        let worn = wearSlots.compactMap { actor.equipped[$0] }
+        if worn.isEmpty {
+            actor.show("You are not wearing anything. A bold choice!")
+        } else {
+            actor.show("You are wearing \(worn.describe()).")
+        }
+    }
+}
+
+// MARK: - unequip command
+
+let unequipCommand = Command("unequip item from:slot") {
+    actor, verb, clauses in
+    if case let .tokens(item) = clauses[0] {
+        guard let matches = match(item, against: actor.equipped) else {
+            actor.show("You don't have anything like that equipped.")
+            return
+        }
+        guard matches.count == 1 else {
+            let matchedItems = matches.map { actor.equipped[$0]! }
+            actor.show("Do you want to equip \(matchedItems.describe(using: "or"))?")
+            return
+        }
+        actor.unequip(in: matches.first!)
+    } else {
+        actor.show("What do you want to unequip?")
     }
 }
