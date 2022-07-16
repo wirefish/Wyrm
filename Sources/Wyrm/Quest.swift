@@ -60,13 +60,12 @@ final class QuestPhase: ValueDictionaryObject {
     ]
 }
 
-final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
+final class Quest: ValueDictionaryObject, CustomDebugStringConvertible, Matchable {
     let ref: ValueRef
     var name = ""
     var summary = ""
     var level = 1
     var requiredQuests = [ValueRef]()
-    var questItems = [ValueRef]()
 
     var phases = [QuestPhase]()
 
@@ -79,10 +78,13 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible {
         "summary": accessor(\Quest.summary),
         "level": accessor(\Quest.level),
         "required_quests": accessor(\Quest.requiredQuests),
-        "quest_items": accessor(\Quest.questItems),
     ]
 
     var debugDescription: String { "<Quest \(ref)>" }
+
+    func match(_ tokens: ArraySlice<String>) -> MatchQuality {
+        return name.match(tokens)
+    }
 
     func phase(_ label: String) -> QuestPhase? {
         return phases.first { $0.label == label }
@@ -191,18 +193,16 @@ extension Avatar {
         return true
     }
 
-    func dropQuest(_ quest: Quest) -> Bool {
+    func dropQuest(_ quest: Quest) {
         guard activeQuests.removeValue(forKey: quest.ref) != nil else {
             logger.warning("cannot drop quest \(quest.name) that is not active")
-            return false
+            return
         }
 
-        quest.questItems.forEach { discardAll(withPrototype: $0) }
+        discardItems { $0.quest == quest.ref }
 
         // FIXME:
         showMap()
-
-        return true
     }
 
     func completeQuest(_ quest: Quest) {
@@ -211,7 +211,7 @@ extension Avatar {
         showNotice("You have completed the quest \"\(quest.name)\"!")
 
         // Clean up forgotten quest items.
-        quest.questItems.forEach { discardAll(withPrototype: $0) }
+        discardItems { $0.quest == quest.ref }
 
         // FIXME:
         showMap()
@@ -291,15 +291,34 @@ let questCommand = Command("quest 1:subcommand name", help: questHelp) { actor, 
     if case let .string(subcommand) = clauses[0] {
         switch subcommand {
         case "drop":
-            // FIXME:
-            break
+            if case let .tokens(name) = clauses[1] {
+                let quests = actor.activeQuests.keys.compactMap { key -> Quest? in
+                    guard case let .quest(quest) = world.lookup(key) else {
+                        return nil
+                    }
+                    return quest
+                }
+                if let matches = match(name, against: quests) {
+                    if matches.count == 1 {
+                        actor.dropQuest(matches.first!)
+                        actor.showNotice("You are no longer on the quest \"\(matches.first!.name)\".")
+                    } else {
+                        actor.show("Do you want to drop \(matches.map { $0.name }.conjunction(using: "or"))?")
+                    }
+                } else {
+                    actor.show("You don't have quests matching that description.")
+                }
+            } else {
+                actor.show("Which quest do you want to drop?")
+            }
+
         default:
             actor.show("Unrecognized subcommand \"\(subcommand)\".")
         }
     } else {
         let descriptions: [String] = actor.activeQuests.compactMap {
             let (ref, state) = $0
-            guard case let .quest(quest) = world.lookup(ref, context: nil) else {
+            guard case let .quest(quest) = world.lookup(ref) else {
                 logger.warning("\(actor) has invalid active quest \(ref)")
                 return nil
             }

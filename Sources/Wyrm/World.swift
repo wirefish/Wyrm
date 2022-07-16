@@ -169,7 +169,7 @@ class World {
         }
     }
 
-    func lookup(_ ref: ValueRef, context: ValueDictionary?) -> Value? {
+    func lookup(_ ref: ValueRef, context: ValueDictionary? = nil) -> Value? {
         switch ref {
         case let .absolute(module, name):
             return modules[module]?[name]

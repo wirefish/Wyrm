@@ -31,6 +31,11 @@ final class Inventory: Container {
 // MARK: - Avatar methods
 
 extension Avatar {
+    private func describeItems(_ items: ArraySlice<Item>) -> String {
+        return items.map { $0.describeBriefly([.indefinite]) }
+            .conjunction(using: "and")
+    }
+
     func discard(_ item: Item, count: Int? = nil) {
         if let removed = inventory.remove(item, count: count) {
             if removed == item {
@@ -42,16 +47,15 @@ extension Avatar {
         }
     }
 
-    func discardAll(withPrototype ref: ValueRef) {
-        let first = inventory.contents.partition { $0.prototype?.ref == ref }
-        for item in inventory.contents[first...] {
-            // TODO: remove item from inventory pane
-            show("You discard \(item.describeBriefly([.indefinite])).")
+    func discardItems(where pred: (Item) -> Bool) {
+        let first = inventory.contents.partition(by: pred)
+        if first != inventory.contents.endIndex {
+            show("You discard \(describeItems(inventory.contents[first...])).")
+            inventory.contents.remove(from: first)
         }
-        inventory.contents.remove(from: first)
     }
 
-    func giveItems(to target: PhysicalEntity, where pred: (Item) -> Bool ) {
+    func giveItems(to target: PhysicalEntity, where pred: (Item) -> Bool) {
         let first = inventory.contents.partition(by: pred)
         if first != inventory.contents.endIndex {
             let desc = inventory.contents[first...].map { $0.describeBriefly([.indefinite]) }

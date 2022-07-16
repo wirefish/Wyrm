@@ -59,6 +59,16 @@ class Item: PhysicalEntity {
         return (brief ?? Self.defaultBrief).format(format, count: count)
     }
 
+    override func describeFully() -> String {
+        var s = super.describeFully()
+        if self.quest != nil {
+            if case let .quest(quest) = world.lookup(self.quest!) {
+                s += " (\(count == 1 ? "This item is" : "These items are") associated with the quest \"\(quest.name)\".)"
+            }
+        }
+        return s
+    }
+
     func isStackable(with stack: Item) -> Bool {
         return stackLimit > 0 && prototype == stack.prototype
     }

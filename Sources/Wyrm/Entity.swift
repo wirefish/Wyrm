@@ -33,8 +33,8 @@ class Entity: ValueDictionary {
         return entity
     }
 
-    final func extends(_ ref: ValueRef) -> Bool {
-        return ref == self.ref || (prototype?.extends(ref) ?? false)
+    final func isa(_ ref: ValueRef) -> Bool {
+        return ref == self.ref || (prototype?.isa(ref) ?? false)
     }
 
     // This will be overridden by subclasses which must always call their superclass
