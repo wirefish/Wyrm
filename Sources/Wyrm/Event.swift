@@ -25,10 +25,15 @@ struct EventHandler {
             case .self:
                 return arg == observer
             case let .prototype(ref):
-                guard case let .entity(entity) = arg else {
+                let ref = ref.toAbsolute(in: fn.module)
+                switch arg {
+                case let .entity(entity):
+                    return entity.isa(ref)
+                case let .quest(quest):
+                    return quest.ref == ref
+                default:
                     return false
                 }
-                return entity.isa(ref)
             case let .quest(ref, phase):
                 guard let avatar = arg.asEntity(Avatar.self),
                       case let .quest(quest) = World.instance.lookup(ref, context: fn.module) else {
