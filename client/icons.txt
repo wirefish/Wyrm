@@ -1,0 +1,90 @@
+# A table of all third-party icons used for the client.
+
+# Aliases
+$weapons      assets/purchased/equipment-icons/Weapons
+$armor        assets/purchased/equipment-icons/Armor and Equipment
+$inventory    assets/purchased/inventory-icons/PNG
+$resources    assets/purchased/resource-icons/PNG
+$loot         assets/purchased/loot-icons/PNG
+$unknown      assets/unknown
+
+# Weapons
+dagger          $weapons/Knives_03.png
+mace            $weapons/Bluntweapons_05.png
+maul            $weapons/Bluntweapons_03.png
+sword           $weapons/Swords_04.png
+scimitar        $weapons/Swords_10.png
+greatsword      $weapons/swords_07.png
+axe             $weapons/Axes_01.png
+battleaxe       $weapons/Axes_04.png
+spear           $weapons/Spears_01.png
+# TODO: wand
+staff           $weapons/Staves_01.png
+
+# Clothing
+cloth_belt      $armor/Belts_04.png
+
+# Light armor
+leather_head    $armor/Leather_01.png
+leather_torso   $armor/Leather_02.png
+leather_legs    $armor/Leather_03.png
+leather_hands   $armor/Leather_05.png
+leather_feet    $armor/Leather_06.png
+
+# Medium armor
+chain_head      $armor/Chain_01.png
+chain_torso     $armor/Chain_02.png
+chain_legs      $armor/Chain_03.png
+chain_hands     $armor/Chain_05.png
+chain_feet      $armor/Chain_06.png
+wooden_shield   $weapons/Shields_01.png
+metal_shield    $weapons/Shields_02.png
+
+# Heavy armor
+heavy_shield    $weapons/Shields_03.png
+
+# Accessories
+copper_ring     $armor/Rings_01.png
+
+# Containers
+backpack        $inventory/Bag_Small.png
+
+# Mining
+pickaxe         $resources/Pickaxe.png
+copper_ore      $resources/Metal_2_Ore.png
+turquoise       $loot/Turquoise.png
+sapphire_small  $loot/Sapphire_Small.png
+
+# Botany
+sickle          $resources/Sickle.png
+
+# Logging
+axe             $resources/Axe.png
+
+# Fishing
+
+# Smithing
+hammer          $resources/Hammer.png
+
+# Currency
+silver_coin     $inventory/Silver_Coin.png
+
+# Keys
+gold_key        $loot/Key_Type_1.png
+silver_key      $loot/Key_Type_2.png
+copper_key      $loot/Key_Type_3.png
+brass_key       $loot/Key_Type_4.png
+
+# Food
+bread           $resources/Bread.png
+mushroom        $loot/Mushroom_Type_6.png
+
+# Creatures
+kobold          $unknown/kobold.png
+pink_creature   $unknown/smile-creature.png
+
+# Misc
+arched_chest    $loot/Chest_Type_1.png
+flat_chest      $loot/Chest_Type_2.png
+sack            $loot/Sack.png
+tombstone       $unknown/tombstone.png

@@ -8,8 +8,8 @@
 class Creature: PhysicalEntity, Attackable, Questgiver {
     // Attackable
     var level = 1
-    var currentHealth: Int = 1  // FIXME:
-    var maxHealth: Int { return 10 + 10 * level }
+    var currentHealth = 1
+    var maxHealth = 1
 
     // Questgiver
     var offersQuests = [Quest]()
@@ -17,7 +17,8 @@ class Creature: PhysicalEntity, Attackable, Questgiver {
     override func copyProperties(from other: Entity) {
         let other = other as! Creature
         level = other.level
-        currentHealth = other.currentHealth
+        maxHealth = 30 + 20 * level
+        currentHealth = maxHealth
         offersQuests = other.offersQuests
         super.copyProperties(from: other)
     }

@@ -11,15 +11,15 @@ enum DamageType: ValueRepresentableEnum {
     // Physical damage types.
     case crushing, piercing, slashing
 
-    // Elemental damage types.
-    case fire, cold, electricity, acid
+    // Elemental and magical damage types.
+    case fire, cold, electricity, acid, nature, magic
 
     static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
         (String(describing: $0), $0)
     })
 }
 
-enum CombatTrait: ValueRepresentableEnum {
+enum CombatTrait: Hashable, ValueRepresentableEnum {
     case power  // increases attack
     case protection  // increases defense
     case precision  // increases chance of critical hit
@@ -59,6 +59,14 @@ enum CombatTrait: ValueRepresentableEnum {
             return .symbol(String(describing: self))
         }
     }
+
+    var description: String {
+        if case let .affinity(damageType) = self {
+            return "\(String(describing: damageType)) affinity"
+        } else {
+            return String(describing: self)
+        }
+    }
 }
 
 struct ScaledTrait: ValueRepresentable {
@@ -88,8 +96,18 @@ protocol Attackable {
     func defenseAgainst(damageType: DamageType) -> Int
 }
 
-fileprivate let healthBase = pow(2.5, 0.1)
-
-func computeMaxHealth(level: Int, healthCoeff: Double = 1.0) -> Int {
-    Int(100.0 * (0.25 * Double(level) + pow(healthBase, Double(level - 1))) * healthCoeff)
+extension Avatar {
+    func computeTraits() -> [CombatTrait:Double] {
+        // TODO: take race and auras into account
+        var traits: [CombatTrait:Double] = [
+            .power: Double(level + 1) * 10.0,
+            .protection: Double(level + 1) * 10.0,
+        ]
+        for item in equipped.values {
+            if let trait = item.trait {
+                traits[trait, default: 0.0] += item.traitValue
+            }
+        }
+        return traits
+    }
 }

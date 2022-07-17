@@ -1048,6 +1048,7 @@ def worn_dagger: lib.dagger {
     description = |
         The dagger has a pitted copper blade and a smooth wooden handle.
     level = 1
+    quality = 'poor
 }
 
 defquest kill_some_plants {

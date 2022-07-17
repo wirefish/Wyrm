@@ -24,12 +24,69 @@ enum EquipmentSlot: String, CodingKeyRepresentable, Hashable, Encodable, ValueRe
     static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
         (String(describing: $0), $0)
     })
+
+    var coeff: Double {
+        switch self {
+        case .mainHand: return 1.0
+        case .offHand: return 1.0
+        case .tool: return 1.0
+
+        case .head: return 0.6
+        case .torso: return 1.0
+        case .back: return 0.5
+        case .hands: return 0.5
+        case .waist: return 0.4
+        case .legs: return 1.0
+        case .feet: return 0.5
+
+        case .ears: return 0.5
+        case .neck: return 0.5
+        case .leftWrist: return 0.25
+        case .rightWrist: return 0.25
+        case .leftFinger: return 0.25
+        case .rightFinger: return 0.25
+        case .trinket: return 0.5
+
+        case .backpack: return 1.0
+        case .beltPouch: return 0.5
+
+        case .bothHands: return 2.0
+        case .eitherHand: return 1.0
+        case .eitherWrist: return 0.25
+        case .eitherFinger: return 0.25
+        }
+    }
+
+    var defenseCoeff: Double {
+        switch self {
+        case .head, .torso, .back, .hands, .waist, .legs, .feet: return coeff
+        default: return 0.0
+        }
+    }
+}
+
+enum EquipmentQuality: Encodable, Comparable, ValueRepresentableEnum {
+    case poor, normal, good, excellent, legendary
+
+    static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
+        (String(describing: $0), $0)
+    })
+
+    var coeff: Double {
+        switch self {
+        case .poor: return 0.75
+        case .normal: return 1.0
+        case .good: return 1.25
+        case .excellent: return 1.5
+        case .legendary: return 1.75
+        }
+    }
 }
 
 class Equipment: Item {
     var slot: EquipmentSlot?
+    var quality: EquipmentQuality = .normal
     var trait: CombatTrait?
-    var traitCoeff = 1.0
 
     // Inventory capacity gained by equipping this item.
     var capacity = 0
@@ -37,15 +94,16 @@ class Equipment: Item {
     override func copyProperties(from other: Entity) {
         let other = other as! Equipment
         slot = other.slot
+        quality = other.quality
         trait = other.trait
-        traitCoeff = other.traitCoeff
+        capacity = other.capacity
         super.copyProperties(from: other)
     }
 
     private static let accessors = [
         "slot": accessor(\Equipment.slot),
+        "quality": accessor(\Equipment.quality),
         "trait": accessor(\Equipment.trait),
-        "trait_coeff": accessor(\Equipment.traitCoeff),
         "capacity": accessor(\Equipment.capacity),
     ]
 
@@ -59,6 +117,22 @@ class Equipment: Item {
             }
         }
     }
+
+    var traitValue: Double {
+        Double(level) * 10.0 * quality.coeff * slot!.coeff
+    }
+
+    override func descriptionNotes() -> [String] {
+        var notes = super.descriptionNotes()
+        if quality != .normal {
+            notes.append("Quality: \(String(describing: quality)).")
+        }
+        if let trait = trait {
+            notes.append(String(format: "Trait: %@ +%1.1f.", trait.description, traitValue))
+        }
+        return notes
+    }
+
 }
 
 class Weapon: Equipment {
@@ -92,5 +166,15 @@ class Weapon: Equipment {
                 super[member] = newValue
             }
         }
+    }
+
+    var attackValue: Double {
+        Double(level + (slot == .bothHands ? 1 : 0)) * 20.0
+    }
+
+    override func descriptionNotes() -> [String] {
+        var notes = super.descriptionNotes()
+        notes.append(String(format: "Attack: %1.1f.", attackValue))
+        return notes
     }
 }

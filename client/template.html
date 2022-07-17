@@ -1,0 +1,62 @@
+<?DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>$title$</title>
+    <link rel="stylesheet" type="text/css" href="index.css"/>
+    <script src="index.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <div id="banner"><a href="index.html"></a></div>
+      <div id="header"></div>
+      <div id="content">
+        $body$
+      </div>
+
+      <div id="sidebar">
+        <div id="actionbox"></div>
+        <div id="players">&nbsp;</div>
+        <div id="sidebox">
+          <div id="index">Home</div>
+          <div id="getting_started">Getting Started</div>
+          <div id="races">Races</div>
+          <div id="guilds">Guilds</div>
+        </div>
+      </div>
+
+      <div id="footer"></div>
+    </div>
+
+    <div id="modalmask" class="overlay"></div>
+    <div id="logindialog" class="popup">
+      <div class="closebox" onclick="hidePopup()">&#x00d7;</div>
+      <div id="signup">
+        <h2>Sign up</h2>
+        <p>Choose your username and password.</p>
+        <form id="createform">
+          <input id="cuser" type="text" name="user" placeholder="Username" tabindex="4"/>
+          <input id="cpass1" type="password" name="password" placeholder="Password" tabindex="5"/>
+          <input id="cpass2" type="password" name="password"
+                 placeholder="Repeat password" tabindex="6"/>
+          <p>Already have an account?
+            <a href="javascript:void(0)" onclick="showLogin()">Log in</a> here.</p>
+          <input type="submit" value="Sign up" tabindex="7"/>
+        </form>
+      </div>
+      <div id="login">
+        <h2>Log in</h2>
+        <p>Enter your username and password.</p>
+        <form id="loginform">
+          <input id="luser" type="text" name="user" placeholder="Username" tabindex="1"/>
+          <input id="lpass" type="password" name="password"
+                 placeholder="Password" tabindex="2"/>
+          <p>Don't have an account?
+            <a href="javascript:void(0)" onclick="showSignup()">Sign up</a> here.</p>
+          <input type="submit" value="Log in" tabindex="3"/>
+        </form>
+      </div>
+      <p id="warning"></p>
+    </div>
+  </body>
+</html>

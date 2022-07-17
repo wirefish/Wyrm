@@ -1,0 +1,199 @@
+<?DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Atalea</title>
+    <link rel="stylesheet" type="text/css" href="game.css"/>
+    <script src="map.js"></script>
+    <script src="markup.js"></script>
+    <script src="game.js"></script>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="header box" id="header">
+        <div id="player_name_auras">
+          <div id="player_name"></div>
+          <div id="player_auras"></div>
+        </div>
+        <div id="player_bars">
+          <div class="statbar" title="Health" id="player_health">
+            <div class="statvalue health"></div>
+            <div class="statlabel">0 / 0</div>
+          </div>
+          <div class="statbar" title="Energy" id="player_energy">
+            <div class="statvalue energy"></div>
+            <div class="statlabel">0 / 0</div>
+          </div>
+          <div class="statbar" title="Experience" id="player_xp">
+            <div class="statvalue xp"></div>
+            <div class="statlabel">0 / 0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="weather box">
+        <div id="location_name"></div>
+        <div id="zone_name"></div>
+      </div>
+
+      <div class="neighbors box" id="neighbors">
+        <div>
+          <div></div>
+          <div class="statbar">
+            <div class="statvalue health"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main box textbox scroll" id="main_text">
+        <div><img src="images/atalea.png" alt="Atalea"></img></div>
+      </div>
+
+      <div class="map box">
+        <canvas id="map_canvas">
+        </canvas>
+      </div>
+
+      <div class="selector buttonbox">
+        <div class="button toggle_on" id="chat" onclick="handler.showPane('chat');"></div>
+        <div class="button toggle_off" id="inventory" onclick="handler.showPane('inventory');"></div>
+        <div class="button toggle_off" id="equipment" onclick="handler.showPane('equipment');"></div>
+        <div class="button toggle_off" id="combat" onclick="handler.showPane('combat');"></div>
+        <div class="button toggle_off" id="skills" onclick="handler.showPane('skills');"></div>
+        <div class="spacer"></div>
+        <div class="button toggle_on" id="local_map"></div>
+        <div class="button toggle_off" id="world_map"></div>
+      </div>
+
+      <div class="rightbar box scroll">
+        <div id="chat_pane" class="textbox">
+        </div>
+
+        <div id="inventory_pane">
+          <div id="inventory_contents">
+          </div>
+        </div>
+
+        <div id="equipment_pane">
+          <div>
+            <div>
+              <div>Main hand</div>
+              <div id="equip_main_hand"></div>
+              <div>Off-hand</div>
+              <div id="equip_off_hand"></div>
+              <div>Tool</div>
+              <div id="equip_tool"></div>
+            </div>
+            <hr/>
+            <div>
+              <div>Head</div>
+              <div id="equip_head"></div>
+              <div>Torso</div>
+              <div id="equip_torso"></div>
+              <div>Back</div>
+              <div id="equip_back"></div>
+              <div>Hands</div>
+              <div id="equip_hands"></div>
+              <div>Waist</div>
+              <div id="equip_waist"></div>
+              <div>Legs</div>
+              <div id="equip_legs"></div>
+              <div>Feet</div>
+              <div id="equip_feet"></div>
+            </div>
+            <hr/>
+            <div>
+              <div>Ears</div>
+              <div id="equip_ears"></div>
+              <div>Neck</div>
+              <div id="equip_neck"></div>
+              <div>Left wrist</div>
+              <div id="equip_left_wrist"></div>
+              <div>Right wrist</div>
+              <div id="equip_right_wrist"></div>
+              <div>Left finger</div>
+              <div id="equip_left_finger"></div>
+              <div>Right finger</div>
+              <div id="equip_right_finger"></div>
+            </div>
+            <hr/>
+            <div>
+              <div>Backpack</div>
+              <div id="equip_backpack"></div>
+              <div>Belt Pouch</div>
+              <div id="equip_belt_pouch"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="combat_pane">
+          <div class="combat_values">
+            <h3>Primary Attributes</h3>
+            <div class="combat_value"><div>Armor</div><div id="armor">0</div></div>
+            <div class="combat_value"><div>Strength</div><div id="strength">0</div></div>
+            <div class="combat_value"><div>Agility</div><div id="agility">0</div></div>
+            <div class="combat_value"><div>Intellect</div><div id="intellect">0</div></div>
+            <div class="combat_value"><div>Vitality</div><div id="vitality">0</div></div>
+            <div class="combat_value"><div>Toughness</div><div id="toughness">0</div></div>
+            <div class="combat_value"><div>Willpower</div><div id="willpower">0</div></div>
+            <div class="combat_value"><div>Compassion</div><div id="compassion">0</div></div>
+            <div class="combat_value"><div>Precision</div><div id="precision">0</div></div>
+            <div class="combat_value"><div>Ferocity</div><div id="ferocity">0</div></div>
+            <div class="combat_value"><div>Endurance</div><div id="endurance">0</div></div>
+            <div class="combat_value"><div>Insight</div><div id="insight">0</div></div>
+          </div>
+          <div class="combat_values">
+            <h3>Derived Attributes</h3>
+            <div class="combat_value"><div>Block</div><div id="block">0</div></div>
+            <div class="combat_value"><div>Dodge</div><div id="dodge">0</div></div>
+            <div class="combat_value"><div>Critical Chance</div><div id="critical_chance">0</div></div>
+            <div class="combat_value"><div>Critical Damage</div><div id="critical_damage">0</div></div>
+          </div>
+          <div class="combat_values">
+            <h3>Immunities</h3>
+            <div class="combat_value"><div>Crushing</div><div id="crushing">0</div></div>
+            <div class="combat_value"><div>Piercing</div><div id="piercing">0</div></div>
+            <div class="combat_value"><div>Slashing</div><div id="slashing">0</div></div>
+            <div class="combat_value"><div>Fire</div><div id="fire">0</div></div>
+            <div class="combat_value"><div>Cold</div><div id="cold">0</div></div>
+            <div class="combat_value"><div>Electricity</div><div id="electricity">0</div></div>
+            <div class="combat_value"><div>Arcane</div><div id="arcane">0</div></div>
+            <div class="combat_value"><div>Shadow</div><div id="shadow">0</div></div>
+          </div>
+        </div>
+
+        <div id="skills_pane">
+          <div class="karma"><div>Unspent karma:</div><div id="unspent_karma">0</div></div>
+        </div>
+      </div>
+
+      <div class="leftbuttons buttonbox">
+        <div class="button" id="quit" onclick="handler.quit();"></div>
+        <div class="button" id="settings"></div>
+        <div class="button" id="help"></div>
+      </div>
+
+      <div class="inputarea">
+        <input type="text" id="command" autocomplete="off" spellcheck="false" maxlength=200
+               placeholder="Type a command or 'help' for help."/>
+        <div id="castbar"><div></div></div>
+      </div>
+
+      <div class="rightbuttons buttonbox">
+        <div class="button">1</div>
+        <div class="button">2</div>
+        <div class="button">3</div>
+        <div class="button">4</div>
+        <div class="button">5</div>
+        <div class="button">6</div>
+        <div class="button">7</div>
+        <div class="button">8</div>
+        <div class="button">9</div>
+        <div class="button">0</div>
+      </div>
+    </div>
+
+  </body>
+
+</html>

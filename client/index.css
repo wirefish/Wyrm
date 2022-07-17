@@ -1,0 +1,286 @@
+* { margin:0; padding:0; outline:0 }
+
+@font-face {
+    font-family:uncial;
+    src:url('fonts/aniron-regular.woff');
+}
+
+@font-face {
+    font-family:artifika;
+    src:url('fonts/artifika-regular.woff');
+}
+
+body {
+    background-color: #18181e;
+    color: #efefef;
+    padding: 10px;
+    font: 10pt artifika;
+    overflow: hidden;
+}
+
+h1 {
+    margin-top: 10pt;
+    font: 15pt uncial;
+    text-transform: lowercase;
+    color: #ffffd0;
+}
+
+h2 {
+    font: 12pt uncial;
+    text-align: center;
+    text-transform: lowercase;
+}
+
+h3 {
+    font: 11pt artifika;
+    color: #ffffd0;
+    margin-top: 10pt;
+    margin-bottom: 5pt;
+}
+
+p {
+    line-height: 15pt;
+    margin-bottom: 5pt;
+}
+
+a {
+    color: #a0a0f0;
+}
+
+a:link {
+    text-decoration: none;
+}
+
+.link {
+    color: #a0a0f0;
+    cursor: pointer;
+}
+
+#banner {
+    grid-area: banner;
+    background-image: image-set(url('images/atalea_small.png') 1x,
+                                url('images/atalea_small@2x.png') 2x);
+    background-repeat: no-repeat;
+}
+
+#banner > a {
+    display: block;
+    height: 40px;
+}
+
+#header {
+    grid-area: header;
+    margin-bottom: 2px;
+    width: 100%;
+    height: 40px;
+    background-color:#18181e;
+    text-align: right;
+    line-height: 40px;
+}
+
+#content {
+    grid-area: content;
+    padding: 0 15px;
+    border-radius: 5px;
+    background-color: #3f3f4d;
+}
+
+#content > p {
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+#sidebar {
+    grid-area: sidebar;
+}
+
+#players {
+    margin-bottom: 10px;
+    text-align: center;
+    color: #a0a0f0;
+    cursor: pointer;
+}
+
+#sidebox {
+    background-color: #2f2f39;
+    border-radius: 5px;
+}
+
+#sidebox > div {
+    padding: 8px 20px;
+    cursor: pointer;
+}
+
+.current {
+    color: hsl(22, 85%, 65%);
+}
+
+#footer {
+    grid-area: footer;
+    line-height: 30px;
+    text-align: center;
+}
+
+#player_table {
+    display: table;
+    width: 100%;
+    border-spacing: 10px;
+    border-collapse: collapse;
+}
+
+#player_table > tr {
+    line-height: 20px;
+}
+
+#player_table > tr:nth-child(1) {
+    color: #ffffcf;
+}
+
+#player_table > tr:nth-child(even) {
+    background-color: #2f2f39;
+}
+
+#player_table > tr > td {
+    padding: 3px 5px;
+}
+
+.overlay {
+    display: none;
+    position: absolute;
+    top: 0%;
+    left: 0%;
+    width: 100%;
+    height:100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1001;
+}
+
+form {
+    overflow: hidden;
+}
+
+.popup {
+    display: none;
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    width: 350px;
+    height: 350px;
+    transform: translate(-50%, 0);
+    border-radius: 5px;
+    background-color: #4f4f5f;
+    padding: 20px;
+    z-index: 1002;
+}
+
+.closebox {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    width: 22px;
+    height: 24px;
+    font: 20pt Arial;
+    text-align: center;
+    line-height: 24px;
+    user-select: none;
+    cursor: pointer;
+}
+
+#createaccount {
+    display: none;
+}
+
+.prompt {}
+
+#warning {
+    padding-top: 20px;
+    color: hsl(22, 85%, 65%);
+}
+
+input[type="text"], input[type="password"] {
+    padding:6px;
+    border:2px solid #18181e;
+    border-radius:8px;
+    font:10pt artifika;
+    outline:0;
+    background-color:#efefef;
+    margin-bottom:8px;
+    display:block;
+    width: 100%;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border:2px solid hsl(22, 85%, 55%);
+}
+
+input[type="submit"] {
+    height: 30px;
+    border: none;
+    border-radius: 15px;
+    box-shadow: inset 0px 0px 0px 2px #efefef;
+    box-sizing: border-box;
+    background: linear-gradient(to bottom, hsl(22, 85%, 65%), hsl(22, 85%, 50%));
+    display: inline-block;
+    color: #efefef;
+    font: 10pt artifika;
+    padding:4px 24px;
+    text-decoration: none;
+    float: right;
+}
+
+input[type="submit"]:hover {
+    background:linear-gradient(to top, hsl(22, 85%, 65%), hsl(22, 85%, 50%));
+}
+
+input[type="submit"]:active {
+    position:relative;
+    top:1px;
+}
+
+#actionbox {
+    height: 40px;
+    border-radius: 20px;
+    box-shadow: inset 0px 0px 0px 2px #efefef;
+    box-sizing: border-box;
+    text-align: center;
+    padding-top: 3px; /* why doesn't line-height work here? */
+    font: 11pt uncial;
+    color: #efefef;
+    text-transform: lowercase;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.loginaction {
+    background:linear-gradient(to bottom, hsl(240, 65%, 55%), hsl(240, 65%, 40%));
+}
+
+.loginaction:hover {
+    background:linear-gradient(to top, hsl(240, 65%, 55%), hsl(240, 65%, 40%));
+}
+
+.playaction {
+    background:linear-gradient(to bottom, hsl(120, 65%, 55%), hsl(120, 65%, 40%));
+
+}
+
+.playaction:hover {
+    background:linear-gradient(to top, hsl(120, 65%, 55%), hsl(120, 65%, 40%));
+}
+
+/* The container lays out all the top-level boxes. */
+
+#container {
+    display: grid;
+    height: 100%;
+    max-width: 850px;
+    margin: auto;
+    column-gap: 10px;
+    grid-template-columns: 150px auto 200px;
+    grid-template-rows: 40px auto 30px;
+    grid-template-areas:
+      "banner header header"
+      "content content sidebar"
+      "footer footer .";
+}

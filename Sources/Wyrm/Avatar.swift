@@ -262,10 +262,9 @@ extension Avatar {
 
 let lookCommand = Command("look at:target with|using|through:tool") { actor, verb, clauses in
     if case let .tokens(target) = clauses[0] {
-        let location = actor.container as! Location
-        guard let targetMatch = match(target, against: location.contents, location.exits, where: {
-            $0.isVisible(to: actor)
-        }) else {
+        guard let targetMatch = match(target,
+                                      against: actor.location.contents, actor.location.exits,
+                                      where: { $0.isVisible(to: actor) }) else {
             actor.show("You don't see anything like that here.")
             return
         }

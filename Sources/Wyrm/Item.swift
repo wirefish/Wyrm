@@ -15,7 +15,7 @@ class Item: PhysicalEntity {
     // The number of items stacked together.
     var count = 1
     
-    var level = 1
+    var level = 0
     var useVerbs = [String]()
     var quest: ValueRef?
 
@@ -59,14 +59,25 @@ class Item: PhysicalEntity {
         return (brief ?? Self.defaultBrief).format(format, count: count)
     }
 
-    override func describeFully() -> String {
-        var s = super.describeFully()
-        if self.quest != nil {
-            if case let .quest(quest) = world.lookup(self.quest!) {
-                s += " (\(count == 1 ? "This item is" : "These items are") associated with the quest \"\(quest.name)\".)"
-            }
+    func descriptionNotes() -> [String] {
+        var notes = [String]()
+        if self.quest != nil, case let .quest(quest) = world.lookup(self.quest!) {
+            notes.append("Quest: \(quest.name).")
         }
-        return s
+        if level > 0 {
+            notes.append("Level: \(level).")
+        }
+        return notes
+    }
+
+    override func describeFully() -> String {
+        let base = super.describeFully()
+        let notes = descriptionNotes()
+        if notes.isEmpty {
+            return base
+        } else {
+            return "\(base) (\(notes.joined(separator: " ")))"
+        }
     }
 
     func isStackable(with stack: Item) -> Bool {

@@ -156,17 +156,31 @@ extension Avatar {
 // MARK: - inventory command
 
 let inventoryHelp = """
-Use the `inventory` command to list or inspect items you are carrying.
-
-- Type `inventory` to list the items you are carrying.
-
-- Type `inventory look` followed by the name of an item in your inventory to
-inspect that item.
+Use the `inventory` command to list the items you are carrying. Optionally, add
+the name of an item to see a more detailed description of that item.
 """
 
-let inventoryCommand = Command("inventory 1:subcommand item", help: inventoryHelp) {
+let inventoryCommand = Command("inventory item", help: inventoryHelp) {
     actor, verb, clauses in
-    if actor.inventory.isEmpty {
+    if case let .tokens(item) = clauses[0] {
+        var matched = false
+        if let matches = match(item, against: actor.inventory.contents) {
+            for item in matches {
+                actor.show("\(item.describeBriefly([.capitalized, .indefinite])) (in inventory): \(item.describeFully())")
+            }
+            matched = true
+        }
+        if let matches = match(item, against: actor.equipped) {
+            for slot in matches {
+                let item = actor.equipped[slot]!
+                actor.show("\(item.describeBriefly([.capitalized, .indefinite])) (equipped): \(item.describeFully())")
+            }
+            matched = true
+        }
+        if !matched {
+            actor.show("You don't have anything like that equipped or in your inventory.")
+        }
+    } else if actor.inventory.isEmpty {
         actor.show("You are not carrying anything.")
     } else {
         actor.show("You are carrying \(actor.inventory.describe()).")
