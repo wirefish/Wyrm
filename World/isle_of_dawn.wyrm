@@ -1176,9 +1176,10 @@ def lashling: creature {
         protrude from the ends of its leafy, tentacle-like appendages.
     entry_message = "A lashling emerges from beneath the weeds."
 
-    // FIXME:
-    // default_attack = lashling_tendril
-    // defense_coeff = 0.5
+    level = 1
+    attack_coeff = 0.5
+    defense_coeff = 0.5
+    weapons = [lashling_tendril]
 
     before kill(actor, self, weapon) {
         spawn(lashling, self.location, 15)

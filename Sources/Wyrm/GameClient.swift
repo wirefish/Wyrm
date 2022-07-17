@@ -79,9 +79,9 @@ struct NeighborProperties: Encodable {
         key = entity.id
         brief = entity.describeBriefly([])
         icon = entity.icon
-        if let creature = entity as? Creature {
-            health = creature.currentHealth
-            maxHealth = creature.maxHealth
+        if let health = (entity as? Combatant)?.health {
+            self.health = health.value
+            maxHealth = health.maxValue
         } else {
             health = nil
             maxHealth = nil

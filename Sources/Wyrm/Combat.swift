@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AppKit
 
 enum DamageType: ValueRepresentableEnum {
     // Physical damage types.
@@ -88,12 +89,41 @@ struct ScaledTrait: ValueRepresentable {
     }
 }
 
-protocol Attackable {
-    var level: Int { get }
-    var currentHealth: Int { get set }
-    var maxHealth: Int { get }
+struct ClampedInt {
+    private var value_: Int
 
-    func defenseAgainst(damageType: DamageType) -> Int
+    init(_ value: Int, maxValue: Int) {
+        self.maxValue = maxValue
+        value_ = Self.clamped(value, maxValue)
+    }
+
+    var maxValue: Int {
+        didSet { value_ = Self.clamped(value_, maxValue) }
+    }
+
+    var value: Int {
+        get { return value_ }
+        set { value_ = Self.clamped(newValue, maxValue) }
+    }
+
+    private static func clamped(_ value: Int, _ maxValue: Int) -> Int {
+        max(0, min(value, maxValue))
+    }
+}
+
+struct Attack {
+    let delay: Double
+    let power: Double
+    let weapon: Weapon
+}
+
+protocol Combatant: AnyObject {
+    var level: Int { get }
+    var health: ClampedInt { get set }
+
+    func defense(against damageType: DamageType) -> Int
+
+    func nextAttack(against target: Combatant) -> Attack?
 }
 
 extension Avatar {
@@ -109,5 +139,102 @@ extension Avatar {
             }
         }
         return traits
+    }
+}
+
+// MARK: - core calculations
+
+// The effective attack rating considering the attacker's attack rating and the
+// defender's defense rating.
+func effectiveAttack(attack: Double, defense: Double) -> Double {
+    attack * (1.0 + (attack - defense) / (attack + defense))
+}
+
+// The base attack and/or defense rating of an entity based on its level.
+func baseRating(level: Int) -> Double {
+    Double(100 + (level - 1) * level)
+}
+
+func baseHealth(level: Int) -> Int {
+    return Int((baseRating(level: level) * 1.5).rounded())
+}
+
+extension Double {
+    func roundedRandomly() -> Double {
+        let k = self.truncatingRemainder(dividingBy: 1.0)
+        return self.rounded(Double.random(in: 0..<1) < k ? .up : .down)
+    }
+}
+
+func damage(effectiveAttack: Double, weapon: Weapon) -> Int {
+    let c = effectiveAttack * weapon.quality.coeff * (weapon.speed / 3.0)
+    let v = c * weapon.variance
+    return Int((0.1 * Double.random(in: (c - v)...(c + v))).roundedRandomly())
+}
+
+// MARK: - attack command
+
+// FIXME: This is a placeholder just to allow quest advancement.
+class Combat: Activity {
+    weak var avatar: Avatar?
+    weak var target: Creature?
+    let duration: Double
+
+    init(_ avatar: Avatar, _ target: Creature, duration: Double = 2.0) {
+        self.avatar = avatar
+        self.target = target
+        self.duration = duration
+    }
+
+    func begin() {
+        if let avatar = avatar, let target = target {
+            avatar.show("You begin attacking \(target.describeBriefly([.definite])).")
+            World.schedule(delay: duration) { self.finish() }
+        } else {
+            finish()
+        }
+    }
+
+    func cancel() {
+        if let avatar = self.avatar {
+            avatar.show("You stop attacking.")
+        }
+        self.avatar = nil
+    }
+
+    func finish() {
+        if let avatar = avatar {
+            if let target = target {
+                // FIXME: default weapon?
+                let weapon = avatar.equipped[.mainHand]!
+                triggerEvent("kill", in: avatar.location, participants: [avatar, target, weapon],
+                             args: [avatar, target, weapon]) {
+                    avatar.showNotice("You killed \(target.describeBriefly([.definite]))!")
+                    // FIXME: experience, corpse, etc.
+                    // FIXME: exit_location or exit_world event
+                    avatar.location.remove(target)
+                }
+            }
+            avatar.activityFinished()
+        }
+    }
+}
+
+let attackCommand = Command("attack target") {
+    actor, verb, clauses in
+    if case let .tokens(target) = clauses[0] {
+        guard let matches = match(target, against: actor.location.contents, where: {
+            $0 is Creature && $0.isVisible(to: actor) }) else {
+            actor.show("You don't see anything like that to attack.")
+            return
+        }
+        if matches.count > 1 {
+            actor.show("Do you want to attack \(matches.describe(using: "or"))?")
+            return
+        }
+
+        actor.beginActivity(Combat(actor, matches.first! as! Creature))
+    } else {
+        actor.show("What do you want to attack?")
     }
 }

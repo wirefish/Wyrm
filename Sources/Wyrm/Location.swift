@@ -87,19 +87,38 @@ class Location: Entity {
 // MARK: - meditate command
 
 class Meditation: Activity {
-    func begin(_ avatar: Avatar) -> Double {
-        avatar.show("You begin to meditate.")
-        return 3.0
+    weak var avatar: Avatar?
+    let duration: Double
+
+    init(_ avatar: Avatar, duration: Double) {
+        self.avatar = avatar
+        self.duration = duration
     }
 
-    func cancel(_ avatar: Avatar) {
-        avatar.show("Your meditation is interrupted.")
+    func begin() {
+        if let avatar = avatar {
+            avatar.show("You begin to meditate.")
+            avatar.sendMessage("startPlayerCast", .double(duration))
+            World.schedule(delay: duration) { self.finish() }
+        }
     }
 
-    func finish(_ avatar: Avatar) {
-        avatar.show("Your meditation is complete.")
-        triggerEvent("meditate", in: avatar.location, participants: [avatar, avatar.location],
-                     args: [avatar]) {}
+    func cancel() {
+        if let avatar = self.avatar {
+            avatar.show("Your meditation is interrupted.")
+            avatar.sendMessage("stopPlayerCast")
+        }
+        self.avatar = nil
+    }
+
+    func finish() {
+        if let avatar = avatar {
+            avatar.show("Your meditation is complete.")
+            avatar.sendMessage("stopPlayerCast")
+            triggerEvent("meditate", in: avatar.location, participants: [avatar, avatar.location],
+                         args: [avatar]) {}
+            avatar.activityFinished()
+        }
     }
 }
 
@@ -110,5 +129,5 @@ interrupted if you move or are attacked.
 """
 
 let meditateCommand = Command("meditate", help: meditateHelp) { actor, verb, clauses in
-    actor.beginActivity(Meditation())
+    actor.beginActivity(Meditation(actor, duration: 3.0))
 }

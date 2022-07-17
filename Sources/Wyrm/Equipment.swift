@@ -138,6 +138,7 @@ class Equipment: Item {
 class Weapon: Equipment {
     var damageType = DamageType.crushing
     var speed = 3.0
+    var variance = 0.2
     var attackVerb = "hits"
     var criticalVerb = "critically hits"
 
@@ -153,6 +154,7 @@ class Weapon: Equipment {
     private static let accessors = [
         "damage_type": accessor(\Weapon.damageType),
         "speed": accessor(\Weapon.speed),
+        "variance": accessor(\Weapon.variance),
         "attack_verb": accessor(\Weapon.attackVerb),
         "critical_verb": accessor(\Weapon.criticalVerb),
     ]

@@ -326,6 +326,7 @@ let helpCommand = Command("help 1:topic 1:subtopic") { actor, verb, clauses in
 // NOTE: To make a command available, add it to this array!
 let allCommands = [
     acceptCommand,
+    attackCommand,
     declineCommand,
     equipCommand,
     goCommand,

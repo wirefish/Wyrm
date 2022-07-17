@@ -4,31 +4,63 @@
 //
 
 protocol Activity: AnyObject {
-    func begin(_ avatar: Avatar) -> Double
-    func cancel(_ avatar: Avatar)
-    func finish(_ avatar: Avatar)
+    func begin()
+    func cancel()
 }
 
-extension Avatar {
-    func cancelActivity() {
-        if let activity = self.activity {
-            self.activity = nil
-            self.sendMessage("stopPlayerCast")
-            activity.cancel(self)
-        }
-    }
+protocol Actor: AnyObject {
+    var activity: Activity? { get set }
+    func beginActivity(_ activity: Activity)
+    func cancelActivity()
+    func activityFinished()
+}
 
+extension Actor {
     func beginActivity(_ activity: Activity) {
         cancelActivity()
         self.activity = activity
-        let t = activity.begin(self)
-        World.schedule(delay: t) { [weak self, weak activity] in
-            if let self = self, let activity = activity {
-                self.activity = nil
-                self.sendMessage("stopPlayerCast")
-                activity.finish(self)
-            }
+        activity.begin()
+    }
+
+    func cancelActivity() {
+        if let activity = self.activity {
+            self.activity = nil
+            activity.cancel()
         }
-        sendMessage("startPlayerCast", .double(t))
+    }
+
+    func activityFinished() {
+        self.activity = nil
     }
 }
+
+class RepeatedActivity<T: Actor>: Activity {
+    weak var actor: T?
+    let firstDelay: Double
+    let delay: Double
+    let body: (T) -> Void
+
+    init(actor: T, delay: Double, firstDelay: Double? = nil, body: @escaping (T) -> Void) {
+        self.actor = actor
+        self.firstDelay = firstDelay ?? delay
+        self.delay = delay
+        self.body = body
+    }
+
+    func begin() {
+        World.schedule(delay: firstDelay) { self.perform() }
+    }
+
+    func cancel() {
+        self.actor = nil
+    }
+
+    private func perform() {
+        if let actor = self.actor {
+            self.body(actor)
+            World.schedule(delay: self.delay) { self.perform() }
+        }
+    }
+}
+
+extension Avatar: Actor {}
