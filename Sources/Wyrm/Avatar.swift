@@ -164,6 +164,18 @@ extension Avatar: Codable {
         try c.encode(tutorialsOn, forKey: .tutorialsOn)
         try c.encode(tutorialsSeen, forKey: .tutorialsSeen)
     }
+
+    static let saveInterval = 60.0
+
+    func savePeriodically() {
+        World.schedule(delay: Self.saveInterval) { [weak self] in
+            if let self = self {
+                logger.debug("saving avatar for account \(self.accountID!)")
+                _ = World.instance.db.saveAvatar(accountID: self.accountID, avatar: self)
+                self.savePeriodically()
+            }
+        }
+    }
 }
 
 // MARK: - as WebSocketDelegate
@@ -187,6 +199,8 @@ extension Avatar: WebSocketDelegate {
                 location.insert(self)
                 locationChanged()
             }
+
+            savePeriodically()
         }
     }
 
