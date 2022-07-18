@@ -380,6 +380,9 @@ class Compiler {
             block.emit(.removeLocals, UInt8(1))
             locals.removeLast()
 
+        case let .stack(lhs, rhs):
+            fatalError("stack not implemented")
+
         case let .var(name, initialValue):
             if locals[scopeLocals.last!...].contains(name) {
                 logger.warning("ignoring duplicate declaration of local variable \(name)")

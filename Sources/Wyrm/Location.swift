@@ -11,10 +11,9 @@ class Location: Entity {
     var contents = [PhysicalEntity]()
     var exits = [Portal]()
     var tutorial: String?
-
-    // FIXME: these should be symbols
     var domain: String?
     var surface: String?
+    var subregion: String?
 
     override func copyProperties(from other: Entity) {
         let other = other as! Location
@@ -23,6 +22,7 @@ class Location: Entity {
         tutorial = other.tutorial
         domain = other.domain
         surface = other.surface
+        subregion = other.subregion
         contents = other.contents.map { $0.clone() }
         // do not copy exits
         super.copyProperties(from: other)
@@ -36,6 +36,7 @@ class Location: Entity {
         "tutorial": accessor(\Location.tutorial),
         "domain": accessor(\Location.domain),
         "surface": accessor(\Location.surface),
+        "subregion": accessor(\Location.subregion),
     ]
 
     override subscript(member: String) -> Value? {

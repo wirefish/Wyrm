@@ -30,6 +30,7 @@ indirect enum ParseNode {
     case `subscript`(ParseNode, ParseNode)
     case exit(ParseNode, ParseNode, ParseNode)
     case comprehension(ParseNode, String, ParseNode, ParseNode?)
+    case stack(ParseNode, ParseNode)
 
     // Statements.
     case `var`(String, ParseNode)
@@ -124,6 +125,7 @@ class Parser {
         .greaterEqual: (method: parseBinary, prec: .comparison),
         .and: (method: parseAnd, prec: .and),
         .or: (method: parseOr, prec: .or),
+        .of: (method: parseStack, prec: .or),
     ]
 
     var scanner: Scanner
@@ -753,7 +755,7 @@ class Parser {
     }
 
     private func parseAnd(lhs: ParseNode) -> ParseNode? {
-        advance()
+        assert(match(.and))
         if let rhs = parseExpr(.and.nextHigher()) {
             return .conjuction(lhs, rhs)
         } else {
@@ -762,9 +764,18 @@ class Parser {
     }
 
     private func parseOr(lhs: ParseNode) -> ParseNode? {
-        advance()
+        assert(match(.or))
         if let rhs = parseExpr(.or.nextHigher()) {
             return .disjunction(lhs, rhs)
+        } else {
+            return nil
+        }
+    }
+
+    private func parseStack(lhs: ParseNode) -> ParseNode? {
+        assert(match(.of))
+        if let rhs = parseExpr(.or.nextHigher()) {
+            return .stack(lhs, rhs)
         } else {
             return nil
         }

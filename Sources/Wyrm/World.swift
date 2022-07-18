@@ -560,6 +560,18 @@ extension World {
             portal.destination = destinationRef.toAbsolute(in: module)
             return .entity(portal)
 
+        case let .stack(lhs, rhs):
+            guard case let .number(n) = lhs, let count = Int(exactly: n) else {
+                throw EvalError.typeMismatch("stack count must be an integer literal")
+            }
+            guard let protoRef = rhs.asValueRef,
+                  let proto = lookup(protoRef, context: module)?.asEntity(Item.self) else {
+                throw EvalError.typeMismatch("invalid stack prototype")
+            }
+            let stack = proto.clone()
+            stack.count = count
+            return .entity(stack)
+
         case let .clone(lhs):
             let lhs = try evalInitializer(lhs, in: module)
             guard case let .ref(ref) = lhs,

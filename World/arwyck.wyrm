@@ -602,3 +602,54 @@ deflocation axe_shop: location {
     contents = [axe_vendor]
     exits = [lib.exit_doorway -> 'south to square_ne]
 }
+
+// inn
+
+def inn_room: location {
+    domain =  'indoor
+    surface = 'wood
+    subregion = "Golden Gryphon"
+}
+
+def rye_loaf: lib.food {
+    brief = "a loa[f|ves] of rye bread"
+    description = "The loaf of rye bread looks rather delicious."
+    icon = 'bread
+    price = 2 of lib.silver_coin
+}
+
+def fish_soup: lib.food {
+    brief = "a bowl[s] of fish soup"
+    description = "Warning: Fish content not guaranteed."
+    price = 3 of lib.silver_coin
+}
+
+def sienna: lib.npc {
+    brief = "Sienna"
+    pose = "is working behind the bar."
+    description = |
+        Sienna is a tall woman with short yellow hair and light brown eyes. She
+        keeps a close eye on her patrons.
+    sells = [rye_loaf, fish_soup]
+
+    when talk(actor, self, subject) {
+        tell(self, actor) |
+            Welcome to the Golden Gryphon! I sell food and drink. I'd say it's
+            the best in town but my mam told me never to lie, so I won't. If
+            you're learning to cook, I can sell you a few recipes as well. Type
+            `buy` to see what I have for sale.
+    }
+}
+
+deflocation inn_common_room: inn_room {
+    name = "Common Room"
+    description = |
+        The common room of the Golden Gryphon is a cheerful place. A crackling
+        fire burns in the stone hearth. Numerous tables and chairs give the
+        space a crowded feel, even when few customers are present. A long oak
+        bar lines one wall.
+    contents = [sienna]
+    exits = [lib.exit_doorway -> 'west to square_ne,
+             lib.doorway -> 'north to inn_kitchen,
+             lib.stairway -> 'up to inn_upstairs_hall]
+}

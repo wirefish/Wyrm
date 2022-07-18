@@ -23,6 +23,7 @@ class Item: PhysicalEntity, Codable {
     var level = 0
     var useVerbs = [String]()
     var quest: ValueRef?
+    var price: Item?
 
     override func copyProperties(from other: Entity) {
         let other = other as! Item
@@ -40,6 +41,7 @@ class Item: PhysicalEntity, Codable {
         "level": accessor(\Item.level),
         "use_verbs": accessor(\Item.useVerbs),
         "quest": accessor(\Item.quest),
+        "price": accessor(\Item.price),
     ]
 
     override subscript(member: String) -> Value? {

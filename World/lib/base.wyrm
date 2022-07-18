@@ -53,6 +53,10 @@ def mining_trainer: trainer {
 
 // Portals
 
+def doorway: portal {
+    brief = "a doorway"
+}
+
 def entry_doorway: portal {
     brief = "a doorway"
 }
@@ -88,4 +92,18 @@ def copper_pickaxe: pickaxe {
 
 def bronze_pickaxe: pickaxe {
     brief = "a bronze pickaxe"
+}
+
+// Currency
+
+def silver_coin: item {
+    brief = "a silver coin"
+    description = "Silver coins are the common currency of the realm."
+    stack_limit = 10000
+}
+
+// Consumables
+
+def food: item {
+    stack_limit = 100
 }

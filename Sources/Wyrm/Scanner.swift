@@ -21,7 +21,7 @@ enum Token: Hashable {
     case allow, before, when, after, phase, `func`
     case `if`, `else`, `while`, `for`, `in`, `let`, `var`
     case await, `return`, `fallthrough`
-    case leads, oneway, to
+    case leads, oneway, to, of
 
     case boolean(Bool)
     case number(Double)
@@ -253,6 +253,7 @@ class Scanner {
         "fallthrough": .fallthrough,
         "oneway": .oneway,
         "to": .to,
+        "of": .of,
     ]
 
     private func consumeIdentifier() -> String? {
