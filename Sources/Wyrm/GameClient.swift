@@ -117,7 +117,7 @@ struct ItemProperties: Encodable {
 }
 
 extension Avatar {
-    func updateEquipment(_ slots: [EquipmentSlot]) {
+    func updateEquipment<S: Sequence>(_ slots: S) where S.Element == EquipmentSlot {
         let update = [EquipmentSlot:ItemProperties?].init(uniqueKeysWithValues: slots.map {
             slot -> (EquipmentSlot, ItemProperties?) in
             if let item = equipped[slot] {

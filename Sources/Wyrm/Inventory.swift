@@ -156,20 +156,23 @@ extension Avatar {
 // MARK: - inventory command
 
 let inventoryHelp = """
-Use the `inventory` command to list the items you are carrying. Optionally, add
-the name of an item to see a more detailed description of that item.
+Use the `inventory` command to list the items you have equipped or are carrying.
+Optionally, add the name of an item to see a more detailed description of that
+item.
 """
+
+let wieldSlots: [EquipmentSlot] = [.mainHand, .offHand]
+
+let wearSlots: [EquipmentSlot] = [.head, .torso, .back, .hands, .waist, .legs, .feet,
+                                  .ears, .neck, .leftWrist, .rightWrist, .leftFinger, .rightFinger,
+                                  .backpack, .beltPouch]
+
+let toolSlots: [EquipmentSlot] = [.tool]
 
 let inventoryCommand = Command("inventory item", help: inventoryHelp) {
     actor, verb, clauses in
     if case let .tokens(item) = clauses[0] {
         var matched = false
-        if let matches = match(item, against: actor.inventory.contents) {
-            for item in matches {
-                actor.show("\(item.describeBriefly([.capitalized, .indefinite])) (in inventory): \(item.describeFully())")
-            }
-            matched = true
-        }
         if let matches = match(item, against: actor.equipped) {
             for slot in matches {
                 let item = actor.equipped[slot]!
@@ -177,13 +180,42 @@ let inventoryCommand = Command("inventory item", help: inventoryHelp) {
             }
             matched = true
         }
+        if let matches = match(item, against: actor.inventory.contents) {
+            for item in matches {
+                actor.show("\(item.describeBriefly([.capitalized, .indefinite])) (in inventory): \(item.describeFully())")
+            }
+            matched = true
+        }
         if !matched {
             actor.show("You don't have anything like that equipped or in your inventory.")
         }
-    } else if actor.inventory.isEmpty {
-        actor.show("You are not carrying anything.")
     } else {
-        actor.show("You are carrying \(actor.inventory.describe()).")
+        let wielded = wieldSlots.compactMap { actor.equipped[$0] }
+        if wielded.isEmpty {
+            actor.show("You are not wielding any weapons.")
+        } else {
+            actor.show("You are wielding \(wielded.describe()).")
+        }
+
+        let tools = toolSlots.compactMap { actor.equipped[$0] }
+        if tools.isEmpty {
+            actor.show("You have no tool at the ready.")
+        } else {
+            actor.show("You have \(tools.describe()) at the ready.")
+        }
+
+        let worn = wearSlots.compactMap { actor.equipped[$0] }
+        if worn.isEmpty {
+            actor.show("You are not wearing anything. A bold choice!")
+        } else {
+            actor.show("You are wearing \(worn.describe()).")
+        }
+
+        if actor.inventory.isEmpty {
+            actor.show("You are not carrying anything.")
+        } else {
+            actor.show("You are carrying \(actor.inventory.describe()).")
+        }
     }
 }
 
@@ -222,14 +254,6 @@ let takeCommand = Command("take item from:container", help: takeHelp) {
 
 // MARK: - equip command
 
-let wieldSlots: [EquipmentSlot] = [.mainHand, .offHand]
-
-let wearSlots: [EquipmentSlot] = [.head, .torso, .back, .hands, .waist, .legs, .feet,
-                                  .ears, .neck, .leftWrist, .rightWrist, .leftFinger, .rightFinger,
-                                  .backpack, .beltPouch]
-
-let toolSlots: [EquipmentSlot] = [.tool]
-
 let equipCommand = Command("equip item in|on:slot") {
     actor, verb, clauses in
     if case let .tokens(item) = clauses[0] {
@@ -243,18 +267,7 @@ let equipCommand = Command("equip item in|on:slot") {
         }
         actor.equip(matches.first!)
     } else {
-        let wielded = wieldSlots.compactMap { actor.equipped[$0] }
-        if wielded.isEmpty {
-            actor.show("You are not wielding any weapons.")
-        } else {
-            actor.show("You are wielding \(wielded.describe()).")
-        }
-        let worn = wearSlots.compactMap { actor.equipped[$0] }
-        if worn.isEmpty {
-            actor.show("You are not wearing anything. A bold choice!")
-        } else {
-            actor.show("You are wearing \(worn.describe()).")
-        }
+        actor.show("What do you want to equip?")
     }
 }
 

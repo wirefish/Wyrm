@@ -189,10 +189,13 @@ extension Avatar: WebSocketDelegate {
             sendMessage("showNotice", .string("Welcome back!"))
             // TODO: update entire UI state.
             updateInventory(inventory)
+            updateEquipment(equipped.keys)
             locationChanged()
         } else {
             // FIXME: figure out a portal to use.
             // TODO: update entire UI state.
+            updateInventory(inventory)
+            updateEquipment(equipped.keys)
 
             triggerEvent("enter_location", in: location, participants: [self],
                          args: [self, location]) {
