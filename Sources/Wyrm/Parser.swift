@@ -29,7 +29,7 @@ indirect enum ParseNode {
     case dot(ParseNode, String)
     case `subscript`(ParseNode, ParseNode)
     case exit(ParseNode, ParseNode, ParseNode)
-    case comprehension(ParseNode, String, ParseNode)
+    case comprehension(ParseNode, String, ParseNode, ParseNode?)
 
     // Statements.
     case `var`(String, ParseNode)
@@ -709,11 +709,18 @@ class Parser {
             guard let sequence = parseExpr() else {
                 return nil
             }
+            var pred: ParseNode?
+            if match(.if) {
+                pred = parseExpr()
+                if pred == nil {
+                    return nil
+                }
+            }
             guard match(.rsquare) else {
                 error("expected ] at end of list comprehension")
                 return nil
             }
-            return .comprehension(first, name, sequence)
+            return .comprehension(first, name, sequence, pred)
         } else {
             // This is a list literal.
             var list = [first]

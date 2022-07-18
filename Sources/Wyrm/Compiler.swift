@@ -359,7 +359,8 @@ class Compiler {
             compile(destination, &block)
             block.emit(.makePortal)
 
-        case let .comprehension(transform, name, sequence):
+        case let .comprehension(transform, name, sequence, pred):
+            // TODO: handle pred.
             block.emit(.beginList)
             compile(sequence, &block)
             block.emit(.iterate)
