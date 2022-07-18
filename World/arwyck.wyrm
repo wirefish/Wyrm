@@ -1,5 +1,78 @@
-// This is the starter town.
+// Arwyck is the low-level hub town, and as such it hosts numerous vendors
+// and trainers, along with a number of introductory quests to demonstrate
+// different mechanics.
+//
+// In addition, some of the NPC dialogue starts to hint at the larger story arc,
+// i.e. the disappearance of the gods and the troubles arising from that.
+//
+// Finally, the town has its own short quest arc involving a rash of thefts from
+// various shops.
 
-deflocation west_dock: location {
+// General prototypes.
+
+def rutted_path: portal {
+    brief = "a rutted path"
+}
+
+def dirt_road: portal {
+    brief = "a dirt road"
+}
+
+def narrow_path: portal {
+    brief = "a narrow path"
+}
+
+def alley: portal {
+    brief = "a narrow alley"
+}
+
+def cobbled_road: portal {
+    brief = "a cobbled road"
+}
+
+// Docks
+
+def dock_location: location {
+    domain = 'outdoor
+    surface = 'wood
+}
+
+def stevedore: lib.npc {
+    brief = "a surly stevedore"
+    pose = "stares out to sea."
+    description = "The man wears stained overalls and a sour frown."
+
+    when talk(actor: .quest(isle_of_dawn.document_delivery, done), self, topic) {
+        tell(self, actor) |
+            Hey, thanks. I've been needin' those. Here's your coin! You'll be
+            glad of it if you'll be visitin' the shops here in Arwyck. It's no
+            bleedin' city, but you can find most of what you'll be needin' here
+            in town.
+        // FIXME: receive_items(actor, [lib.silver_coin], self)
+        complete_quest(actor, isle_of_dawn.document_delivery)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Ah, to be sailing the Emerald Sea. But here I am, stuck ashore,
+            loading and unloading gods-know-what for gods-know-whom. Well, it's
+            a living.
+    }
+}
+
+deflocation west_dock: dock_location {
     name = "West Dock"
+    description = "A short wooden dock juts out into the bay."
+    contents = [stevedore]
+    exits = [rutted_path -> 'south to bayside_plaza_2]
+
+    before enter_location(actor: .quest(isle_of_dawn.document_delivery, active), location, entry) {
+        advance_quest(actor, isle_of_dawn.document_delivery, 'done)
+    }
+}
+
+deflocation east_dock: dock_location {
+    brief = "East Dock"
+    description = "A rickety wooden dock extends out into the bay."
+    exits = [rutted_path -> 'south to bayside_plaza_4]
 }

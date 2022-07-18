@@ -4,9 +4,8 @@
 // TODO: region
 
 def isle_location: location {
-    // FIXME: these should be symbols
-    domain = "outdoor"
-    surface = "grass"
+    domain = 'outdoor
+    surface = 'grass
 }
 
 def gravel_path: portal {
@@ -729,6 +728,10 @@ def white_tulip: item {
     }
 }
 
+def tulip_field_portal: lib.continuing_portal {
+    brief = "the tulip field"
+}
+
 def tulip_field: isle_location {
     name = "Field of Tulips"
     description = |
@@ -743,20 +746,20 @@ deflocation tulip_field_sw: tulip_field {
         `take tulip` to take a white tulip when you see one. Picking up an item
         places it into your inventory. Use the `inventory` command to list the
         items you are carrying.
-    exits = [gravel_path -> 'west to clothing_stall, gravel_path -> 'east to tulip_field_se,
-             gravel_path -> 'north to tulip_field_nw]
+    exits = [gravel_path -> 'west to clothing_stall, tulip_field_portal -> 'east to tulip_field_se,
+             tulip_field_portal -> 'north to tulip_field_nw]
 }
 
 deflocation tulip_field_se: tulip_field {
-    exits = [gravel_path -> 'west to tulip_field_sw, gravel_path -> 'north to tulip_field_ne]
+    exits = [tulip_field_portal -> 'west to tulip_field_sw, tulip_field_portal -> 'north to tulip_field_ne]
 }
 
 deflocation tulip_field_nw: tulip_field {
-    exits = [gravel_path -> 'east to tulip_field_ne, gravel_path -> 'south to tulip_field_sw]
+    exits = [tulip_field_portal -> 'east to tulip_field_ne, tulip_field_portal -> 'south to tulip_field_sw]
 }
 
 deflocation tulip_field_ne: tulip_field {
-    exits = [gravel_path -> 'west to tulip_field_nw, gravel_path -> 'south to tulip_field_se]
+    exits = [tulip_field_portal -> 'west to tulip_field_nw, tulip_field_portal -> 'south to tulip_field_se]
 }
 
 // fountain_plaza
@@ -1197,6 +1200,10 @@ def overgrown_field: isle_location {
     contents = [lashling]
 }
 
+def overgrown_field_portal: lib.continuing_portal {
+    brief = "the overgrown field"
+}
+
 deflocation overgrown_field_se: overgrown_field {
     tutorial = |
         To begin attacking a lashling, type `attack lashling`. You will
@@ -1207,24 +1214,24 @@ deflocation overgrown_field_se: overgrown_field {
         you will gain access to a variety of special maneuvers that you can use
         during combat. Type `help combat` to learn more.
 
-    exits = [gravel_path -> 'west to overgrown_field_sw,
-             gravel_path -> 'north to overgrown_field_ne,
+    exits = [overgrown_field_portal -> 'west to overgrown_field_sw,
+             overgrown_field_portal -> 'north to overgrown_field_ne,
              gravel_path -> 'east to guard_station]
 }
 
 deflocation overgrown_field_sw: overgrown_field {
-    exits = [gravel_path -> 'east to overgrown_field_se,
-             gravel_path -> 'north to overgrown_field_nw]
+    exits = [overgrown_field_portal -> 'east to overgrown_field_se,
+             overgrown_field_portal -> 'north to overgrown_field_nw]
 }
 
 deflocation overgrown_field_ne: overgrown_field {
-    exits = [gravel_path -> 'west to overgrown_field_nw,
-             gravel_path -> 'south to overgrown_field_se]
+    exits = [overgrown_field_portal -> 'west to overgrown_field_nw,
+             overgrown_field_portal -> 'south to overgrown_field_se]
 }
 
 deflocation overgrown_field_nw: overgrown_field {
-    exits = [gravel_path -> 'east to overgrown_field_ne,
-             gravel_path -> 'south to overgrown_field_sw]
+    exits = [overgrown_field_portal -> 'east to overgrown_field_ne,
+             overgrown_field_portal -> 'south to overgrown_field_sw]
 }
 
 // cobbled_square
@@ -1270,9 +1277,8 @@ def shiny_seashell: item {
     }
 }
 
-def beach_portal: portal {
+def beach_portal: lib.continuing_portal {
     brief = "the beach"
-    // FIXME: pose = "continues to the %s."
 }
 
 def beach_location: isle_location {
@@ -1313,11 +1319,11 @@ defquest document_delivery {
     required_quests = [kill_some_plants]
 
     phase active {
-        summary = "Collect the dockmaster's documents."
+        summary = "Find the surly stevedore in Arwyck."
     }
 
     phase done {
-        summary = "Give the dockmaster's documents to the surly stevedore in Arwyck."
+        summary = "Give the documents to the surly stevedore."
     }
 }
 

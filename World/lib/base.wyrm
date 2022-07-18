@@ -57,3 +57,7 @@ def exit_doorway: portal {
 def stairway: portal {
     brief = "a stairway"
 }
+
+def continuing_portal: portal {
+    pose = "continues to the $."
+}

@@ -61,7 +61,9 @@ class Portal: PhysicalEntity {
 
     override func describeFully() -> String {
         if isObvious {
-            return "\(describeBriefly([.capitalized, .indefinite])) leads \(direction). \(super.describeFully())"
+            let leads = pose?.replacingOccurrences(of: "$", with: String(describing: direction))
+                ?? "leads \(direction)."
+            return "\(describeBriefly([.capitalized, .indefinite])) \(leads) \(description ?? "")"
         } else {
             return super.describeFully()
         }
