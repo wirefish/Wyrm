@@ -653,3 +653,201 @@ deflocation inn_common_room: inn_room {
              lib.doorway -> 'north to inn_kitchen,
              lib.stairway -> 'up to inn_upstairs_hall]
 }
+
+def cooking_trainer: lib.npc {
+    brief = "Dully the Cook"
+    pose = "is stirring a pot of...something."
+    description = |
+        Dully is a portly dwarven male with a scraggly beard. He wears a
+        grease-stained apron and a strange, poofy hat. He wields a huge wooden spoon
+        as if it were a weapon.
+    teaches = []  // FIXME:
+
+    after enter_location(actor, location, entry) {
+        tell(self, actor) "Aye, it's a good day for a stew, ain't it?"
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Aye, if ye be lookin' ta learn ta cook, I be yer dwarf. Type `learn`
+            ta see wha I can teach ya, or `help skills` ta learn more about
+            skills an' such.
+    }
+}
+
+deflocation inn_kitchen: inn_room {
+    name = "Kitchen"
+    description = |
+        This large and somewhat disorganized kitchen smells faintly of ale and
+        grease.
+    contents = [cooking_trainer]
+    exits = [lib.doorway -> 'south to inn_common_room]
+}
+
+deflocation inn_upstairs_hall: inn_room {
+    name = "Upstairs Hall"
+    description = |
+        This dark, windowless hall leads to the Golden Gryphon's guest rooms.
+    exits = [lib.stairway -> 'down to inn_common_room,
+             lib.doorway -> 'west to small_guest_room,
+             lib.doorway -> 'east to large_guest_room]
+}
+
+deflocation small_guest_room: inn_room {
+    name = "Small Guest Room"
+    description = |
+        This cramped room holds a small bed and an iron-bound chest. The window
+        overlooks the village square.
+    exits = [lib.doorway -> 'east to inn_upstairs_hall]
+}
+
+deflocation large_guest_room: inn_room {
+    name = "Large Guest Room"
+    description = |
+        This room is tastefully furnished. The wide feather bed is lumpy but
+        comfortable. An oak wardrobe features carvings of trees and forest
+        creatures. The window provides a view of nearby rooftops and the rolling
+        hills east of the village.
+    exits = [lib.doorway -> 'west to inn_upstairs_hall]
+}
+
+// armory
+
+def warrior_trainer: lib.npc {  // FIXME: lib.warrior_trainer
+    brief = "Andalya"
+    pose = "is in the center of the room, idly swinging a slender longsword."
+    description = |
+        Andalya is a lean, graying woman who wears loose clothing befitting
+        one who teaches the martial arts.
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Welcome, stranger. I am Andalya. It is my privilege to be the local
+            representative of the Company of the Blade. We are a band dedicated
+            to the practice of the martial arts. It is my job to train those who
+            are interested in learning to defend themselves with good steel.
+
+            Type `guild info` to learn more about my guild. If you want to join,
+            type `guild join`.
+    }
+}
+
+deflocation armory_training_hall: location {
+    name = "Training Hall"
+    description = |
+        This long hall has stone walls and an arched ceiling. The soft wooden
+        floor is clean but marred from the many training matches that have been
+        fought here.
+    domain = 'indoor
+    surface = 'wood
+    contents = [warrior_trainer]
+    exits = [lib.exit_doorway -> 'south to square_nw]
+}
+
+// explorers' lodge
+
+def lodge_room: location {
+    domain = 'indoor
+    surface = 'wood
+    subregion = "Explorer's Lodge"
+}
+
+def quartermaster: lib.npc {
+    brief = "the quartermaster"
+    pose = "stands nearby."
+    description = |
+        The quartermaster is a slender man with graying hair and elegant
+        mustaches. His clothing, although impeccably clean, seems a little too big
+        for him.
+    sells = []  // FIXME:
+
+    when talk(actor, self, topic) {
+        tell(self, actor) "Good day to you, traveler."
+    }
+}
+
+deflocation lodge_foyer: lodge_room {
+    name = "Foyer"
+    description = |
+        This airy room has wood-paneled walls and a thick carpet on the floor.
+    contents = [quartermaster]
+    exits = [lib.exit_doorway -> 'north to square_sw,
+             lib.doorway -> 'south to lodge_trophy_room,
+             lib.doorway -> 'west to lodge_study]
+}
+
+def stuffed_gorilla: fixture {
+    brief = "a stuffed gorilla"
+    pose = "stands at the end of the room."
+    icon = 'gorilla
+    description = |
+        This intimidating creature stands over eight feet tall. Even in death
+        its expression is fierce. A plaque mounted on the wall reads:
+
+        > Although it slew several dogs and gravely wounded a scout, our party
+        defeated this beast as we traversed the jungles of Phaa, CY 549.
+}
+
+deflocation lodge_trophy_room: lodge_room {
+    name = "Trophy Room"
+    description = |
+        The walls of this long room are lined with hunting prizes of all kinds:
+        antlers, horns, mounted heads, and more.
+    contents = [stuffed_gorilla]
+    exits = [lib.doorway -> 'north to lodge_foyer, lib.doorway -> 'west to lodge_workshop]
+}
+
+def lord_olmquist: lib.npc {
+    brief = "Lord Olmquist"
+    pose = "sits in a chair, smoking a pipe."
+    description = |
+        Olmquist is a rather stout, red-cheeked fellow with a bushy white beard
+        and bald pate. Horn-rimmed spectacles perch upon his substantial nose.
+        He wears a velvet smoking jacket, an open-necked white shirt, and dark
+        silk trousers.
+
+    when talk(actor, self, topic) {
+        tell(self, actor) "Why yes, be a dear and fetch me a bourbon, won't you?"
+    }
+}
+
+deflocation lodge_study: lodge_room {
+    name = "Study"
+    description = |
+        Two walls of this room are lined with shelves full of books. A number of
+        comfortable armchairs and small tables fill the remainder of the space.
+    contents = [lord_olmquist]
+    exits = [lib.doorway -> 'east to lodge_foyer, lib.doorway -> 'south to lodge_workshop]
+}
+
+def explorer_trainer: lib.npc {
+    brief = "Naman Artani"
+    pose = "is hunched over a strange device on the table."
+    description = |
+        Naman is a wiry young man who wears a scarred leather apron over his
+        practical attire. His curly auburn hair floats in a wild cloud around
+        his head.
+    teaches = []  // FIXME: swimming, climbing, ...?
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Welcome to the Explorer's Lodge. Members of our guild travel across
+            Atalea in search of rarities: strange creatures, lost treasures, and
+            ancient knowledge. As you might imagine, survival skills come in
+            quite handy in this vocation!
+
+            I am happy to teach you some of those skills. Type `learn` to see
+            what I can teach you.
+    }
+}
+
+deflocation lodge_workshop: lodge_room {
+    name =  "Workshop"
+    description = |
+        A long table fills the center of this room; various implements are
+        strewn across its surface. Shelves along the walls hold all manner of
+        tools and contraptions.
+    contents = [explorer_trainer]
+    exits = [lib.doorway -> 'north to lodge_study, lib.doorway -> 'east to lodge_trophy_room,
+             lib.exit_doorway -> 'south to wall_street_1]
+}
