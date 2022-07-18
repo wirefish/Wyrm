@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/29/22.
 //
 
-enum EquipmentSlot: String, CodingKeyRepresentable, Hashable, Encodable, ValueRepresentableEnum {
+enum EquipmentSlot: String, CodingKeyRepresentable, Hashable, Codable, ValueRepresentableEnum {
     // Weapons and tools.
     case mainHand, offHand, tool
 

@@ -101,9 +101,11 @@ class Database {
                 return nil
             }
             let encodedAvatar = row.getBlob(0)
-            return try decoder.decode(Avatar.self, from: Data(encodedAvatar!))
+            let avatar = try decoder.decode(Avatar.self, from: Data(encodedAvatar!))
+            avatar.accountID = accountID
+            return avatar
         } catch {
-            logger.error("error loading avatar: \(error)")
+            logger.error("error loading avatar for account \(accountID): \(error)")
             return nil
         }
     }
@@ -137,8 +139,11 @@ class Database {
 
     private func encodeAvatar(_ avatar: Avatar) -> String {
         let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
         let data = try! encoder.encode(avatar)
-        return String(data: data, encoding: .utf8)!
+        let s = String(data: data, encoding: .utf8)!
+        logger.debug(s)
+        return s
     }
 
     private static let createAccountSQL = """

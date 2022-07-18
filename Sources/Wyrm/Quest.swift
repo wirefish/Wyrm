@@ -7,8 +7,8 @@
 
 import CoreFoundation
 
-struct QuestState: Encodable {
-    enum State: ValueRepresentable, Encodable {
+struct QuestState: Codable {
+    enum State: ValueRepresentable, Codable {
         case `nil`
         case number(Double)
         case numbers([Double])

@@ -335,6 +335,7 @@ let allCommands = [
     lookCommand,
     meditateCommand,
     questCommand,
+    saveCommand,
     sayCommand,
     takeCommand,
     talkCommand,

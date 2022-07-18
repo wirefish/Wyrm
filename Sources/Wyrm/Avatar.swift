@@ -61,6 +61,10 @@ final class Avatar: PhysicalEntity {
     var tutorialsOn = true
     var tutorialsSeen = Set<String>()
 
+    // Properties below this point are not encoded/decoded.
+
+    var accountID: AccountID!
+
     // Pending offer, if any.
     var offer: Offer?
 
@@ -98,17 +102,17 @@ final class Avatar: PhysicalEntity {
 
 extension Avatar: Codable {
     enum CodingKeys: CodingKey {
-        case level, location, race, equipped, activeQuests, completedQuests, skills
+        case location, level, race, gender, name, inventory, equipped
+        case activeQuests, completedQuests, skills, tutorialsOn, tutorialsSeen
     }
 
     convenience init(from decoder: Decoder) throws {
         self.init(withPrototype: World.instance.avatarPrototype)
         copyProperties(from: World.instance.avatarPrototype)
 
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        level = try container.decode(Int.self, forKey: .level)
+        let c = try decoder.container(keyedBy: CodingKeys.self)
 
-        let locationRef = try container.decode(ValueRef.self, forKey: .location)
+        let locationRef = try c.decode(ValueRef.self, forKey: .location)
         if let loc = World.instance.lookup(locationRef, context: nil)?.asEntity(Location.self) {
             self.container = loc
         } else {
@@ -116,7 +120,9 @@ extension Avatar: Codable {
             self.container = World.instance.startLocation
         }
 
-        if let raceRef = try container.decodeIfPresent(ValueRef.self, forKey: .race) {
+        level = try c.decode(Int.self, forKey: .level)
+
+        if let raceRef = try c.decodeIfPresent(ValueRef.self, forKey: .race) {
             if case let .race(race) = World.instance.lookup(raceRef, context: nil) {
                 self.race = race
             } else {
@@ -126,17 +132,37 @@ extension Avatar: Codable {
             logger.warning("avatar has no race")
         }
 
-        // TODO: other fields
+        gender = try c.decode(Gender?.self, forKey: .gender)
+        name = try c.decode(String?.self, forKey: .name)
+
+        inventory = Inventory()
+        inventory.contents = try c.decode([Item].self, forKey: .inventory)
+
+        equipped = try c.decode([EquipmentSlot:Equipment].self, forKey: .equipped)
+        activeQuests = try c.decode([ValueRef:QuestState].self, forKey: .activeQuests)
+        completedQuests = try c.decode([ValueRef:Int].self, forKey: .completedQuests)
+        skills = try c.decode([ValueRef:Int].self, forKey: .skills)
+
+        tutorialsOn = try c.decode(Bool.self, forKey: .tutorialsOn)
+        tutorialsSeen = try c.decode(Set<String>.self, forKey: .tutorialsSeen)
     }
 
     func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(level, forKey: .level)
-        try container.encode(location.ref, forKey: .location)
-        try container.encode(equipped, forKey: .equipped)
-        try container.encode(activeQuests, forKey: .activeQuests)
-        try container.encode(completedQuests, forKey: .completedQuests)
-        try container.encode(skills, forKey: .skills)
+        // case location, level, race, gender, name, inventory, equipped
+        // case activeQuests, completedQuests, skills, tutorialsOn, tutorialsSeen
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(location.ref, forKey: .location)
+        try c.encode(level, forKey: .level)
+        try c.encode(race?.ref, forKey: .race)
+        try c.encode(gender, forKey: .gender)
+        try c.encode(name, forKey: .name)
+        try c.encode(inventory.contents, forKey: .inventory)
+        try c.encode(equipped, forKey: .equipped)
+        try c.encode(activeQuests, forKey: .activeQuests)
+        try c.encode(completedQuests, forKey: .completedQuests)
+        try c.encode(skills, forKey: .skills)
+        try c.encode(tutorialsOn, forKey: .tutorialsOn)
+        try c.encode(tutorialsSeen, forKey: .tutorialsSeen)
     }
 }
 
@@ -378,5 +404,16 @@ let sayCommand = Command("say *:message") {
         }
     } else {
         actor.show("What do you want to say?")
+    }
+}
+
+// MARK: - save command
+
+let saveCommand = Command("save") {
+    actor, verb, clauses in
+    if World.instance.db.saveAvatar(accountID: actor.accountID, avatar: actor) {
+        actor.show("Your avatar was saved.")
+    } else {
+        actor.show("Error saving avatar.")
     }
 }
