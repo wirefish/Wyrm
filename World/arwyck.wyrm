@@ -851,3 +851,81 @@ deflocation lodge_workshop: lodge_room {
     exits = [lib.doorway -> 'north to lodge_study, lib.doorway -> 'east to lodge_trophy_room,
              lib.exit_doorway -> 'south to wall_street_1]
 }
+
+// mages' tower
+
+def tower_room: location {
+    domain = 'indoor
+    surface = 'stone
+    subregion = "Mages' Tower"
+}
+
+deflocation tower_library: tower_room {
+    name = "Library"
+    description = |
+        This large, circular room encompasses the entire ground floor of a
+        squat, stone tower. The walls are lined with shelves full of
+        leather-bound books.
+    exits = [lib.exit_doorway -> 'east to square_w,
+             lib.stairway -> 'down to tower_basement,
+             lib.stairway -> 'up to tower_study]
+}
+
+def wand_vendor: lib.npc {
+    brief = "Giglox Tiglox"
+    pose = "excitedly awaits your attention."
+    description = |
+        Giglox is a tiny, long-eared creature. His toothy smile is both
+        infectious and somewhat frightening.
+    sells = []  // FIXME: [pine_wand, oak_wand]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            You look like you need a wand. And who doesn't? Type `buy` to see
+            what I have available.
+    }
+}
+
+deflocation tower_basement: tower_room {
+    name = "Basement"
+    description = |
+        The basement of the library is full of books, scrolls, and other
+        scholarly items. Everything is neatly stacked and organized, if a little
+        dusty.
+    contents = [wand_vendor]
+    exits = [lib.stairway -> 'up to tower_library]
+}
+
+def mage_trainer: lib.npc {
+    brief = "Milena Landeris"
+    pose = "sits at a nearby desk, perusing a scroll."
+    description = |
+        Milena is pleasant-looking young woman. Her clothing is casual and
+        practical. Her long black hair is carefully plaited. She seems somewhat
+        bored with the scroll in her hands and her eyes often wander to the
+        nearest window.
+    teaches = []  // FIXME:
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Hello! I'm glad for the interruption. I am supposed to be studying
+            this scroll, but the mating rituals of the southern blue-tailed
+            cockatrice are really not my cup of tea.
+
+            I am the local representative of the College of Arcanists, a guild
+            for those who wish to study magic. I am just an apprentice myself,
+            but I can teach you some basic skills; type `learn` to see what I
+            can teach. If you are new in town, you might want to type `help
+            skills` to learn more about skills in general.
+    }
+}
+
+deflocation tower_study: tower_room {
+    name = "Study"
+    description = |
+        This circular room commands an excellent view of Arwyck through a number
+        of large, glass-paned windows. A desk and padded leather chair have been
+        placed beneath each window.
+    contents = [mage_trainer]
+    exits = [lib.stairway -> 'down to tower_library]
+}
