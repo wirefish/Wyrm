@@ -188,7 +188,9 @@ extension Avatar {
                                  forKey: quest.ref)
 
         // FIXME:
-        showMap()
+        if container != nil {
+            showMap()
+        }
 
         return true
     }
