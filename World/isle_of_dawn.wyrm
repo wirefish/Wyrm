@@ -1340,7 +1340,7 @@ def dockmaster: lib.npc {
     after accept_quest(actor, quest: document_delivery, self) {
         tell(self, actor) "Good, good. Take these."
 
-        receive(actor, bundle_of_documents!, self)
+        receive_items(actor, [bundle_of_documents], self)
 
         tell(self, actor) |
             I need you to deliver those to my man in Arwyck. Surly fellow near

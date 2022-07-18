@@ -270,7 +270,6 @@ struct QuestScriptFunctions: ScriptProvider {
 
     static func receiveItems(_ args: [Value]) throws -> Value {
         let (avatar, items, source) = try unpack(args, Avatar.self, [Item].self, PhysicalEntity.self)
-        print(items)
         avatar.receiveItems(items, from: source)
         return .nil
     }
