@@ -749,7 +749,7 @@ deflocation armory_training_hall: location {
 def lodge_room: location {
     domain = 'indoor
     surface = 'wood
-    subregion = "Explorer's Lodge"
+    subregion = "Explorers' Lodge"
 }
 
 def quartermaster: lib.npc {

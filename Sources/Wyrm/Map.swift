@@ -55,7 +55,8 @@ extension Avatar {
         let map = Map(at: location, radius: 3)
         sendMessage("showMap",
                     .string(location.name),
-                    .string("Region Name"), .string("Subregion Name"),  // FIXME:
+                    .string("Region Name"),  // FIXME:
+                    .string(location.subregion),
                     .integer(map.radius),
                     .list(map.cells.map { cell -> ClientValue in
 
