@@ -30,7 +30,7 @@ def cobbled_road: portal {
     brief = "a cobbled road"
 }
 
-// Docks
+// docks
 
 def dock_location: location {
     domain = 'outdoor
@@ -76,3 +76,234 @@ deflocation east_dock: dock_location {
     description = "A rickety wooden dock extends out into the bay."
     exits = [rutted_path -> 'south to bayside_plaza_4]
 }
+
+// bayside_plaza
+
+def plaza_portal: lib.continuing_portal {
+    brief = "the plaza"
+}
+
+def plaza_location: location {
+    name = "Bayside Plaza"
+    description = "A cobbled stone plaza runs along the shore of the bay."
+    domain = 'outdoor
+    surface = 'stone
+}
+
+def beggar: lib.npc {
+    brief = "an old beggar"
+    pose = "sits nearby."
+    description = |
+        The beggar looks like he's been dragged through a mile of mud. He smells
+        worse than he looks.
+
+    when talk(actor, self, subject) {
+        show(actor) |
+            The beggar looks up at you with milky white eyes and doesn't say a
+            word. Despite his apparent blindness, he perfectly tracks your every
+            move.
+    }
+}
+
+deflocation bayside_plaza_1: plaza_location {
+    contents = [beggar]
+    exits = [plaza_portal -> 'east to bayside_plaza_2]
+}
+
+deflocation bayside_plaza_2: plaza_location {
+    exits = [plaza_portal -> 'west to bayside_plaza_1,
+             plaza_portal -> 'east to bayside_plaza_3,
+             rutted_path -> 'north to west_dock]
+}
+
+deflocation bayside_plaza_3: plaza_location {
+    exits = [plaza_portal -> 'west to bayside_plaza_2, plaza_portal -> 'east to bayside_plaza_4,
+             dirt_road -> 'south to harbor_road_1]
+
+    tutorial = |
+        Welcome to Arwyck! In this lively town you will find numerous
+        vendors and trainers.
+
+        Vendors can sell you many items, including armor and weapons, which will
+        prove invaluable in your adventures. They are represented on the map by
+        an icon that looks like a stack of coins. Use the `buy` command near a
+        vendor to see what's for sale.
+
+        Trainers are representatives of `help:guilds`. By joining a guild you
+        gain access to certain `help:skills`, including those required to use
+        any weapons you may buy.
+
+        Trainers are represented on the map by an upward-pointing arrow icon.
+        Use the `guild` command near a trainer to learn more."
+}
+
+defquest dance_monkey {
+    name = "Dance Monkey"
+    summary = |
+        Find the monkey and dance for it, dance for it, dance for it, oh oh oh.
+    level = 1
+
+    phase active {
+        summary = |
+            Find the monkey in Arwyck and dance for it, dance for it, dance for
+            it, oh oh oh.
+    }
+
+    phase done {
+        summary = |
+            Return to the young laborer and recount your dancing exploits.
+    }
+}
+
+def young_laborer: lib.npc {
+    brief = "a young laborer"
+    pose = "scrubs the cobbles nearby."
+    description = |
+        The laborer is a boy of perhaps fourteen summers. He is on his knees,
+        scrubbing the cobbles with an old wire brush.
+    offers_quests = [dance_monkey]
+
+    when talk(actor: .quest(dance_monkey, available), self, topic) {
+        show(actor) "The boy looks up from his work."
+        tell(self, actor) |
+            Oh my, I like your style! If you've got a moment, there's something
+            that's been bothering me lately. I could really use your help.
+        offer_quest(self, dance_monkey, actor)
+    }
+
+    after accept_quest(actor, quest: dance_monkey, self) {
+        tell(self, actor) |
+            There's this dancing monkey, you see. It wanders around the south
+            end of town. It spends its days dancing for people, but it seems so
+            sad. It makes me wanna cry.
+
+            I think someone should dance for the monkey for once. My boss would
+            break my arm if I left work, but...could you do it for me?
+
+        show_tutorial(actor, 'emote) |
+            You can perform simple gestures using the `emote` command. For
+            example, you could type `emote dances for the monkey.` Type `help
+            emote` for more information.
+    }
+
+    when talk(actor: .quest(dance_monkey, active), self, topic) {
+        tell(self, actor) |
+            Did you find the monkey? When you're done I won't make you do it all
+            again, I promise.
+    }
+
+    when talk(actor: .quest(dance_monkey, done), self, topic) {
+        tell(self, actor) |
+            Look me in the eyes... you did it, didn't you? Ha ha I never thought
+            you would, but thank you anyway!
+        complete_quest(actor, dance_monkey)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor, "Just look at these cobbles. Do you see the way they shine?")
+    }
+}
+
+deflocation bayside_plaza_4: plaza_location {
+    contents = [young_laborer]
+    exits = [plaza_portal -> 'west to bayside_plaza_3, plaza_portal -> 'east to bayside_plaza_5,
+             rutted_path -> 'north to east_dock]
+}
+
+defquest ticket_please {
+    name = "Ticket, Please"
+    summary = "Grab a ticket from the dispenser and present it to the attendant."
+    level = 1
+
+    phase active {
+        summary = "Grab a ticket from the dispenser."
+    }
+
+    phase done {
+        summary = "Present the ticket to the attendant."
+    }
+}
+
+def yellow_ticket: item {
+    brief = "a yellow ticket"
+    description = |
+        Tiny letters imprinted on the ticket read, "May be exchanged for 50
+        silver coins. The issuer is not liable for any injury, death, or financial
+        loss caused by goods or services purchased with said coins, or by the
+        decision not to spend them."
+    quest = ticket_please
+}
+
+def ticket_dispenser: fixture {
+    brief = "a ticket dispenser"
+    icon = 'flat_chest
+    description = |
+        A plaque atop the device reads:
+
+        > This ticket dispenser is provided as a free service of the Explorer's Guild.
+
+    // FIXME: receive_message = "%tB rattles briefly then dispenses %ab."
+
+    when use(actor: .quest(ticket_please, active), self, target) {
+        receive_items(actor, [yellow_ticket], self)
+        show_tutorial(actor, 'give_items) |
+            You can use the `give` command to give an item to a non-player
+            character. To complete this quest, give the ticket to the attendant.
+        advance_quest(actor, ticket_please, 'done)
+    }
+
+    when use(actor, self, target) {
+        show(actor) "Try as you might, you cannot activate the ticket dispenser."
+    }
+}
+
+def attendant: lib.npc {
+    brief = "an attendant"
+    description = |
+        The attendant is extremely tall and thin. He wears a long, striped coat
+        and a comically tall tophat.
+    offers_quests = [ticket_please]
+
+    when talk(actor: .quest(ticket_please, available), self, topic) {
+        tell(self, actor) |
+            You look like one of those reborn heroes who keep popping up. I bet
+            you need some coin. I'd be happy to be of service!
+        offer_quest(self, ticket_please, actor)
+    }
+
+    after accept_quest(actor, quest: ticket_please, self) {
+        tell(self, actor) |
+            See that ticket dispenser over there? If you `use` it, it will give
+            you a ticket. If you then give that ticket me, I will exchange it
+            for 50 silver coins! It seems too good to be true, but I assure you
+            the offer is real. Why not give it a try?
+
+        show_tutorial(actor, 'use) |
+            The `use` command lets you use an item you are carrying or an item
+            in your surroundings. It is a general-purpose way to employ an item
+            for some effect.
+    }
+
+    when talk(actor: .quest(ticket_please, active), self, topic) {
+        tell(self, actor) |
+            Go ahead and `use` the dispenser. It won't bite.
+    }
+
+    allow give_item(actor, item: yellow_ticket, self) {
+        return true
+    }
+
+    after give_item(actor: .quest(ticket_please, done), item: yellow_ticket, self) {
+        tell(self, actor) |
+            Another ticket redeemed! My bonus this month is going to be off the
+            charts! Here's your silver. Don't spend it all in one place!
+        // FIXME: receive_items(actor, [lib.silver_coin], self)
+        complete_quest(actor, ticket_please, 'done)
+    }
+}
+
+deflocation bayside_plaza_5: plaza_location {
+    contents = [attendant, ticket_dispenser]
+    exits = [plaza_portal -> 'west to bayside_plaza_4]
+}
+
