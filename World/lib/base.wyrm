@@ -44,6 +44,13 @@ def npc: creature {
     }
 }
 
+def trainer: npc {
+    teaches = []  // FIXME:
+}
+
+def mining_trainer: trainer {
+}
+
 // Portals
 
 def entry_doorway: portal {
@@ -60,4 +67,19 @@ def stairway: portal {
 
 def continuing_portal: portal {
     pose = "continues to the $."
+}
+
+// Tools
+
+def pickaxe: equipment {
+    size = 'medium
+    slot = 'tool
+}
+
+def copper_pickaxe: pickaxe {
+    brief = "a copper pickaxe"
+}
+
+def bronze_pickaxe: pickaxe {
+    brief = "a bronze pickaxe"
 }

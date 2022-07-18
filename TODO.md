@@ -23,4 +23,6 @@
 
 - icons.
 
-- save avatar. manually for now.
+- handle receiving stacks of e.g. coins
+
+- vendors: buy and sell. add prices to items.

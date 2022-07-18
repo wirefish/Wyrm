@@ -77,7 +77,7 @@ deflocation east_dock: dock_location {
     exits = [rutted_path -> 'south to bayside_plaza_4]
 }
 
-// bayside_plaza
+// bayside plaza
 
 def plaza_portal: lib.continuing_portal {
     brief = "the plaza"
@@ -307,3 +307,77 @@ deflocation bayside_plaza_5: plaza_location {
     exits = [plaza_portal -> 'west to bayside_plaza_4]
 }
 
+// harbor road
+
+def harbor_road: location {
+    name = "Harbor Road"
+    description = |
+        A rutted dirt road runs between the harbor and the village proper.
+    surface = 'dirt
+    domain = 'outdoor
+}
+
+deflocation harbor_road_1: harbor_road {
+    exits = [dirt_road -> 'north to bayside_plaza_3, dirt_road -> 'south to harbor_road_2,
+             lib.entry_doorway -> 'east to miners_guildhall]
+}
+
+deflocation harbor_road_2: harbor_road {
+    exits = [dirt_road -> 'north to harbor_road_1, dirt_road -> 'south to square_n]
+}
+
+// miner's guild
+
+def mining_trainer: lib.mining_trainer {
+    brief = "Marigold"
+    pose = "is nearby, poking through a stack of ore."
+    description = |
+        Marigold is a cheerful, rosy-cheeked dwarven woman who looks strong
+        enough to crush rocks. Her leather garments are streaked with soot.
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Welcome to Arwyck! I am the local representative of the Underhill
+            Consortium, a guild for those interested in mining. This workshop
+            serves as a gathering place for our members.
+
+            As a miner you can extract ore, raw gemstones, and other valuable
+            resources from deposits scattered around the world. If this sounds
+            useful, I'd love to welcome you to our guild! Type `guild info` for
+            more information or `guild join` to sign up.
+
+            If you decide mining's for you, Hermetch over there sells the tools
+            you'll need to begin your mining career.
+    }
+}
+
+def mining_vendor: lib.npc {  // FIXME: lib.vendor
+    brief = "Hermetch the Bald"
+    pose = "stands in front of the tool rack, whistling idly."
+    description = |
+        Hermetch lives up to his apellation; his head shines almost as brightly
+        as the polished blades of the pickaxes on the rack behind him.
+    sells = [lib.copper_pickaxe, lib.bronze_pickaxe]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            I sell the finest tools in the land! The absolute finest!
+        await sleep(1)
+        show(actor) "Marigold rolls her eyes."
+        await sleep(1)
+        tell(self, actor) |
+            Pay her no mind... Type `buy` to see what's available.
+    }
+}
+
+deflocation miners_guildhall: location {
+    name = "Miners' Guildhall"
+    description = |
+        This cavernous warehouse contains numerous carts filled with different
+        types of ore. A rack on the south wall holds a variety of pickaxes,
+        shovels, and other tools useful for mining.
+    domain = 'indoor
+    surface = 'wood
+    contents = [mining_trainer, mining_vendor]
+    exits = [lib.exit_doorway -> 'west to harbor_road_1]
+}

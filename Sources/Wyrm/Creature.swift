@@ -17,6 +17,9 @@ class Creature: PhysicalEntity, Combatant, Questgiver {
     // Questgiver
     var offersQuests = [Quest]()
 
+    var sells: [ValueRef]?
+    var teaches: [ValueRef]?
+
     override func copyProperties(from other: Entity) {
         let other = other as! Creature
         level = other.level
@@ -25,6 +28,8 @@ class Creature: PhysicalEntity, Combatant, Questgiver {
         health_coeff = other.health_coeff
         weapons = other.weapons
         offersQuests = other.offersQuests
+        sells = other.sells
+        teaches = other.teaches
         super.copyProperties(from: other)
 
         health.maxValue = Int(health_coeff * Double(baseHealth(level: level)))
@@ -38,6 +43,8 @@ class Creature: PhysicalEntity, Combatant, Questgiver {
         "health_coeff": accessor(\Creature.health_coeff),
         "weapons": accessor(\Creature.weapons),
         "offers_quests": accessor(\Creature.offersQuests),
+        "sells": accessor(\Creature.sells),
+        "teaches": accessor(\Creature.teaches),
     ]
 
     override subscript(member: String) -> Value? {

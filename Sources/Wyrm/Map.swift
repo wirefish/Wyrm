@@ -65,15 +65,22 @@ extension Avatar {
                         }
 
                         for entity in cell.location.contents {
-                            guard let entity = entity as? Questgiver else {
-                                continue
+                            if let entity = entity as? Questgiver {
+                                if entity.completesQuestFor(self) {
+                                    state |= Self.questCompletableBit
+                                } else if entity.advancesQuestFor(self) {
+                                    state |= Self.questAdvanceableBit
+                                } else if entity.offersQuestFor(self) {
+                                    state |= Self.questAvailableBit
+                                }
                             }
-                            if entity.completesQuestFor(self) {
-                                state |= Self.questCompletableBit
-                            } else if entity.advancesQuestFor(self) {
-                                state |= Self.questAdvanceableBit
-                            } else if entity.offersQuestFor(self) {
-                                state |= Self.questAvailableBit
+                            if let creature = entity as? Creature {
+                                if creature.sells != nil {
+                                    state |= Self.vendorBit
+                                }
+                                if creature.teaches != nil {
+                                    state |= Self.trainerBit
+                                }
                             }
                         }
 
