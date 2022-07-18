@@ -381,3 +381,224 @@ deflocation miners_guildhall: location {
     contents = [mining_trainer, mining_vendor]
     exits = [lib.exit_doorway -> 'west to harbor_road_1]
 }
+
+// village square
+
+def square: location {
+    name = "Village Square"
+    description = |
+        This cobbled plaza is the heart of the village. Various shops line its
+        perimeter.
+    domain = 'outdoor
+    surface = 'stone
+}
+
+def square_portal: lib.continuing_portal {
+  brief = "the square"
+}
+
+def shaggy_dog: lib.npc {
+    brief = "a shaggy white dog"
+    description = |
+        The dog is very curious and closely watches anyone who passes by. Its
+        fur is matted and dirty but it seems happy.
+
+    lying_down = "lies nearby, curiously eyeing passers-by."
+    standing = "stands nearby and looks around."
+
+    when start_world() {
+        while true {
+            // FIXME: show_near(self, "The shaggy dog lays down in a comfortable spot.")
+            self.pose = self.lying_down
+            await sleep(20)
+
+            // FIXME: show_near(self, "The shaggy dog stands up and stretches.")
+            self.pose = self.standing
+            await sleep(5)
+
+            // FIXME:
+            // var exits = [exit for exit in self.location.exits if exit.prototype == square_portal]
+            // travel(self, select_random(exits))
+            await sleep(5)
+        }
+    }
+
+    when talk(actor, self, topic) {
+        show(actor) "The dog's ears perk up and it tilts its head to the side."
+    }
+}
+
+deflocation square_nw: square {
+    contents = [shaggy_dog]
+    exits = [square_portal -> 'east to square_n, square_portal -> 'south to square_w,
+             lib.entry_doorway -> 'north to armory_training_hall,
+             lib.entry_doorway -> 'west to sword_shop]
+}
+
+deflocation square_n: square {
+    exits = [square_portal -> 'west to square_nw, square_portal -> 'east to square_ne,
+             square_portal -> 'south to square_c, dirt_road -> 'north to harbor_road_2]
+}
+
+deflocation square_ne: square {
+    exits = [square_portal -> 'west to square_n, square_portal -> 'south to square_e,
+             lib.entry_doorway -> 'east to inn_common_room,
+             lib.exit_doorway -> 'north to axe_shop]
+}
+
+deflocation square_w: square {
+    exits = [square_portal -> 'north to square_nw, square_portal -> 'east to square_c,
+             square_portal -> 'south to square_sw,
+             lib.entry_doorway -> 'west to tower_library]
+}
+
+def square_sign: fixture {
+    brief = "a directional sign"
+    pose = "stands nearby."
+    description = |
+        Wooden arrows affixed atop the signpost read as follows:
+
+        | North: Docks
+        | West: Silverwood
+        | South: Wall Street
+        | East: Mistmarsh
+}
+
+def spiritstone: lib.spiritstone {
+  pose = "stands on a small pedestal in the center of the square."
+}
+
+deflocation square_c: square {
+    contents = [spiritstone, square_sign]
+    exits = [square_portal -> 'west to square_w, square_portal -> 'east to square_e,
+             square_portal -> 'north to square_n, square_portal -> 'south to square_s]
+
+    tutorial = |
+        You can `use` a spiritstone to bind your life essence to its location.
+        If you later die, your spirit will return here and your body will be
+        resurrected by the stone.
+}
+
+deflocation square_e: square {
+    exits = [square_portal -> 'west to square_c, square_portal -> 'north to square_ne,
+             square_portal -> 'south to square_se, dirt_road -> 'east to east_road_1]
+}
+
+deflocation square_sw: square {
+    exits = [square_portal -> 'north to square_w, square_portal -> 'east to square_s,
+             dirt_road -> 'west to forest_road_1, lib.entry_doorway -> 'south to lodge_foyer]
+}
+
+deflocation square_s: square {
+    exits = [square_portal -> 'west to square_sw, square_portal -> 'east to square_se,
+             square_portal -> 'north to square_c, dirt_road -> 'south to south_road_1]
+}
+def crone: lib.npc {
+    brief = "an old crone"
+    pose = "stands off to the side, watching people pass by."
+    description = |
+        The crone wears a faded gray cloak. Her wavy white hair spills from
+        beneath her hood. Her eyes are bright, and she watches any passersby
+        with great interest.
+
+    after enter_location(actor, location, entry) {
+        show(actor) "The crone stares at you for a moment, then looks away."
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Greetings, stranger. Your new body may be young, but I can sense the
+            age of your spirit. This is not your first time around the block, so
+            to speak. In a past life you were a great hero, but perhaps you have
+            forgotten your deeds. A pity.
+
+            Know this: you are here for a reason. This world needs you; I feel
+            it in my bones, I hear it on the wind...but I know not why. What
+            threat could be so grave that, in order to overcome it, we must tear
+            history's heroes away from their peaceful slumber in the Dreamlands?
+
+            Of course that raises another question: who or what is doing the
+            tearing?
+
+            In the village of my birth there is an old curse: "May you live in
+            interesting times." Perhaps I will be lucky and my days will end
+            before things become too interesting. For you, though, I foresee no
+            such luck.
+    }
+}
+
+deflocation square_se: square {
+    contents = [crone]
+    exits = [square_portal -> 'west to square_s, square_portal -> 'north to square_e]
+}
+
+// sword shop
+
+def sword_vendor: lib.npc {
+    brief = "Bryndan O'Donnel"
+    pose = "cleans a longsword with an oiled rag."
+    description = |
+        Bryndan is a lanky man with freckled skin and gray eyes. His auburn hair
+        hangs down to his shoulders.
+    sells = []  // FIXME: [copper_sword, bronze_sword, copper_greatsword, bronze_greatsword]
+
+    when talk(actor: .quest(talking_shop, active), self, topic) {
+        tell(self, actor) |
+            Ah, yes, I heard about Mirabel. Those bastards stole a few blades
+            from me, perhaps a week past.
+
+            If you've not heard of the Gray Hand, well, that's a good thing. But
+            every merchant in town knows 'em. They want a piece of the pie, and
+            say they'll protect us. Little good they did this time. My contact
+            there swears they had nothing to do with any of these recent thefts.
+            But what good is the word of a thief?
+
+            That being said, I've never had particular problems with the Hand
+            before. So maybe this is something different.
+
+        // FIXME: advance_quest(actor, talking_shop, 'sword_vendor)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Welcome to my shop! I have a variety of swords for sale.
+            Type `buy` to see what I have available.
+    }
+}
+
+deflocation sword_shop: location {
+    name = "Bryndan's House of Blades"
+    description = |
+        A variety of bladed weapons are displayed in racks that fill this small
+        shop.
+    domain = 'indoor
+    surface = 'wood
+    contents = [sword_vendor]
+    exits = [lib.exit_doorway -> 'east to square_nw]
+}
+
+// axe shop
+
+def axe_vendor: lib.npc {
+    brief = "Durg Bighands"
+    pose = "sits atop a chair that is clearly too small for him."
+    description = |
+        Durg is an ogre. Although he is very small for his kind, he is still far
+        too large for the typical furniture found in Arwyck.
+    sells = []  // FIXME: [copper_axe, bronze_axe, copper_battleaxe, bronze_battleaxe]
+
+    when talk(actor, self, topic) {
+        show(actor) "Durg stretches his shoulders."
+        tell(self, actor) |
+            Do you happen to need an axe? Maybe two? Type `buy` to see my wares.
+    }
+}
+
+deflocation axe_shop: location {
+    name = "Durg's Slicery"
+    description = "The walls are lined with inexpensive but servicable axes."
+    domain = 'indoor
+    surface = 'wood
+    contents = [axe_vendor]
+    exits = [lib.exit_doorway -> 'south to square_ne]
+}
