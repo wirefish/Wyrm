@@ -134,10 +134,7 @@ extension Avatar: Codable {
 
         gender = try c.decode(Gender?.self, forKey: .gender)
         name = try c.decode(String?.self, forKey: .name)
-
-        inventory = Inventory()
-        inventory.contents = try c.decode([Item].self, forKey: .inventory)
-
+        inventory = try c.decode(Inventory.self, forKey: .inventory)
         equipped = try c.decode([EquipmentSlot:Equipment].self, forKey: .equipped)
         activeQuests = try c.decode([ValueRef:QuestState].self, forKey: .activeQuests)
         completedQuests = try c.decode([ValueRef:Int].self, forKey: .completedQuests)
@@ -156,7 +153,7 @@ extension Avatar: Codable {
         try c.encode(race?.ref, forKey: .race)
         try c.encode(gender, forKey: .gender)
         try c.encode(name, forKey: .name)
-        try c.encode(inventory.contents, forKey: .inventory)
+        try c.encode(inventory, forKey: .inventory)
         try c.encode(equipped, forKey: .equipped)
         try c.encode(activeQuests, forKey: .activeQuests)
         try c.encode(completedQuests, forKey: .completedQuests)

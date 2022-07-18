@@ -139,6 +139,7 @@ class Database {
 
     private func encodeAvatar(_ avatar: Avatar) -> String {
         let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
         let data = try! encoder.encode(avatar)
         return String(data: data, encoding: .utf8)!
     }

@@ -13,7 +13,7 @@
 // - unequip: equipped -> inventory
 // - discard: inventory -> nowhere
 
-final class Inventory: Container {
+final class Inventory: Container, Codable {
     static let baseCapacity = 5
 
     required init(withPrototype proto: Entity? = nil) {
@@ -25,6 +25,39 @@ final class Inventory: Container {
         self.capacity = avatar.equipped.reduce(Self.baseCapacity) {
             return $0 + $1.1.capacity
         }
+    }
+
+    enum CodingKeys: CodingKey {
+        case capacity, contents
+    }
+
+    enum PrototypeKey: CodingKey {
+        case prototype
+    }
+
+    init(from decoder: Decoder) throws {
+        super.init()
+
+        let c = try decoder.container(keyedBy: Self.CodingKeys)
+        capacity = try c.decode(Int.self, forKey: .capacity)
+
+        var contentsArrayForProto = try c.nestedUnkeyedContainer(forKey: .contents)
+        var contentsArray = contentsArrayForProto
+        while !contentsArrayForProto.isAtEnd {
+            let itemContainer = try contentsArrayForProto.nestedContainer(keyedBy: Self.PrototypeKey)
+            let protoRef = try itemContainer.decode(ValueRef.self, forKey: .prototype)
+            guard let proto = World.instance.lookup(protoRef)?.asEntity(Item.self) else {
+                logger.error("cannot load item with prototype \(protoRef)")
+                continue
+            }
+            contents.append(try contentsArray.decode(type(of: proto)))
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: Self.CodingKeys)
+        try c.encode(capacity, forKey: .capacity)
+        try c.encode(contents, forKey: .contents)
     }
 }
 
