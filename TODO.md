@@ -26,3 +26,7 @@
 - handle receiving stacks of e.g. coins
 
 - vendors: buy and sell. add prices to items.
+
+- clean up script library.
+
+- update neighbors when entities move.
