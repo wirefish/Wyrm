@@ -408,17 +408,16 @@ def shaggy_dog: lib.npc {
 
     when start_world() {
         while true {
-            // FIXME: show_near(self, "The shaggy dog lays down in a comfortable spot.")
+            show_near(self, "The shaggy dog lays down in a comfortable spot.")
             self.pose = self.lying_down
             await sleep(20)
 
-            // FIXME: show_near(self, "The shaggy dog stands up and stretches.")
+            show_near(self, "The shaggy dog stands up and stretches.")
             self.pose = self.standing
             await sleep(5)
 
-            // FIXME:
-            // var exits = [exit for exit in self.location.exits if exit.prototype == square_portal]
-            // travel(self, select_random(exits))
+            var exits = [exit for exit in self.location.exits if isa(exit, square_portal)]
+            travel(self, random_element(exits))
             await sleep(5)
         }
     }

@@ -83,6 +83,14 @@ class Location: Entity {
             return nil
         }
     }
+
+    func showAll(_ message: String) {
+        for entity in contents {
+            if let avatar = entity as? Avatar {
+                avatar.show(message)
+            }
+        }
+    }
 }
 
 // MARK: - meditate command

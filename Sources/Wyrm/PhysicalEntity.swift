@@ -33,6 +33,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
         "is_obvious": accessor(\PhysicalEntity.isObvious),
         "alts": accessor(\PhysicalEntity.alts),
         "size": accessor(\PhysicalEntity.size),
+        "location": accessor(\PhysicalEntity.location),
     ]
 
     override subscript(member: String) -> Value? {

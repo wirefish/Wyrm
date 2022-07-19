@@ -191,19 +191,19 @@ class World {
     }
 }
 
-// MARK: - starting and stopping
+// MARK: - starting the world
 
 extension World {
-
     func start() {
         for entity in startableEntities {
             entity.handleEvent(.when, "start_world", args: [])
-        }
-    }
 
-    func stop() {
-        for entity in startableEntities {
-            entity.handleEvent(.when, "stop_world", args: [])
+            if let location = entity as? Location {
+                for entity in location.contents {
+                    entity.location = location
+                    entity.handleEvent(.when, "start_world", args: [])
+                }
+            }
         }
     }
 }

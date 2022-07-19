@@ -147,12 +147,14 @@ extension PhysicalEntity {
                            args: [self, location, portal], body: {
             avatar?.willExitLocation(via: portal)
             location.remove(self)
+            location.showAll("\(self.describeBriefly([.capitalized, .indefinite])) heads \(portal.direction).")
         }) else {
             return
         }
 
         triggerEvent("enter_location", in: destination, participants: [self, entry!],
                      args: [self, destination, entry!]) {
+            destination.showAll("\(self.describeBriefly([.capitalized, .indefinite])) arrives from the \(entry!.direction).")
             destination.insert(self)
             avatar?.didEnterLocation(via: entry!)
         }

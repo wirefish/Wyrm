@@ -370,9 +370,7 @@ class Compiler {
             compile(destination, &block)
             block.emit(.makePortal)
 
-        case let .comprehension(transform, name, sequence, _):
-            // TODO: handle pred.
-
+        case let .comprehension(transform, name, sequence, pred):
             let loopVar = UInt8(locals.count)
             block.emit(.pushNil)
             block.emit(.createLocal)
@@ -384,6 +382,10 @@ class Compiler {
             block.emit(.beginList)
             let advanceJump = block.emitJump(.advanceOrJump)
             block.emit(.storeLocal, loopVar)
+            if pred != nil {
+                compile(pred!, &block)
+                block.emitJump(.jumpIfFalse, to: advanceJump - 1)
+            }
             compile(transform, &block)
             block.emitJump(.jump, to: advanceJump - 1)
             block.patchJump(at: advanceJump)

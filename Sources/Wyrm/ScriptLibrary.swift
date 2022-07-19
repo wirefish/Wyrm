@@ -58,18 +58,31 @@ struct ScriptLibrary: ScriptProvider {
         ("change_gender", changeGender),
         ("change_name", changeName),
         ("change_race", changeRace),
+        ("isa", isa),
         ("len", len),
         ("log_debug", logDebug),
         ("opposite_direction", oppositeDirection),
         ("random", random),
+        ("random_element", randomElement),
         ("remove_exit", removeExit),
         ("show", show),
+        ("show_near", showNear),
         ("show_tutorial", showTutorial),
         ("sleep", sleep),
         ("spawn", spawn),
         ("tell", tell),
+        ("travel", travel),
         ("trunc", trunc),
     ]
+
+    static func isa(_ args: [Value]) throws -> Value {
+        let (entity, proto) = try unpack(args, Entity.self, Entity.self)
+        if let ref = proto.ref {
+            return .boolean(entity.isa(ref))
+        } else {
+            return .boolean(entity == proto)
+        }
+    }
 
     static func trunc(_ args: [Value]) throws -> Value {
         let x = try unpack(args, Double.self)
@@ -86,6 +99,11 @@ struct ScriptLibrary: ScriptProvider {
         return .number(Double(list.values.count))
     }
 
+    static func randomElement(_ args: [Value]) throws -> Value {
+        let list = try unpack(args, ValueList.self)
+        return list.values.randomElement() ?? .nil
+    }
+
     static func logDebug(_ args: [Value]) throws -> Value {
         logger.debug(args.map({ String(describing: $0) }).joined(separator: " "))
         return .nil
@@ -100,6 +118,12 @@ struct ScriptLibrary: ScriptProvider {
     static func showTutorial(_ args: [Value]) throws -> Value {
         let (avatar, key, message) = try unpack(args, Avatar.self, String.self, String.self)
         avatar.showTutorial(key, message)
+        return .nil
+    }
+
+    static func showNear(_ args: [Value]) throws -> Value {
+        let (actor, message) = try unpack(args, PhysicalEntity.self, String.self)
+        actor.location.showAll(message)
         return .nil
     }
 
@@ -182,5 +206,15 @@ struct ScriptLibrary: ScriptProvider {
             }
         }
         return .nil
+    }
+
+    static func travel(_ args: [Value]) throws -> Value {
+        let (actor, exit) = try unpack(args, PhysicalEntity.self, Portal.self)
+        guard let destRef = exit.destination,
+              let dest = World.instance.lookup(destRef)?.asEntity(Location.self) else {
+            return .boolean(false)
+        }
+        actor.travel(to: dest, direction: exit.direction, via: exit)
+        return .boolean(true)
     }
 }
