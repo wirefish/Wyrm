@@ -48,7 +48,7 @@ def stevedore: lib.npc {
             glad of it if you'll be visitin' the shops here in Arwyck. It's no
             bleedin' city, but you can find most of what you'll be needin' here
             in town.
-        // FIXME: receive_items(actor, [lib.silver_coin], self)
+        receive_items(actor, [10 of lib.silver_coin], self)
         complete_quest(actor, isle_of_dawn.document_delivery)
     }
 
@@ -297,7 +297,7 @@ def attendant: lib.npc {
         tell(self, actor) |
             Another ticket redeemed! My bonus this month is going to be off the
             charts! Here's your silver. Don't spend it all in one place!
-        // FIXME: receive_items(actor, [lib.silver_coin], self)
+        receive_items(actor, [50 of lib.silver_coin], self)
         complete_quest(actor, ticket_please, 'done)
     }
 }

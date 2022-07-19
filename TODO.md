@@ -32,3 +32,8 @@
 - update neighbors when entities move.
 
 - move tutorials seen and completed quests to separate tables in the database, since they just keep growing and resaving them every time will become slower and slower.
+
+- use command
+
+- give command
+
