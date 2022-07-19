@@ -929,3 +929,219 @@ deflocation tower_study: tower_room {
     contents = [mage_trainer]
     exits = [lib.stairway -> 'down to tower_library]
 }
+
+// east road
+
+def east_road: location {
+    name = "East Road"
+    description = |
+        This broad dirt road connects the center of Arwyck to the village's
+        eastern gate.
+    domain = 'outdoor
+    surface = 'dirt
+}
+
+deflocation east_road_1: east_road {
+    exits = [dirt_road -> 'west to square_e, dirt_road -> 'east to east_road_2,
+             lib.entry_doorway -> 'south to mace_shop]
+}
+
+defquest i_need_bread {
+    name = "Feed the Poor"
+    summary = "Purchase a loaf of rye bread and give it to the hungry street urchin."
+    level = 1
+
+    phase active {
+        summary = "Purchase a loaf of rye bread at the inn."
+    }
+
+    phase done {
+        summary = "Give the rye bread to the street urchin."
+    }
+}
+
+// FIXME: This quest is kind of a mess.
+def urchin: lib.npc {
+    brief = "a street urchin"
+    pose = "sits alongside the road."
+    description = |
+        The urchin is a young girl, perhaps eight years old. Her clothes are
+        little more than dirty rags.
+    offers_quests = [i_need_bread]
+
+    when talk(actor: .quest(i_need_bread, available), self, topic) {
+        tell(self, actor) |
+            You seem like you have many important things to do, so I hate to
+            bother you. But could you spare a loaf of bread? My family is
+            desperate for food, you see, and I wasn't able to beg for enough
+            coin to buy any.
+        offer_quest(self, i_need_bread, actor)
+    }
+
+    after accept_quest(actor, quest: i_need_bread, npc) {
+        tell(self, actor) |
+            Oh, thank you! If you go to the inn, the innkeeper sells a very nice
+            loaf of rye. I'd really appreciate if you could `give` me one.
+    }
+
+    when talk(actor: .quest(i_need_bread, active), self, topic) {
+        show(actor) |
+            The urchin looks at you with a hint of expectation.
+        tell(self, actor) |
+            Were you able to find the inn?
+    }
+
+    when talk(actor: .quest(i_need_bread, done), self, topic) {
+        tell(npc, avatar) |
+            I truly appreciate your offer to help my family. If you have a spare
+            loaf of rye, I'd be happy if you could `give` it to me.
+    }
+
+    allow give_item(actor, item: rye_loaf, self) {
+        return true
+    }
+
+    after give_item(actor: .quest(i_need_bread, done), item: rye_loaf, self) {
+        show(actor) "The urchin grins from ear to ear."
+
+        tell(self, actor) |
+            Thank you so much! You've truly done my family a great service
+            today. May the gods' blessings return to us all!
+
+        complete_quest(actor, i_need_bread)
+    }
+
+    after give_item(actor, item: rye_loaf, self) {
+        tell(self, actor) "Thank you for your kindness!"
+    }
+}
+
+deflocation east_road_2: east_road {
+    contents = [urchin]
+    exits = [dirt_road -> 'west to east_road_1, dirt_road -> 'east to east_road_3,
+             alley -> 'south to muggers_alley_1]
+}
+
+deflocation east_road_3: east_road {
+    exits = [dirt_road -> 'west to east_road_2, dirt_road -> 'east to east_gate,
+             lib.entry_doorway -> 'north to temple_sanctuary]
+}
+
+// mace shop
+
+def mace_vendor: lib.npc {
+    brief = "Maury na Munigan"
+    pose = "stands behind the counter, arms crossed."
+    description = |
+        Maury is a burly man with a full beard and little hair left atop his
+        head. He looks strong enough to crack a few skulls without the aid of
+        the weapons he sells.
+    sells = []  // FIXME: [copper_mace, bronze_mace, copper_maul, bronze_maul]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Welcome to my shop, {actor}. You'll find my wares to be of better
+            quality than most, I think.
+    }
+}
+
+deflocation mace_shop: location {
+    name = "Maury's Maces"
+    description = |
+        This shop sells a variety of weapons ideal for cracking skulls.
+    domain = 'indoor
+    surface = 'wood
+    contents = [mace_vendor]
+    exits = [lib.exit_doorway -> 'north to east_road_1]
+}
+
+// temple
+
+def old_priest: lib.npc {
+    brief = "an aged priest"
+    pose = "kneels before the altar."
+    description = |
+        The priest is unkempt and dirty. His robes are in desperate need of
+        repair and his scraggly beard is in dire need of a trim. You can see
+        intelligence and compassion in his striking blue eyes, but also a touch
+        of madness.
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Be welcome in this temple, friend.
+
+            My flock is few in number these days. As the gods abandoned the
+            people, so too did the people abandon the gods. I do not blame them.
+            As for myself, I cannot turn my back on a lifetime of belief. Not
+            yet.
+
+        await sleep(1)
+        show(actor) "The priest pauses for a moment, collecting his thoughts."
+        await sleep(1)
+
+        tell(self, actor) |
+            It began slowly at first, nearly a century ago. The gods had always
+            lent their power to their faithful servants. Members of the
+            priesthood wielded magic as powerful as that of any mage.
+
+            But then our powers began to fail. One by one, the gods stopped
+            granting us their blessings. Did they lose interest in us? Did they
+            go elsewhere? Perhaps they simply ceased to exist?
+
+            It is heresy to think such things. But now it has been thirty years
+            since the last of them disappeared. My order no longer wields any
+            power and we can do little to help the people we once protected.
+            Perhaps we no longer deserve the gods' aid and guidance? I do not
+            know, but I will continue my search for answers.
+
+            The absence of the gods leaves a great void. My only hope is that
+            evil and darkness do not fill it.
+    }
+}
+
+deflocation temple_sanctuary: location {
+    name = "Sanctuary"
+    description = |
+        This large room was once a place where people gathered to worship the
+        gods, but it has clearly not been used in many years. A large altar
+        stands near one end of the room and various statues reside in niches
+        along the walls. Dust and grime cover every surface; puddles on the
+        floor mark the spots where the wooden roof has begun to fail. The
+        tapestries that once lined the walls have fallen into ruin.
+    domain = 'indoor
+    surface = 'stone
+    contents = [old_priest]
+    exits = [lib.exit_doorway -> 'south to east_road_3]
+}
+
+// east gate
+
+def east_guard: lib.npc {
+    brief = "the gate guard"
+    pose = "leans against the wall of the gatehouse."
+
+    when talk(actor: .quest(at_the_gates, active), self, topic) {
+        tell(self, actor) |
+            Mirabel's boy? Yes, he passed through in the dead of night, maybe
+            three weeks past. As shady as ever, that one. He was with two others
+            who looked even worse.
+        // advance_quest(actor, at_the_gates, 'next_phase)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            East of here is Mistmarsh. It's a dangerous area. Don't fall in a
+            sinkhole...I'm not comin' to drag you out!
+    }
+}
+
+deflocation east_gate: location {
+    name = "East Gate"
+    description = |
+        A squat stone gatehouse stands at the village's entrance. To the east, a
+        road winds through marshes that stretch along the coast of Emerald Bay.
+    domain = 'outdoor
+    surface = 'stone
+    contents = [east_guard]
+    exits = [dirt_road -> 'west to east_road_3, dirt_road -> 'east to mistmarsh.muddy_path_A12]
+}
