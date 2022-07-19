@@ -61,11 +61,11 @@ extension World {
                 let count = Int(code.bytecode[ip]); ip += 1
                 locals.removeLast(count)
 
-            case .lookupLocal:
+            case .loadLocal:
                 let index = Int(code.bytecode[ip]); ip += 1
                 stack.append(locals[index])
 
-            case .assignLocal:
+            case .storeLocal:
                 let index = Int(code.bytecode[ip]); ip += 1
                 locals[index] = stack.removeLast()
 
@@ -201,7 +201,7 @@ extension World {
                     ip += 2
                 }
 
-            case .lookupSymbol:
+            case .loadSymbol:
                 let index = code.getUInt16(at: ip)
                 guard case let .symbol(s) = code.constants[Int(index)] else {
                     throw ExecError.typeMismatch
@@ -212,7 +212,7 @@ extension World {
                 stack.append(value)
                 ip += 2
 
-            case .lookupMember:
+            case .loadMember:
                 let index = code.getUInt16(at: ip); ip += 2
                 let lhs = stack.removeLast()
                 guard case let .symbol(name) = code.constants[Int(index)],
@@ -231,7 +231,7 @@ extension World {
                     stack.append(value)
                 }
 
-            case .assignMember:
+            case .storeMember:
                 let index = code.getUInt16(at: ip)
                 guard case let .symbol(s) = code.constants[Int(index)] else {
                     throw ExecError.typeMismatch
@@ -243,7 +243,7 @@ extension World {
                 obj[s] = rhs
                 ip += 2
 
-            case .subscript:
+            case .loadSubscript:
                 guard let index = Int.fromValue(stack.removeLast()) else {
                     throw ExecError.typeMismatch
                 }
@@ -255,7 +255,7 @@ extension World {
                 }
                 stack.append(list.values[index])
 
-            case .assignSubscript:
+            case .storeSubscript:
                 let rhs = stack.removeLast()
                 guard let index = Int.fromValue(stack.removeLast()) else {
                     throw ExecError.typeMismatch

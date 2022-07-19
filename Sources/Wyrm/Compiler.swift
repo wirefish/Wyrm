@@ -35,11 +35,11 @@ enum Opcode: UInt8 {
     case removeLocals
 
     // The next byte is the index of a local. Push its value onto the stack.
-    case lookupLocal
+    case loadLocal
 
     // The next byte is the index of a local. Pop the top of the stack and store
     // it in the local.
-    case assignLocal
+    case storeLocal
 
     // Replace the boolean value on the top of the stack with its inverse.
     case not
@@ -68,24 +68,24 @@ enum Opcode: UInt8 {
     // Lookup the value of an identifier and push its value onto the stack. The
     // next two bytes are the index of a symbolic constant in the constants
     // table.
-    case lookupSymbol
+    case loadSymbol
 
     // Lookup the value of a member of an object. The next two bytes are the
     // index of a symbolic constant; the top of the stack is the object. Pushes
     // the resulting value onto the stack.
-    case lookupMember
+    case loadMember
 
     // Assign a value to a member of an object. The next two bytes are the index
     // of a symbolic constant. The value to assign is on the top of the stack
     // and the object is next on the stack.
-    case assignMember
+    case storeMember
 
     // Subscript a list. The top of the stack is the index and the list is next
     // on the stack.
-    case `subscript`
+    case loadSubscript
 
     // Assign an element of a list.
-    case assignSubscript
+    case storeSubscript
 
     // Mark the current stack position as the beginning of a list of values.
     case beginList
@@ -215,11 +215,11 @@ extension ScriptFunction {
                 let i = Int8(bitPattern: bytecode[ip + 1])
                 print(String(format: "%5d: %@ %5d", ip, opname, i))
                 ip += 2
-            case .removeLocals, .lookupLocal, .assignLocal, .advance, .stringify, .joinStrings:
+            case .removeLocals, .loadLocal, .storeLocal, .advance, .stringify, .joinStrings:
                 let i = bytecode[ip + 1]
                 print(String(format: "%5d: %@ %5d", ip, opname, i))
                 ip += 2
-            case .pushConstant, .assignMember, .lookupMember, .lookupSymbol:
+            case .pushConstant, .storeMember, .loadMember, .loadSymbol:
                 let index = Int(getUInt16(at: ip + 1))
                 print(String(format: "%5d: %@ %5d  ; %@",
                              ip, opname, index, String(describing: constants[index])))
@@ -285,9 +285,9 @@ class Compiler {
 
         case let .identifier(s):
             if let localIndex = locals.lastIndex(of: s) {
-                block.emit(.lookupLocal, UInt8(localIndex))
+                block.emit(.loadLocal, UInt8(localIndex))
             } else {
-                block.emit(.lookupSymbol, block.addConstant(.symbol(s)))
+                block.emit(.loadSymbol, block.addConstant(.symbol(s)))
             }
 
         case let .unaryExpr(op, rhs):
@@ -350,12 +350,12 @@ class Compiler {
 
         case let .dot(lhs, member):
             compile(lhs, &block)
-            block.emit(.lookupMember, block.addConstant(.symbol(member)))
+            block.emit(.loadMember, block.addConstant(.symbol(member)))
 
         case let .subscript(lhs, index):
             compile(lhs, &block)
             compile(index, &block)
-            block.emit(.subscript)
+            block.emit(.loadSubscript)
 
         case let .exit(portal, direction, destination):
             compile(portal, &block)
@@ -452,18 +452,18 @@ class Compiler {
                     fatalError("undefined local \(s)")
                 }
                 compile(rhs, &block)
-                block.emit(.assignLocal, UInt8(localIndex))
+                block.emit(.storeLocal, UInt8(localIndex))
 
             case let .subscript(expr, index):
                 compile(expr, &block)
                 compile(index, &block)
                 compile(rhs, &block)
-                block.emit(.assignSubscript)
+                block.emit(.storeSubscript)
 
             case let .dot(expr, member):
                 compile(expr, &block)
                 compile(rhs, &block)
-                block.emit(.assignMember, block.addConstant(.symbol(member)))
+                block.emit(.storeMember, block.addConstant(.symbol(member)))
 
             default:
                 fatalError("invalid assignment form")
