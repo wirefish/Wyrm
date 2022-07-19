@@ -63,7 +63,7 @@ enum Opcode: UInt8 {
 
     // Like jump, but only if the value on the top of the stack is true or
     // false or nil, respectively.
-    case jumpIf, jumpIfNot, jumpIfNil
+    case jumpIfTrue, jumpIfFalse, jumpIfNil
 
     // Lookup the value of an identifier and push its value onto the stack. The
     // next two bytes are the index of a symbolic constant in the constants
@@ -210,26 +210,26 @@ extension ScriptFunction {
             let op = Opcode(rawValue: bytecode[ip])!
             let opname = String(describing: op).padding(toLength: 12, withPad: " ",
                                                         startingAt: 0)
+            let prefix = String(format: "%5d: %@", ip, opname)
             switch op {
             case .pushSmallInt:
                 let i = Int8(bitPattern: bytecode[ip + 1])
-                print(String(format: "%5d: %@ %5d", ip, opname, i))
+                print(prefix, String(format: "%5d", i))
                 ip += 2
             case .removeLocals, .loadLocal, .storeLocal, .advance, .stringify, .joinStrings:
                 let i = bytecode[ip + 1]
-                print(String(format: "%5d: %@ %5d", ip, opname, i))
+                print(prefix, String(format: "%5d", i))
                 ip += 2
             case .pushConstant, .storeMember, .loadMember, .loadSymbol:
                 let index = Int(getUInt16(at: ip + 1))
-                print(String(format: "%5d: %@ %5d  ; %@",
-                             ip, opname, index, String(describing: constants[index])))
+                print(prefix, String(format: "%5d  ; %@", index, String(describing: constants[index])))
                 ip += 3
-            case .jump, .jumpIf, .jumpIfNot, .jumpIfNil:
+            case .jump, .jumpIfTrue, .jumpIfFalse, .jumpIfNil:
                 let offset = Int(getInt16(at: ip + 1))
-                print(String(format: "%5d: %@ %5d  ; -> %d", ip, opname, offset, ip + 3 + offset))
+                print(prefix, String(format: "%5d  ; -> %d", offset, ip + 3 + offset))
                 ip += 3
             default:
-                print(String(format: "%5d: %@", ip, opname))
+                print(prefix)
                 ip += 1
             }
         }
@@ -320,14 +320,14 @@ class Compiler {
 
         case let .conjuction(lhs, rhs):
             compile(lhs, &block)
-            let jump = block.emitJump(.jumpIfNot)
+            let jump = block.emitJump(.jumpIfFalse)
             block.emit(.pop)
             compile(rhs, &block)
             block.patchJump(at: jump)
 
         case let .disjunction(lhs, rhs):
             compile(lhs, &block)
-            let jump = block.emitJump(.jumpIf)
+            let jump = block.emitJump(.jumpIfTrue)
             block.emit(.pop)
             compile(rhs, &block)
             block.patchJump(at: jump)
@@ -401,7 +401,7 @@ class Compiler {
 
         case let .if(predicate, thenBlock, elseBlock):
             compile(predicate, &block)
-            let skipThen = block.emitJump(.jumpIfNot)
+            let skipThen = block.emitJump(.jumpIfFalse)
             block.emit(.pop)
             compileScope(thenBlock, &block)
             if let elseBlock = elseBlock {
@@ -416,7 +416,7 @@ class Compiler {
         case let .while(pred, body):
             let start = block.bytecode.count
             compile(pred, &block)
-            let endJump = block.emitJump(.jumpIfNot)
+            let endJump = block.emitJump(.jumpIfFalse)
             block.emit(.pop)
             compileScope(body, &block)
             block.emitJump(.jump, to: start)

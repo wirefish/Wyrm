@@ -171,7 +171,7 @@ extension World {
                 let offset = code.getInt16(at: ip)
                 ip += 2 + Int(offset)
 
-            case .jumpIf:
+            case .jumpIfTrue:
                 guard case let .boolean(b) = stack.last else {
                     throw ExecError.typeMismatch
                 }
@@ -182,7 +182,7 @@ extension World {
                     ip += 2
                 }
 
-            case .jumpIfNot:
+            case .jumpIfFalse:
                 guard case let .boolean(b) = stack.last else {
                     throw ExecError.typeMismatch
                 }
