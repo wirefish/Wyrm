@@ -228,55 +228,6 @@ extension Avatar {
     }
 }
 
-struct QuestScriptFunctions: ScriptProvider {
-    static let functions = [
-        ("advance_quest", advanceQuest),
-        ("complete_quest", completeQuest),
-        ("give_item", giveItem),
-        ("offer_quest", offerQuest),
-        ("receive_items", receiveItems),
-    ]
-
-    static func offerQuest(_ args: [Value]) throws -> Value {
-        let (npc, quest, avatar) = try unpack(args, PhysicalEntity.self, Quest.self, Avatar.self)
-
-        let b = triggerEvent("offer_quest", in: avatar.location, participants: [npc, avatar],
-                             args: [npc, quest, avatar]) {
-            avatar.receiveOffer(QuestOffer(questgiver: npc, quest: quest))
-            avatar.showNotice("""
-                \(npc.describeBriefly([.capitalized, .definite])) has offered you the quest
-                "\(quest.name)". Type `accept` to accept it.
-                """)
-        }
-
-        return .boolean(b)
-    }
-
-    static func advanceQuest(_ args: [Value]) throws -> Value {
-        let (avatar, quest, phase) = try unpack(args, Avatar.self, Quest.self, String.self)
-        _ = avatar.advanceQuest(quest, to: phase)
-        return .nil
-    }
-
-    static func completeQuest(_ args: [Value]) throws -> Value {
-        let (avatar, quest) = try unpack(args, Avatar.self, Quest.self)
-        avatar.completeQuest(quest)
-        return .nil
-    }
-
-    static func giveItem(_ args: [Value]) throws -> Value {
-        let (avatar, proto, target) = try unpack(args, Avatar.self, Item.self, PhysicalEntity.self)
-        avatar.giveItems(to: target) { $0.prototype == proto }
-        return .nil
-    }
-
-    static func receiveItems(_ args: [Value]) throws -> Value {
-        let (avatar, items, source) = try unpack(args, Avatar.self, [Item].self, PhysicalEntity.self)
-        avatar.receiveItems(items, from: source)
-        return .nil
-    }
-}
-
 let questHelp = """
 Use the `quest` command to view information about your active quests or to drop
 a quest you are no longer interested in completing.

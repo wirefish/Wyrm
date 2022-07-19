@@ -8,62 +8,24 @@ enum ScriptError: Error {
     case wrongNumberOfArguments(got: Int, expected: Int)
 }
 
-protocol ScriptProvider {
-    static var functions: [(String, ([Value]) throws -> Value)] { get }
-}
-
-// Helper functions to unpack a value array into a specific number of values of specific types.
-extension ScriptProvider {
-    static func unpack<T1: ValueRepresentable>
-    (_ args: [Value], _ t1: T1.Type) throws -> T1 {
-        guard args.count == 1 else {
-            throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 1)
-        }
-        guard let v1 = T1.fromValue(args[0]) else {
-            throw ScriptError.invalidArgument
-        }
-        return v1
-    }
-
-    static func unpack<T1: ValueRepresentable, T2: ValueRepresentable>
-    (_ args: [Value], _ t1: T1.Type, _ t2: T2.Type) throws -> (T1, T2) {
-        guard args.count == 2 else {
-            throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 2)
-        }
-        guard let v1 = T1.fromValue(args[0]),
-              let v2 = T2.fromValue(args[1]) else {
-            throw ScriptError.invalidArgument
-        }
-        return (v1, v2)
-    }
-
-    static func unpack<T1: ValueRepresentable, T2: ValueRepresentable, T3: ValueRepresentable>
-    (_ args: [Value], _ t1: T1.Type, _ t2: T2.Type, _ t3: T3.Type) throws -> (T1, T2, T3) {
-        guard args.count == 3 else {
-            throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 3)
-        }
-        guard let v1 = T1.fromValue(args[0]),
-              let v2 = T2.fromValue(args[1]),
-              let v3 = T3.fromValue(args[2]) else {
-            throw ScriptError.invalidArgument
-        }
-        return (v1, v2, v3)
-    }
-}
-
-struct ScriptLibrary: ScriptProvider {
+struct ScriptLibrary {
     static let functions = [
         ("add_exit", addExit),
+        ("advance_quest", advanceQuest),
         ("announce", announce),
         ("change_gender", changeGender),
         ("change_name", changeName),
         ("change_race", changeRace),
+        ("complete_quest", completeQuest),
+        ("give_item", giveItem),
         ("isa", isa),
         ("len", len),
         ("log_debug", logDebug),
+        ("offer_quest", offerQuest),
         ("opposite_direction", oppositeDirection),
         ("random", random),
         ("random_element", randomElement),
+        ("receive_items", receiveItems),
         ("remove_exit", removeExit),
         ("show", show),
         ("show_near", showNear),
@@ -216,5 +178,83 @@ struct ScriptLibrary: ScriptProvider {
         }
         actor.travel(to: dest, direction: exit.direction, via: exit)
         return .boolean(true)
+    }
+
+    static func offerQuest(_ args: [Value]) throws -> Value {
+        let (npc, quest, avatar) = try unpack(args, PhysicalEntity.self, Quest.self, Avatar.self)
+
+        let b = triggerEvent("offer_quest", in: avatar.location, participants: [npc, avatar],
+                             args: [npc, quest, avatar]) {
+            avatar.receiveOffer(QuestOffer(questgiver: npc, quest: quest))
+            avatar.showNotice("""
+                \(npc.describeBriefly([.capitalized, .definite])) has offered you the quest
+                "\(quest.name)". Type `accept` to accept it.
+                """)
+        }
+
+        return .boolean(b)
+    }
+
+    static func advanceQuest(_ args: [Value]) throws -> Value {
+        let (avatar, quest, phase) = try unpack(args, Avatar.self, Quest.self, String.self)
+        _ = avatar.advanceQuest(quest, to: phase)
+        return .nil
+    }
+
+    static func completeQuest(_ args: [Value]) throws -> Value {
+        let (avatar, quest) = try unpack(args, Avatar.self, Quest.self)
+        avatar.completeQuest(quest)
+        return .nil
+    }
+
+    static func giveItem(_ args: [Value]) throws -> Value {
+        let (avatar, proto, target) = try unpack(args, Avatar.self, Item.self, PhysicalEntity.self)
+        avatar.giveItems(to: target) { $0.prototype == proto }
+        return .nil
+    }
+
+    static func receiveItems(_ args: [Value]) throws -> Value {
+        let (avatar, items, source) = try unpack(args, Avatar.self, [Item].self, PhysicalEntity.self)
+        avatar.receiveItems(items, from: source)
+        return .nil
+    }
+}
+
+// Helper functions to unpack a value array into a specific number of values of specific types.
+extension ScriptLibrary {
+    static func unpack<T1: ValueRepresentable>
+    (_ args: [Value], _ t1: T1.Type) throws -> T1 {
+        guard args.count == 1 else {
+            throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 1)
+        }
+        guard let v1 = T1.fromValue(args[0]) else {
+            throw ScriptError.invalidArgument
+        }
+        return v1
+    }
+
+    static func unpack<T1: ValueRepresentable, T2: ValueRepresentable>
+    (_ args: [Value], _ t1: T1.Type, _ t2: T2.Type) throws -> (T1, T2) {
+        guard args.count == 2 else {
+            throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 2)
+        }
+        guard let v1 = T1.fromValue(args[0]),
+              let v2 = T2.fromValue(args[1]) else {
+            throw ScriptError.invalidArgument
+        }
+        return (v1, v2)
+    }
+
+    static func unpack<T1: ValueRepresentable, T2: ValueRepresentable, T3: ValueRepresentable>
+    (_ args: [Value], _ t1: T1.Type, _ t2: T2.Type, _ t3: T3.Type) throws -> (T1, T2, T3) {
+        guard args.count == 3 else {
+            throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 3)
+        }
+        guard let v1 = T1.fromValue(args[0]),
+              let v2 = T2.fromValue(args[1]),
+              let v3 = T3.fromValue(args[2]) else {
+            throw ScriptError.invalidArgument
+        }
+        return (v1, v2, v3)
     }
 }
