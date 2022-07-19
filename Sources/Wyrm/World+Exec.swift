@@ -313,6 +313,16 @@ extension World {
                 }
                 stack.append(.entity(e.clone()))
 
+            case .setCount:
+                guard let item = Item.fromValue(stack.removeLast()) else {
+                    throw ExecError.typeMismatch
+                }
+                guard let count = Int.fromValue(stack.removeLast()) else {
+                    throw ExecError.typeMismatch
+                }
+                item.count = count
+                stack.append(.entity(item))
+
             case .call:
                 guard case let .list(args) = stack.removeLast() else {
                     throw ExecError.typeMismatch

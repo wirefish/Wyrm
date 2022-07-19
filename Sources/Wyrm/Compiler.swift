@@ -108,6 +108,10 @@ enum Opcode: UInt8 {
     // Replace the entity on the top of the stack with a clone.
     case clone
 
+    // The top of the stack is an item and the next value on the stack is an
+    // integer. Pop both, set the count of the item, and push the modified item.
+    case setCount
+
     // Call a function. The top of the stack is a list of the arguments; the
     // next value on the stack is the function to call.
     case call
@@ -359,7 +363,7 @@ class Compiler {
             compile(destination, &block)
             block.emit(.makePortal)
 
-        case let .comprehension(transform, name, sequence, pred):
+        case let .comprehension(transform, name, sequence, _):
             // TODO: handle pred.
             block.emit(.beginList)
             compile(sequence, &block)
@@ -381,7 +385,10 @@ class Compiler {
             locals.removeLast()
 
         case let .stack(lhs, rhs):
-            fatalError("stack not implemented")
+            compile(lhs, &block)
+            compile(rhs, &block)
+            block.emit(.clone)
+            block.emit(.setCount)
 
         case let .var(name, initialValue):
             if locals[scopeLocals.last!...].contains(name) {
