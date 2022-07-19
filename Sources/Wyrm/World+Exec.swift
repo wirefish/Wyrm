@@ -12,6 +12,7 @@ enum ExecError: Error {
     case expectedCallable
     case expectedFuture
     case invalidResult
+    case nestedIterationNotSupported
 }
 
 extension World {
@@ -27,6 +28,8 @@ extension World {
                 _ stack: inout [Value], _ ip: Int) throws -> CallableResult {
         var lists = [Int]()
         var ip = ip
+        var iter: Array<Value>.Iterator?
+
         loop: while ip < code.bytecode.count {
             let op = Opcode(rawValue: code.bytecode[ip])!
             ip += 1
@@ -50,9 +53,6 @@ extension World {
 
             case .pop:
                 let _ = stack.removeLast()
-
-            case .swap:
-                stack.swapAt(stack.count - 2, stack.count - 1)
 
             case .createLocal:
                 locals.append(stack.removeLast())
@@ -172,7 +172,7 @@ extension World {
                 ip += 2 + Int(offset)
 
             case .jumpIfTrue:
-                guard case let .boolean(b) = stack.last else {
+                guard case let .boolean(b) = stack.removeLast() else {
                     throw ExecError.typeMismatch
                 }
                 if (b) {
@@ -183,18 +183,10 @@ extension World {
                 }
 
             case .jumpIfFalse:
-                guard case let .boolean(b) = stack.last else {
+                guard case let .boolean(b) = stack.removeLast() else {
                     throw ExecError.typeMismatch
                 }
                 if (!b) {
-                    let offset = code.getInt16(at: ip)
-                    ip += 2 + Int(offset)
-                } else {
-                    ip += 2
-                }
-
-            case .jumpIfNil:
-                if case .nil = stack.last {
                     let offset = code.getInt16(at: ip)
                     ip += 2 + Int(offset)
                 } else {
@@ -274,22 +266,22 @@ extension World {
                 stack.removeSubrange(start...)
                 stack.append(.list(ValueList(values)))
 
-            case .iterate:
+            case .makeIterator:
+                guard iter == nil else {
+                    throw ExecError.nestedIterationNotSupported
+                }
                 guard case let .list(list) = stack.removeLast() else {
                     throw ExecError.typeMismatch
                 }
-                stack.append(.iterator(list.values.makeIterator()))
+                iter = list.values.makeIterator()
 
-            case .advance:
-                let index = Int(code.bytecode[ip]); ip += 1
-                guard case var .iterator(iterator) = stack.last else {
-                    throw ExecError.typeMismatch
-                }
-                if let value = iterator.next() {
-                    locals[index] = value
-                    stack[stack.count - 1] = .iterator(iterator)
+            case .advanceOrJump:
+                if let value = iter?.next() {
+                    stack.append(value)
+                    ip += 2
                 } else {
-                    stack[stack.count - 1] = .nil
+                    iter = nil
+                    ip += Int(code.getInt16(at: ip)) + 2
                 }
 
             case .makePortal:

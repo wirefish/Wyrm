@@ -25,9 +25,6 @@ enum Opcode: UInt8 {
     // Pop and discard the value on the top of the stack.
     case pop
 
-    // Swap the two top values on the stack.
-    case swap
-
     // Pop the top of the stack and create a new local variable.
     case createLocal
 
@@ -61,9 +58,9 @@ enum Opcode: UInt8 {
     // Change the instruction pointer. The next two bytes are a signed offset.
     case jump
 
-    // Like jump, but only if the value on the top of the stack is true or
-    // false or nil, respectively.
-    case jumpIfTrue, jumpIfFalse, jumpIfNil
+    // Like jump, but pop the top of the stack and jump only if the popped value
+    // is true or false, respectively.
+    case jumpIfTrue, jumpIfFalse
 
     // Lookup the value of an identifier and push its value onto the stack. The
     // next two bytes are the index of a symbolic constant in the constants
@@ -94,13 +91,13 @@ enum Opcode: UInt8 {
     // a single value representing a list of the removed values.
     case endList
 
-    // Replace the list on the top of the stack with an iterator over the list.
-    case iterate
+    // The top of the stack is a list. Pop it and create an iterator over the
+    // list.
+    case makeIterator
 
-    // The next byte is the index of a local. Given an iterator on top of the
-    // stack, place the next list element (if any) into the local and advance
-    // the iterator, or replace it with .nil at the end of the list.
-    case advance
+    // If the current iterator has a next value, push it onto the stack.
+    // Otherwise, branch using the offset in the next two bytes.
+    case advanceOrJump
 
     // Create a Portal from the three values on the top of the stack.
     case makePortal
@@ -216,7 +213,7 @@ extension ScriptFunction {
                 let i = Int8(bitPattern: bytecode[ip + 1])
                 print(prefix, String(format: "%5d", i))
                 ip += 2
-            case .removeLocals, .loadLocal, .storeLocal, .advance, .stringify, .joinStrings:
+            case .removeLocals, .loadLocal, .storeLocal, .stringify, .joinStrings:
                 let i = bytecode[ip + 1]
                 print(prefix, String(format: "%5d", i))
                 ip += 2
@@ -224,7 +221,7 @@ extension ScriptFunction {
                 let index = Int(getUInt16(at: ip + 1))
                 print(prefix, String(format: "%5d  ; %@", index, String(describing: constants[index])))
                 ip += 3
-            case .jump, .jumpIfTrue, .jumpIfFalse, .jumpIfNil:
+            case .jump, .jumpIfTrue, .jumpIfFalse, .advanceOrJump:
                 let offset = Int(getInt16(at: ip + 1))
                 print(prefix, String(format: "%5d  ; -> %d", offset, ip + 3 + offset))
                 ip += 3
@@ -320,17 +317,27 @@ class Compiler {
 
         case let .conjuction(lhs, rhs):
             compile(lhs, &block)
-            let jump = block.emitJump(.jumpIfFalse)
-            block.emit(.pop)
+            let leftJump = block.emitJump(.jumpIfFalse)
             compile(rhs, &block)
-            block.patchJump(at: jump)
+            let rightJump = block.emitJump(.jumpIfFalse)
+            block.emit(.pushTrue)
+            let endJump = block.emitJump(.jump)
+            block.patchJump(at: leftJump)
+            block.patchJump(at: rightJump)
+            block.emit(.pushFalse)
+            block.patchJump(at: endJump)
 
         case let .disjunction(lhs, rhs):
             compile(lhs, &block)
-            let jump = block.emitJump(.jumpIfTrue)
-            block.emit(.pop)
+            let leftJump = block.emitJump(.jumpIfTrue)
             compile(rhs, &block)
-            block.patchJump(at: jump)
+            let rightJump = block.emitJump(.jumpIfTrue)
+            block.emit(.pushFalse)
+            let endJump = block.emitJump(.jump)
+            block.patchJump(at: leftJump)
+            block.patchJump(at: rightJump)
+            block.emit(.pushTrue)
+            block.patchJump(at: endJump)
 
         case let .list(elements):
             block.emit(.beginList)
@@ -365,24 +372,25 @@ class Compiler {
 
         case let .comprehension(transform, name, sequence, _):
             // TODO: handle pred.
-            block.emit(.beginList)
-            compile(sequence, &block)
-            block.emit(.iterate)
-            let listVar = locals.count
+
+            let loopVar = UInt8(locals.count)
             block.emit(.pushNil)
             block.emit(.createLocal)
             locals.append(name)
-            let start = block.bytecode.count
-            block.emit(.advance, UInt8(listVar))
-            let endJump = block.emitJump(.jumpIfNil)
+
+            compile(sequence, &block)
+            block.emit(.makeIterator)
+
+            block.emit(.beginList)
+            let advanceJump = block.emitJump(.advanceOrJump)
+            block.emit(.storeLocal, loopVar)
             compile(transform, &block)
-            block.emit(.swap)  // to bring the iterator to the top
-            block.emitJump(.jump, to: start)
-            block.patchJump(at: endJump)
-            block.emit(.pop)  // the iterator
+            block.emitJump(.jump, to: advanceJump - 1)
+            block.patchJump(at: advanceJump)
             block.emit(.endList)
-            block.emit(.removeLocals, UInt8(1))
+
             locals.removeLast()
+            block.emit(.removeLocals, UInt8(1))
 
         case let .stack(lhs, rhs):
             compile(lhs, &block)
@@ -402,7 +410,6 @@ class Compiler {
         case let .if(predicate, thenBlock, elseBlock):
             compile(predicate, &block)
             let skipThen = block.emitJump(.jumpIfFalse)
-            block.emit(.pop)
             compileScope(thenBlock, &block)
             if let elseBlock = elseBlock {
                 let skipElse = block.emitJump(.jump)
@@ -417,11 +424,9 @@ class Compiler {
             let start = block.bytecode.count
             compile(pred, &block)
             let endJump = block.emitJump(.jumpIfFalse)
-            block.emit(.pop)
             compileScope(body, &block)
             block.emitJump(.jump, to: start)
             block.patchJump(at: endJump)
-            block.emit(.pop)
 
         case .for:
             fatalError("for loop not yet implemented")
