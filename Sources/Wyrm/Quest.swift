@@ -11,15 +11,16 @@ struct QuestState: Codable {
     enum State: ValueRepresentable, Codable {
         case `nil`
         case number(Double)
-        case numbers([Double])
+        case labels([String])
 
         static func fromValue(_ value: Value) -> State? {
             switch value {
+            case .nil:
+                return .nil
             case let .number(n):
                 return .number(n)
             case let .list(list):
-                let ns = list.values.map { Double.fromValue($0) }
-                return ns.allSatisfy({ $0 != nil }) ? .numbers(ns.map { $0! }) : nil
+                return .labels(list.values.compactMap { String.fromValue($0) })
             default:
                 return nil
             }
@@ -29,7 +30,7 @@ struct QuestState: Codable {
             switch self {
             case .nil: return .nil
             case let .number(n): return .number(n)
-            case let .numbers(ns): return .list(ValueList(ns))
+            case let .labels(labels): return .list(ValueList(labels))
             }
         }
     }
@@ -179,20 +180,58 @@ struct QuestOffer: Offer {
 
 // Avatar methods related to managing quests.
 extension Avatar {
-    func advanceQuest(_ quest: Quest, to phaseLabel: String) -> Bool {
-        guard let phase = quest.phase(phaseLabel) else {
-            logger.warning("cannot advance quest \(quest.name) to unknown phase \(phaseLabel)")
+    // Returns true if the quest advances to the next phase.
+    func advanceQuest(_ quest: Quest, by progress: Value?) -> Bool {
+        guard var state = activeQuests[quest.ref] else {
+            logger.warning("cannot advance inactive quest \(quest.ref)")
             return false
         }
-        activeQuests.updateValue(QuestState(phase: phaseLabel, state: phase.initialState),
-                                 forKey: quest.ref)
+        guard case let .quest(quest) = World.instance.lookup(quest.ref) else {
+            logger.warning("cannot advance non-existent quest \(quest.ref)")
+            return false
+        }
+        guard let index = quest.phases.firstIndex(where: { $0.label == state.phase }) else {
+            logger.warning("cannot advance quest \(quest.ref) in undefined phase \(state.phase)")
+            return false
+        }
+        guard index + 1 < quest.phases.endIndex else {
+            logger.warning("cannot advance quest \(quest.ref) in last phase \(state.phase)")
+            return false
+        }
+
+        var advance = false
+        switch state.state {
+        case .nil:
+            advance = true
+        case var .number(n):
+            let p = progress?.to(Double.self) ?? 1.0
+            n = max(0.0, n - p)
+            state.state = .number(n)
+            advance = n == 0.0
+        case let .labels(labels):
+            if let p = progress?.to(String.self) {
+                let labels = labels.filter { $0 != p }
+                state.state = .labels(labels)
+                advance = labels.isEmpty
+            } else {
+                logger.warning("expected string when advancing quest \(quest.ref) in phase \(state.phase)")
+            }
+        }
+
+        if advance {
+            let phase = quest.phases[index + 1]
+            activeQuests.updateValue(QuestState(phase: phase.label, state: phase.initialState),
+                                     forKey: quest.ref)
+        } else {
+            activeQuests.updateValue(state, forKey: quest.ref)
+        }
 
         // FIXME:
         if container != nil {
             showMap()
         }
 
-        return true
+        return advance
     }
 
     func dropQuest(_ quest: Quest) {

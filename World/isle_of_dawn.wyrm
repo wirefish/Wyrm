@@ -261,7 +261,7 @@ deflocation human_shrine: isle_location {
             hand she holds a tiny seedling, its delicate leaves unfolding
             before your eyes.
         change_race(actor, lib.human)
-        advance_quest(actor, choose_a_race, 'done)
+        advance_quest(actor, choose_a_race)
     }
 
     when meditate(actor) {
@@ -337,7 +337,7 @@ deflocation elven_shrine: isle_location {
             tiny sparkling flecks which quickly disperse in the dying breeze.
             The clearing is calm once again.
         change_race(actor, lib.elf)
-        advance_quest(actor, choose_a_race, 'done)
+        advance_quest(actor, choose_a_race)
     }
 
     when meditate(actor) {
@@ -417,7 +417,7 @@ deflocation sidhe_shrine: isle_location {
             are uttered. Apparently satisfied, the figures disappear; the
             shadows retreat.
         change_race(actor, lib.sidhe)
-        advance_quest(actor, choose_a_race, 'done)
+        advance_quest(actor, choose_a_race)
     }
 
     when meditate(actor) {
@@ -474,7 +474,7 @@ deflocation dwarven_shrine: isle_location {
 
             Without warning the shaking stops and the light dissipates.
         change_race(actor, lib.dwarf)
-        advance_quest(actor, choose_a_race, 'done)
+        advance_quest(actor, choose_a_race)
     }
 
     when meditate(actor) {
@@ -547,7 +547,7 @@ deflocation goblin_shrine: isle_location {
             stature and greenish skin now match those of the caretaker.
         change_race(actor, lib.goblin)
         tell(self, actor) "Huzzah! Welcome to the family!"
-        advance_quest(actor, choose_a_race, 'done)
+        advance_quest(actor, choose_a_race)
     }
 
     when meditate(actor) {
@@ -593,7 +593,7 @@ deflocation ogre_shrine: isle_location {
 
             Rocks fly around. Muscles grow. Brain shrink.
         change_race(actor, lib.ogre)
-        advance_quest(actor, choose_a_race, 'done)
+        advance_quest(actor, choose_a_race)
     }
 
     when meditate(actor) {
@@ -724,7 +724,7 @@ def white_tulip: item {
 
     when take(actor, self, source) {
         spawn(white_tulip, source, 15)
-        advance_quest(actor, get_some_clothes, 'done)
+        advance_quest(actor, get_some_clothes)
     }
 }
 
@@ -868,7 +868,7 @@ deflocation male_shrine: isle_location {
             The statue's mouth begins to move and a deep voice intones several
             archaic words you don't understand.
         change_gender(actor, 'male)
-        advance_quest(actor, choose_a_gender, 'done)
+        advance_quest(actor, choose_a_gender)
     }
 }
 
@@ -897,7 +897,7 @@ deflocation female_shrine: isle_location {
             The statue slowly turns its head to face you and says several arcane
             words in a powerful, mellifluous voice.
         change_gender(actor, 'female)
-        advance_quest(actor, choose_a_gender, 'done)
+        advance_quest(actor, choose_a_gender)
     }
 }
 
@@ -1015,7 +1015,7 @@ def orb_of_naming: fixture {
             Sparks skitter across its smooth surface and you feel an
             uncomfortable tingle beneath your skin.
         if change_name(actor, message) {
-            advance_quest(actor, choose_a_name, 'done)
+            advance_quest(actor, choose_a_name)
         } else {
             show(actor) |
                 The sparks subside and the orb's glow dims; nothing seems to
@@ -1189,7 +1189,7 @@ def lashling: creature {
     }
 
     after kill(actor, self, weapon) {
-        advance_quest(actor, kill_some_plants, 'done)
+        advance_quest(actor, kill_some_plants)
     }
 }
 

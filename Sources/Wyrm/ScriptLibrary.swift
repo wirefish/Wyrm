@@ -196,9 +196,8 @@ struct ScriptLibrary {
     }
 
     static func advanceQuest(_ args: [Value]) throws -> Value {
-        let (avatar, quest, phase) = try unpack(args, Avatar.self, Quest.self, String.self)
-        _ = avatar.advanceQuest(quest, to: phase)
-        return .nil
+        let (avatar, quest, progress) = try unpack(args, Avatar.self, Quest.self, Value?.self)
+        return .boolean(avatar.advanceQuest(quest, by: progress))
     }
 
     static func completeQuest(_ args: [Value]) throws -> Value {
@@ -257,4 +256,23 @@ extension ScriptLibrary {
         }
         return (v1, v2, v3)
     }
+
+    static func unpack<T1: ValueRepresentable, T2: ValueRepresentable, T3: ValueRepresentable>
+    (_ args: [Value], _ t1: T1.Type, _ t2: T2.Type, _ t3: T3?.Type) throws -> (T1, T2, T3?) {
+        guard args.count >= 2 && args.count <= 3 else {
+            throw ScriptError.wrongNumberOfArguments(got: args.count, expected: 2)
+        }
+        guard let v1 = T1.fromValue(args[0]), let v2 = T2.fromValue(args[1]) else {
+            throw ScriptError.invalidArgument
+        }
+        var v3: T3?
+        if args.count == 3 {
+            v3 = T3.fromValue(args[2])
+            if v3 == nil {
+                throw ScriptError.invalidArgument
+            }
+        }
+        return (v1, v2, v3)
+    }
+
 }

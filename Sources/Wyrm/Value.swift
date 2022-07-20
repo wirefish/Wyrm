@@ -55,6 +55,10 @@ enum Value: Equatable {
         }
         return false
     }
+
+    func to<T: ValueRepresentable>(_ t: T.Type) -> T? {
+        return T.fromValue(self)
+    }
 }
 
 // MARK: - ValueList

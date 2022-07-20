@@ -67,7 +67,7 @@ deflocation west_dock: dock_location {
     exits = [rutted_path -> 'south to bayside_plaza_2]
 
     before enter_location(actor: .quest(isle_of_dawn.document_delivery, active), location, entry) {
-        advance_quest(actor, isle_of_dawn.document_delivery, 'done)
+        advance_quest(actor, isle_of_dawn.document_delivery)
     }
 }
 
@@ -249,7 +249,7 @@ def ticket_dispenser: fixture {
         show_tutorial(actor, 'give_items) |
             You can use the `give` command to give an item to a non-player
             character. To complete this quest, give the ticket to the attendant.
-        advance_quest(actor, ticket_please, 'done)
+        advance_quest(actor, ticket_please)
     }
 
     when use(actor, self, target) {
@@ -492,6 +492,7 @@ deflocation square_s: square {
     exits = [square_portal -> 'west to square_sw, square_portal -> 'east to square_se,
              square_portal -> 'north to square_c, dirt_road -> 'south to south_road_1]
 }
+
 def crone: lib.npc {
     brief = "an old crone"
     pose = "stands off to the side, watching people pass by."
@@ -500,7 +501,7 @@ def crone: lib.npc {
         beneath her hood. Her eyes are bright, and she watches any passersby
         with great interest.
 
-    after enter_location(actor, location, entry) {
+    after enter_location(actor: avatar, location, entry) {
         show(actor) "The crone stares at you for a moment, then looks away."
     }
 
