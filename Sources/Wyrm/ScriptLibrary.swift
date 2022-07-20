@@ -5,12 +5,6 @@
 
 import Network
 
-enum ScriptError: Error {
-    case invalidArgument
-    case wrongNumberOfArguments(got: Int, expected: Int)
-    case tooManyArguments
-}
-
 struct NativeFunction: Callable {
     let fn: ([Value]) throws -> Value
 
@@ -202,6 +196,11 @@ struct ScriptLibrary {
 }
 
 // MARK: - helper functions
+
+enum ScriptError: Error {
+    case invalidArgument
+    case tooManyArguments
+}
 
 extension ScriptLibrary {
 
