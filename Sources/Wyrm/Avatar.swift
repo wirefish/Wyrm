@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
+final class Race: ValueDictionary, CustomDebugStringConvertible {
     let ref: ValueRef
     var brief: NounPhrase?
     var description: String?
@@ -20,6 +20,14 @@ final class Race: ValueDictionaryObject, CustomDebugStringConvertible {
         "brief": accessor(\Race.brief),
         "description": accessor(\Race.description),
     ]
+
+    func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors)
+    }
+
+    func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors)
+    }
 
     func describeBriefly(_ format: Text.Format) -> String {
         // FIXME:
@@ -84,13 +92,12 @@ final class Avatar: PhysicalEntity {
         "location": accessor(\Avatar.location),
     ]
 
-    override subscript(member: String) -> Value? {
-        get { Self.accessors[member]?.get(self) ?? super[member] }
-        set {
-            if Self.accessors[member]?.set(self, newValue!) == nil {
-                super[member] = newValue
-            }
-        }
+    override func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors) ?? super.get(member)
+    }
+
+    override func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
     }
 
     override func describeBriefly(_ format: Text.Format) -> String {

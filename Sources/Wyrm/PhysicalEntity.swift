@@ -36,13 +36,12 @@ class PhysicalEntity: Entity, Viewable, Matchable {
         "location": accessor(\PhysicalEntity.location),
     ]
 
-    override subscript(member: String) -> Value? {
-        get { Self.accessors[member]?.get(self) ?? super[member] }
-        set {
-            if Self.accessors[member]?.set(self, newValue!) == nil {
-                super[member] = newValue
-            }
-        }
+    override func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors) ?? super.get(member)
+    }
+
+    override func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
     }
 
     var location: Location {

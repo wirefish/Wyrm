@@ -211,7 +211,7 @@ extension World {
                       let dict = lhs.asValueDictionary else {
                     throw ExecError.typeMismatch
                 }
-                guard let value = dict[name] else {
+                guard let value = dict.get(name) else {
                     throw ExecError.undefinedSymbol(name)
                 }
                 if case let .function(fn) = value {
@@ -225,14 +225,14 @@ extension World {
 
             case .storeMember:
                 let index = code.getUInt16(at: ip)
-                guard case let .symbol(s) = code.constants[Int(index)] else {
+                guard case let .symbol(name) = code.constants[Int(index)] else {
                     throw ExecError.typeMismatch
                 }
-                let rhs = stack.removeLast()
-                guard let obj = stack.removeLast().asValueDictionary else {
+                let value = stack.removeLast()
+                guard let dict = stack.removeLast().asValueDictionary else {
                     throw ExecError.typeMismatch
                 }
-                obj[s] = rhs
+                try dict.set(name, to: value)
                 ip += 2
 
             case .loadSubscript:

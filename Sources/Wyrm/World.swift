@@ -16,9 +16,12 @@ class Module: ValueDictionary {
         self.name = name
     }
 
-    subscript(member: String) -> Value? {
-        get { bindings[member] }
-        set { bindings[member] = newValue }
+    func get(_ member: String) -> Value? {
+        return bindings[member]
+    }
+
+    func set(_ member: String, to value: Value) {
+        bindings[member] = value
     }
 }
 
@@ -104,7 +107,7 @@ class World {
         self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
 
         for (name, fn) in ScriptLibrary.functions {
-            builtins[name] = .function(NativeFunction(name: name, fn: fn))
+            builtins.set(name, to: .function(NativeFunction(name: name, fn: fn)))
         }
 
         for (name, proto) in [("avatar", Avatar()),
@@ -118,7 +121,7 @@ class World {
                               ("portal", Portal()),
                               ("weapon", Weapon())] {
             proto.ref = .absolute(builtins.name, name)
-            builtins[name] = .entity(proto)
+            builtins.set(name, to: .entity(proto))
         }
 
         World.instance = self
@@ -150,9 +153,9 @@ class World {
     func lookup(_ ref: ValueRef, context: [ValueDictionary]) -> Value? {
         switch ref {
         case let .absolute(module, name):
-            return modules[module]?[name]
+            return modules[module]?.get(name)
         case let .relative(name):
-            if let value = context.firstMap({ $0[name] }) ?? builtins[name] {
+            if let value = context.firstMap({ $0.get(name) }) ?? builtins.get(name) {
                 return value
             } else if let module = modules[name] {
                 return .module(module)
@@ -165,9 +168,9 @@ class World {
     func lookup(_ ref: ValueRef, context: ValueDictionary? = nil) -> Value? {
         switch ref {
         case let .absolute(module, name):
-            return modules[module]?[name]
+            return modules[module]?.get(name)
         case let .relative(name):
-            return context?[name] ?? builtins[name]
+            return context?.get(name) ?? builtins.get(name)
         }
     }
 
@@ -293,7 +296,7 @@ extension World {
         // Initialize the members.
         for (name, initialValue) in members {
             do {
-                entity[name] = try evalInitializer(initialValue, in: module)
+                try entity.set(name, to: try evalInitializer(initialValue, in: module))
             } catch {
                 print("\(entity.ref!) \(name) \(error)")
             }
@@ -332,7 +335,7 @@ extension World {
         // Initialize the members.
         for (name, initialValue) in members {
             do {
-                quest[name] = try evalInitializer(initialValue, in: module)
+                try quest.set(name, to: try evalInitializer(initialValue, in: module))
             } catch {
                 print("\(quest.ref) \(name): \(error)")
             }
@@ -342,7 +345,7 @@ extension World {
             let phase = QuestPhase(phaseName)
             for (name, initialValue) in members {
                 do {
-                    phase[name] = try evalInitializer(initialValue, in: module)
+                    try phase.set(name, to: try evalInitializer(initialValue, in: module))
                 } catch {
                     print("\(quest.ref) \(phaseName) \(name): \(error)")
                 }
@@ -363,7 +366,7 @@ extension World {
         // Initialize the members.
         for (name, initialValue) in members {
             do {
-                race[name] = try evalInitializer(initialValue, in: module)
+                try race.set(name, to: try evalInitializer(initialValue, in: module))
             } catch {
                 print("\(race.ref) \(name): \(error)")
             }

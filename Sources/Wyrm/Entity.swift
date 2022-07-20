@@ -37,11 +37,12 @@ class Entity: ValueDictionary {
         return ref == self.ref || (prototype?.isa(ref) ?? false)
     }
 
-    // This will be overridden by subclasses which must always call their superclass
-    // method if they don't define the member themselves.
-    subscript(memberName: String) -> Value? {
-        get { return extraMembers[memberName] }
-        set { extraMembers[memberName] = newValue }
+    func get(_ member: String) -> Value? {
+        return extraMembers[member]
+    }
+
+    func set(_ member: String, to value: Value) throws {
+        extraMembers[member] = value
     }
 }
 

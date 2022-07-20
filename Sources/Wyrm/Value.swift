@@ -83,21 +83,24 @@ final class ValueList: CustomDebugStringConvertible {
 
 // MARK: - ValueDictionary
 
+protocol ValueDictionary: AnyObject {
+    func get(_ member: String) -> Value?
+    func set(_ member: String, to value: Value) throws
+}
+
+enum ValueError: Error {
+    case expected(String)
+    case unknownMember(String)
+}
+
 // A pair of functions used to get and set the value of a particular property
 // of an object that behaves as a value dictionary.
 struct Accessor {
     let get: (ValueDictionary) -> Value
-    let set: (ValueDictionary, Value) -> Void
-}
-
-protocol ValueDictionary: AnyObject {
-    subscript(member: String) -> Value? { get set }
+    let set: (ValueDictionary, Value) throws -> Void
 }
 
 extension ValueDictionary {
-    // Generic accessor functions to help classes implement the accessors property
-    // required by this protocol.
-
     static func accessor<T: ValueDictionary, V: ValueRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
         return Accessor(
@@ -105,67 +108,31 @@ extension ValueDictionary {
                 return ($0 as! T)[keyPath: keyPath].toValue()
             },
             set: {
-                if let value = V.fromValue($1) {
-                    ($0 as! T)[keyPath: keyPath] = value
-                }
-            })
-    }
-
-    static func accessor<T: ValueDictionary, V: ValueRepresentable>
-    (_ keyPath: ReferenceWritableKeyPath<T, V?>) -> Accessor {
-        return Accessor(
-            get: {
-                return ($0 as! T)[keyPath: keyPath]?.toValue() ?? .nil
-            },
-            set: {
                 guard let value = V.fromValue($1) else {
-                    print("cannot set property of type \(V?.self) from value \($1)")
-                    return
+                    throw ValueError.expected(String(describing: V.self))
                 }
                 ($0 as! T)[keyPath: keyPath] = value
             })
     }
 
-    static func accessor<T: ValueDictionary, V: ValueRepresentable>
-    (_ keyPath: ReferenceWritableKeyPath<T, [V]>) -> Accessor {
-        return Accessor(
-            get: { .list(ValueList(($0 as! T)[keyPath: keyPath])) },
-            set: { (object, value) in
-                guard case let .list(list) = value else {
-                    return
-                }
-                (object as! T)[keyPath: keyPath] = list.values.compactMap { V.fromValue($0) }
-            })
+    func getMember(_ member: String, _ accessors: [String:Accessor]) -> Value? {
+        return accessors[member]?.get(self)
     }
 
-    // FIXME: get rid of this
-    static func accessor<T: ValueDictionary, V: RawRepresentable>
-    (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor where V.RawValue == String {
-        return Accessor(
-            get: {
-                let s = ($0 as! T)[keyPath: keyPath].rawValue
-                return .symbol(s)
-            },
-            set: {
-                if case let .symbol(s) = $1 {
-                    if let v = V.init(rawValue: s) {
-                        ($0 as! T)[keyPath: keyPath] = v
-                    }
-                }
-            })
+    func setMember(_ member: String, to value: Value, _ accessors: [String:Accessor]) throws {
+        if let acc = accessors[member] {
+            try acc.set(self, value)
+        } else {
+            throw ValueError.unknownMember(member)
+        }
     }
-}
-
-protocol ValueDictionaryObject: ValueDictionary {
-    static var accessors: [String:Accessor] { get }
-}
-
-extension ValueDictionaryObject {
-    // A subscript operator to implement ValueDictionary. It uses the accessors
-    // registered by a class implementing Facet.
-    subscript(member: String) -> Value? {
-        get { type(of: self).accessors[member]?.get(self) }
-        set { type(of: self).accessors[member]?.set(self, newValue!) }
+    
+    func setMember(_ member: String, to value: Value, _ accessors: [String:Accessor], _ elseFn: () throws -> Void) throws {
+        if let acc = accessors[member] {
+            try acc.set(self, value)
+        } else {
+            try elseFn()
+        }
     }
 }
 
@@ -276,6 +243,25 @@ extension Array: ValueRepresentable where Element: ValueRepresentable {
 
     func toValue() -> Value {
         return .list(ValueList(self.map { $0.toValue() }))
+    }
+}
+
+extension Optional: ValueRepresentable where Wrapped: ValueRepresentable {
+    static func fromValue(_ value: Value) -> Self? {
+        if value == .nil {
+            return .some(.none)
+        } else if let wrapped = Wrapped.fromValue(value) {
+            return .some(wrapped)
+        } else {
+            return .none
+        }
+    }
+
+    func toValue() -> Value {
+        switch self {
+        case .none: return .nil
+        case let .some(wrapped): return wrapped.toValue()
+        }
     }
 }
 

@@ -44,15 +44,12 @@ class Portal: PhysicalEntity {
         "twin": accessor(\Portal.twin),
     ]
 
-    override subscript(member: String) -> Value? {
-        get { return Portal.accessors[member]?.get(self) ?? super[member] }
-        set {
-            if let acc = Portal.accessors[member] {
-                acc.set(self, newValue!)
-            } else {
-                super[member] = newValue
-            }
-        }
+    override func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors) ?? super.get(member)
+    }
+
+    override func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
     }
 
     override func match(_ tokens: ArraySlice<String>) -> MatchQuality {

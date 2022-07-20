@@ -39,7 +39,7 @@ struct QuestState: Codable {
     var state: State
 }
 
-final class QuestPhase: ValueDictionaryObject {
+final class QuestPhase: ValueDictionary {
     // The label that identifies the phase when defining the quest and when
     // calling advance_quest().
     let label: String
@@ -59,9 +59,17 @@ final class QuestPhase: ValueDictionaryObject {
         "summary": accessor(\QuestPhase.summary),
         "initial_state": accessor(\QuestPhase.initialState),
     ]
+
+    func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors)
+    }
+
+    func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors)
+    }
 }
 
-final class Quest: ValueDictionaryObject, CustomDebugStringConvertible, Matchable {
+final class Quest: ValueDictionary, CustomDebugStringConvertible, Matchable {
     let ref: ValueRef
     var name = ""
     var summary = ""
@@ -80,6 +88,14 @@ final class Quest: ValueDictionaryObject, CustomDebugStringConvertible, Matchabl
         "level": accessor(\Quest.level),
         "required_quests": accessor(\Quest.requiredQuests),
     ]
+
+    func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors)
+    }
+
+    func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors)
+    }
 
     var debugDescription: String { "<Quest \(ref)>" }
 

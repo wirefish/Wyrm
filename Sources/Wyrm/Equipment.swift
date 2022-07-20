@@ -107,15 +107,12 @@ class Equipment: Item {
         "capacity": accessor(\Equipment.capacity),
     ]
 
-    override subscript(member: String) -> Value? {
-        get { return Self.accessors[member]?.get(self) ?? super[member] }
-        set {
-            if let acc = Self.accessors[member] {
-                acc.set(self, newValue!)
-            } else {
-                super[member] = newValue
-            }
-        }
+    override func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors) ?? super.get(member)
+    }
+
+    override func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
     }
 
     var traitValue: Double {
@@ -159,15 +156,12 @@ class Weapon: Equipment {
         "critical_verb": accessor(\Weapon.criticalVerb),
     ]
 
-    override subscript(member: String) -> Value? {
-        get { return Self.accessors[member]?.get(self) ?? super[member] }
-        set {
-            if let acc = Self.accessors[member] {
-                acc.set(self, newValue!)
-            } else {
-                super[member] = newValue
-            }
-        }
+    override func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors) ?? super.get(member)
+    }
+
+    override func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
     }
 
     var attackValue: Double {
