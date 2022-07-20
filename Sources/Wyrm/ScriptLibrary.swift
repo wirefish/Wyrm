@@ -3,8 +3,6 @@
 //  Wyrm
 //
 
-import Network
-
 struct NativeFunction: Callable {
     let fn: ([Value]) throws -> Value
 
