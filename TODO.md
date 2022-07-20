@@ -1,8 +1,5 @@
 - improve error handling in parsing, eval, exec. not so many Error enum types.
 
-- values that can be represented by arbitrary symbols, unlike enums. can make a Symbol class
-  that just wraps a String for now.
-  
 - fix crash in release?
 
 - add generic verbs that are implied commands. parses rest of input and matches against contents of location. optional ignored prep. if matched entity defines the verb, triggers event, or if location defines verb, triggers event. things like meditate or talk that have no inherent mechanical effect (but unlike say equip) can use this and not require explicit commands.
@@ -11,7 +8,7 @@
 
 - better way to get reasonable default size for various entity subclasses
 
-- respawn after delay, wrap in event
+- make spawn() generate an event
 
 - events for take/put/etc?
 
@@ -23,11 +20,7 @@
 
 - icons.
 
-- handle receiving stacks of e.g. coins
-
 - vendors: buy and sell. add prices to items.
-
-- clean up script library.
 
 - update neighbors when entities move.
 
