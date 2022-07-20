@@ -33,6 +33,8 @@ enum Value: Equatable {
     var asValueDictionary: ValueDictionary? {
         switch self {
         case let .entity(e): return e
+        case let .quest(q): return q
+        case let .race(r): return r
         case let .module(m): return m
         default: return nil
         }
@@ -290,7 +292,7 @@ extension Entity: ValueRepresentable {
         case let .entity(entity):
             return entity as? Self
         case let .ref(ref):
-            return World.instance.lookup(ref, context: nil)?.asEntity(Self.self)
+            return World.instance.lookup(ref)?.asEntity(Self.self)
         default:
             return nil
         }
@@ -307,7 +309,7 @@ extension Quest: ValueRepresentable {
         case let .quest(quest):
             return quest
         case let .ref(ref):
-            guard case let .quest(quest) = World.instance.lookup(ref, context: nil) else {
+            guard case let .quest(quest) = World.instance.lookup(ref) else {
                 return nil
             }
             return quest
