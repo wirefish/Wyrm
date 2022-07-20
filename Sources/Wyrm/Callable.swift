@@ -13,15 +13,6 @@ protocol Callable {
     func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult
 }
 
-struct NativeFunction: Callable {
-    let name: String
-    let fn: ([Value]) throws -> Value
-
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {
-        return .value(try fn(args))
-    }
-}
-
 // A constraint on the argument value that can match a parameter when calling a
 // script function.
 enum Constraint: Equatable {

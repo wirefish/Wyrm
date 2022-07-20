@@ -107,7 +107,7 @@ class World {
         self.rootPath = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
 
         for (name, fn) in ScriptLibrary.functions {
-            builtins.set(name, to: .function(NativeFunction(name: name, fn: fn)))
+            builtins.set(name, to: .function(NativeFunction(fn: fn)))
         }
 
         for (name, proto) in [("avatar", Avatar()),
