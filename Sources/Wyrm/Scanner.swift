@@ -157,7 +157,7 @@ class Scanner {
     private func skipComment() {
         if match("*") {
             // Skip until the next "*/".
-            while advance() != "*" || peek() != "/" { }
+            while advance() != "*" || !match("/") { }
         } else if match("/") {
             // Skip until the end of this line.
             while !advance().isNewline { }
