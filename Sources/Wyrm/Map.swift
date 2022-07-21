@@ -23,6 +23,9 @@ class Map {
         var nextOpen = 0
         while nextOpen < cells.count {
             let cell = cells[nextOpen]; nextOpen += 1
+            if cell.location.domain != startLocation.domain {
+                continue
+            }
             for portal in cell.location.exits {
                 guard let destinationRef = portal.destination,
                       let destination = World.instance.lookup(
