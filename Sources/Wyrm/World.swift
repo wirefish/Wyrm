@@ -438,10 +438,7 @@ extension World {
     }
 
     private func twinPortals() {
-        for entity in locations {
-            guard let location = entity as? Location else {
-                continue
-            }
+        for location in locations {
             for portal in location.exits {
                 guard portal.twin == nil else {
                     continue
