@@ -131,7 +131,7 @@ final class Avatar: PhysicalEntity {
 
 extension Avatar: Codable {
     enum CodingKeys: CodingKey {
-        case location, level, race, gender, name, inventory, equipped
+        case location, level, xp, race, gender, name, inventory, equipped
         case activeQuests, completedQuests, skills, tutorialsOn, tutorialsSeen
     }
 
@@ -150,6 +150,7 @@ extension Avatar: Codable {
         }
 
         level = try c.decode(Int.self, forKey: .level)
+        xp = try c.decode(Int.self, forKey: .xp)
 
         if let raceRef = try c.decodeIfPresent(ValueRef.self, forKey: .race) {
             if case let .race(race) = World.instance.lookup(raceRef, context: nil) {
@@ -179,6 +180,7 @@ extension Avatar: Codable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(location.ref, forKey: .location)
         try c.encode(level, forKey: .level)
+        try c.encode(xp, forKey: .xp)
         try c.encode(race?.ref, forKey: .race)
         try c.encode(gender, forKey: .gender)
         try c.encode(name, forKey: .name)
