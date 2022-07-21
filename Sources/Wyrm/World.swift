@@ -7,6 +7,8 @@
 
 import CoreFoundation
 import Dispatch
+import Network
+import XCTest
 
 class Module: ValueDictionary {
     let name: String
@@ -78,6 +80,12 @@ enum ValueRef: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
     }
 }
 
+struct Extension {
+    let ref: ValueRef
+    var handlers = [EventHandler]()
+    var methods = [String:Value]()
+}
+
 enum WorldError: Error {
     case invalidModuleSpec(String)
     case cannotOpenDatabase
@@ -92,6 +100,7 @@ class World {
     var modules = [String:Module]()
     let builtins = Module("__BUILTINS__")
     var startableEntities = [Entity]()
+    var extensions = [Extension]()
     let db = Database()
     var avatarPrototype: Avatar!
     var startLocation: Location!
@@ -218,6 +227,8 @@ extension World {
             load(contentsOfFile: relativePath, into: module)
         }
 
+        applyExtensions()
+
         twinPortals()
 
         logger.info(String(format: "loaded world in %.3f seconds", CFAbsoluteTimeGetCurrent() - startTime))
@@ -273,6 +284,9 @@ extension World {
 
             case .race:
                 loadRace(def, into: module)
+
+            case .extension:
+                loadExtension(def, into: module)
 
             default:
                 fatalError("unexpected definition at top level")
@@ -375,12 +389,54 @@ extension World {
         module.bindings[name] = .race(race)
     }
 
+    private func loadExtension(_ node: ParseNode, into module: Module) {
+        guard case let .extension(ref, handlers, methods) = node else {
+            fatalError("invalid call to loadExtension")
+        }
+
+        var ext = Extension(ref: ref.toAbsolute(in: module))
+
+        // Compile the event handlers.
+        let compiler = Compiler()
+        for (phase, event, parameters, body) in handlers {
+            let parameters = [Parameter(name: "self", constraint: .none)] + parameters
+            if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
+                ext.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
+            }
+        }
+
+        // Compile the methods.
+        for (name, parameters, body) in methods {
+            let parameters = [Parameter(name: "self", constraint: .none)] + parameters
+            if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
+                ext.methods[name] = .function(fn)
+            }
+        }
+
+        extensions.append(ext)
+    }
+
     private func moduleName(for relativePath: String) -> String {
         if let sep = relativePath.lastIndex(of: "/") {
             return relativePath[..<sep].replacingOccurrences(of: "/", with: "_")
         } else {
             return String(relativePath.prefix(while: { $0 != "." }))
         }
+    }
+
+    private func applyExtensions() {
+        for ext in extensions {
+            guard case let .entity(entity) = lookup(ext.ref) else {
+                logger.warning("cannot apply extension to undefined entity \(ext.ref)")
+                continue
+            }
+            entity.handlers += ext.handlers
+            entity.extraMembers.merge(ext.methods) { (old, new) -> Value in
+                logger.warning("extension cannot replace existing method")
+                return old
+            }
+        }
+        extensions.removeAll()
     }
 
     private func twinPortals() {

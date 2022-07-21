@@ -49,6 +49,7 @@ indirect enum ParseNode {
                 handlers: [Handler], methods: [Method], startable: Bool)
     case quest(name: String, members: [Member], phases: [QuestPhase])
     case race(name: String, members: [Member])
+    case `extension`(ref: ValueRef, handlers: [Handler], methods: [Method])
 
     // True if this node can syntactically be on the left side of an assignment.
     var isAssignable: Bool {
@@ -162,6 +163,8 @@ class Parser {
             return parseQuest()
         case .defrace:
             return parseRace()
+        case .extend:
+            return parseExtension()
         default:
             error("invalid token \(currentToken) at top level")
             advance()
@@ -471,7 +474,44 @@ class Parser {
 
         return .race(name: name, members: members)
     }
-    
+
+    // MARK: - parsing extensions
+
+    private func parseExtension() -> ParseNode? {
+        assert(match(.extend))
+
+        guard let ref = parseValueRef() else {
+            error("expected reference after extend")
+            return nil
+        }
+
+        guard match(.lbrace) else {
+            error("expected { at start of extension body")
+            return nil
+        }
+
+        var handlers = [ParseNode.Handler]()
+        var methods = [ParseNode.Method]()
+        while !match(.rbrace) {
+            switch currentToken {
+            case .allow, .before, .when, .after:
+                if let handler = parseHandler() {
+                    handlers.append(handler)
+                }
+            case .func:
+                if let method = parseMethod() {
+                    methods.append(method)
+                }
+            default:
+                error("invalid token \(currentToken) within extension body")
+                advance()
+                break
+            }
+        }
+
+        return .extension(ref: ref, handlers: handlers, methods: methods)
+    }
+
     // MARK: - parsing statements
 
     private func parseStatement() -> ParseNode? {
