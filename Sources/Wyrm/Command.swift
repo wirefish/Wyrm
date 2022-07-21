@@ -341,4 +341,5 @@ let allCommands = [
     talkCommand,
     tutorialCommand,
     unequipCommand,
+    useCommand,
 ]

@@ -333,37 +333,28 @@ let lookCommand = Command("look at:target with|using|through:tool") { actor, ver
 // MARK: - talk command
 
 let talkCommand = Command("talk to:target about:topic") { actor, verb, clauses in
-    let candidates = actor.location.contents.filter {
-        $0.canRespondTo(phase: .when, event: "talk")
+    var candidates = actor.location.contents.filter {
+        $0.isVisible(to: actor) && $0.canRespondTo(phase: .when, event: "talk")
     }
 
-    var targets: [PhysicalEntity]
     if case let .tokens(targetPhrase) = clauses[0] {
-        guard let match = match(targetPhrase, against: candidates) else {
+        guard let matches = match(targetPhrase, against: candidates) else {
             actor.show("There's nobody like that here to talk to.")
             return
         }
-        targets = match.matches
-    } else {
-        guard candidates.count > 0 else {
-            actor.show("There's nobody here to talk to.")
-            return
-        }
-        targets = candidates
-    }
-
-    guard targets.count == 1 else {
-        let names = targets.map { $0.describeBriefly([.definite]) }
-        actor.show("Do you want to talk to \(names.conjunction(using: "or"))?")
+        candidates = matches.matches
+    } else if candidates.isEmpty {
+        actor.show("There's nobody here to talk to.")
         return
     }
 
-    let target = targets.first!
-    let topic = clauses[1].asString
-
-    triggerEvent("talk", in: actor.location, participants: [actor, target],
-                 args: [actor, target, topic]) {
+    if candidates.count > 1 {
+        actor.show("Do you want to talk to \(candidates.describe(using: "or"))?")
+        return
     }
+
+    triggerEvent("talk", in: actor.location, participants: [actor, candidates[0]],
+                 args: [actor, candidates[0], clauses[1].asString]) {}
 }
 
 // MARK: - tutorial command
@@ -437,4 +428,31 @@ let saveCommand = Command("save") {
     } else {
         actor.show("Error saving avatar.")
     }
+}
+
+// MARK: - use command
+
+let useCommand = Command("use target") { actor, verb, clauses in
+    var candidates = actor.location.contents.filter {
+        $0.isVisible(to: actor) && $0.canRespondTo(phase: .when, event: "use")
+    }
+
+    if case let .tokens(target) = clauses[0] {
+        guard let matches = match(target, against: candidates) else {
+            actor.show("You don't see anything like that here to use.")
+            return
+        }
+        candidates = matches.matches
+    } else if candidates.isEmpty {
+        actor.show("There's nothing here that you can use.")
+        return
+    }
+
+    if candidates.count > 1 {
+        actor.show("Do you want to use \(candidates.describe(using: "or"))?")
+        return
+    }
+
+    triggerEvent("use", in: actor.location, participants: [actor, candidates[0]],
+                 args: [actor, candidates[0]]) {}
 }
