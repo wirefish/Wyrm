@@ -97,7 +97,7 @@ def beggar: lib.npc {
         The beggar looks like he's been dragged through a mile of mud. He smells
         worse than he looks.
 
-    when talk(actor, self, subject) {
+    when talk(actor, self, topic) {
         show(actor) |
             The beggar looks up at you with milky white eyes and doesn't say a
             word. Despite his apparent blindness, he perfectly tracks your every
@@ -556,7 +556,7 @@ def sword_vendor: lib.npc {
             That being said, I've never had particular problems with the Hand
             before. So maybe this is something different.
 
-        // FIXME: advance_quest(actor, talking_shop, 'sword_vendor)
+        advance_quest(actor, talking_shop, 'sword_vendor)
     }
 
     when talk(actor, self, topic) {
@@ -632,7 +632,7 @@ def sienna: lib.npc {
         keeps a close eye on her patrons.
     sells = [rye_loaf, fish_soup]
 
-    when talk(actor, self, subject) {
+    when talk(actor, self, topic) {
         tell(self, actor) |
             Welcome to the Golden Gryphon! I sell food and drink. I'd say it's
             the best in town but my mam told me never to lie, so I won't. If
@@ -1144,4 +1144,683 @@ deflocation east_gate: location {
     surface = 'stone
     contents = [east_guard]
     exits = [dirt_road -> 'west to east_road_3, dirt_road -> 'east to mistmarsh.muddy_path_A12]
+}
+
+// muggers' alley
+
+def muggers_alley: location {
+    name = "Muggers' Alley"
+    description = |
+        This narrow, muddy lane cuts through the least savory section of Arwyck.
+    domain = 'outdoor
+    surface = 'dirt
+}
+
+deflocation muggers_alley_1: muggers_alley {
+    exits = [alley -> 'north to east_road_2, alley -> 'south to muggers_alley_2,
+             lib.entry_doorway -> 'east to potion_shop]
+}
+
+deflocation muggers_alley_2: muggers_alley {
+    exits = [alley -> 'north to muggers_alley_1, alley -> 'south to muggers_alley_3,
+             lib.entry_doorway -> 'west to dagger_shop]
+}
+
+deflocation muggers_alley_3: muggers_alley {
+    exits = [alley -> 'north to muggers_alley_2, alley -> 'south to wall_street_6,
+             lib.entry_doorway -> 'east to warehouse_anteroom,
+             lib.entry_doorway -> 'west to crow_bar]
+}
+
+// potion shop
+
+def potion_vendor: lib.npc {
+    brief = "Gemma"
+    pose = "cleans a clay jar with a greasy cloth."
+    description = |
+        The alchemist's daughter is a pudgy young woman who looks extremely
+        bored with her work.
+    sells = []  // FIXME:
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Hello there. What brings you in? Supplies have been rather hard to
+            come by lately, but I have a few potions to sell. Type `buy` to see
+            what's in stock.
+    }
+}
+
+deflocation potion_shop: location {
+    name = "Dilwar's Elixiry"
+    description = |
+        The north wall is lined with shelves, but they hold only a few lonely
+        jars and bottles.
+    domain = 'indoor
+    surface = 'wood
+    contents = [potion_vendor]
+    exits = [lib.exit_doorway -> 'west to muggers_alley_1,
+             lib.doorway -> 'east to alchemy_workshop]
+}
+
+def venom_extractor: item {
+    brief = "a venom extractor"
+    description = |
+        This contraption can be used to extract a vial of venom from fresh
+        corpses of certain creatures.
+    quest = get_some_venom
+
+    allow use(actor, self, target: mistmarsh.giant_centipede_corpse) {
+        return true
+    }
+
+    when use(actor, self, target: mistmarsh.giant_centipede_corpse) {
+        show(actor) |
+            You stick the needle of the venom extractor into the corpse and pull
+            the trigger. The device sucks a small amount of venom into an
+            internal chamber.
+        advance_quest(actor, get_some_venom, 1)
+    }
+}
+
+defquest get_some_venom {
+    name = "It's Centipedal"
+    summary = "Kill giant centipedes in the Mistmarsh and return their venom to Dilwar."
+    level = 2
+
+    phase active {
+        summary = "Obtain venom from the corpses of giant centipedes."
+        initial_state = 3
+    }
+
+    phase done {
+        summary = "Return the venom to Dilwar."
+    }
+}
+
+def alchemist: lib.npc {
+    brief = "Dilwar"
+    pose = "stares at the smoking remains of a shattered bowl, lost in thought."
+    description = |
+        The alchemist is a rotund, red-faced man with wisps of white hair that
+        float over his head like smoke.
+
+    offers_quests = [silverwood.moss_results, get_some_venom]
+    // FIXME: ends_quests = [@get_some_venom, @silverwood/analyze_this]
+
+    when talk(actor: .quest(get_some_venom, available), self, topic) {
+        tell(self, actor) "Can't you see I'm busy here?"
+        await sleep(1)
+        show(actor) "The alchemist scratches his chin."
+        tell(self, actor) |
+            On second thought, you might be of use...unless you're scared of
+            bugs. Big bugs. Very, very big bugs.
+    }
+
+    after accept_quest(actor, quest: get_some_venom, self) {
+        tell(self, actor) |
+            As you might have noticed, our inventory is rather depleted. I was
+            mixing up some new love potions, but I seem to have blown them up.
+            Faulty equipment, I'm sure.
+
+            Sadly, that was the last of my centipede venom. I'll pay you well if
+            you can bring me some. Here, take this, you'll need it.
+
+        receive_items(actor, [venom_extractor], self)
+
+        tell(self, actor) |
+            Use the device on three centipede corpses and you'll get plenty of
+            venom. You can find centipedes in the Mistmarch, east of town.
+    }
+
+    when talk(actor: .quest(get_some_venom, active), self, topic) {
+        tell(self, actor) "Please stop wasting my time. I need that venom."
+    }
+
+    when talk(actor: .quest(get_som_venom, done), self, topic) {
+        tell(self, actor) |
+            Yes, this will do quite nicely. A job well done. You've earned your
+            reward.
+        receive_items(actor, [20 of lib.silver_coin], self)
+    }
+}
+
+deflocation alchemy_workshop: location {
+    name = "Dilwar's Workshop"
+    description = |
+        This small room is packed with glassware, tubes, and esoteric materials
+        stored in haphazardly-arranged bins and jars.
+    domain = 'indoor
+    surface = 'wood
+    contents = [alchemist]
+    exits = [lib.doorway -> 'west to potion_shop]
+}
+
+// dagger shop
+
+def dagger_vendor: lib.npc {
+    brief = "Jimmy the Hare"
+    pose = "cleans his fingernails with a silver knife."
+    description = |
+        Jimmy is a greasy-haired young man whose eyes dart around nervously, as
+        if he expects someone to leap from the shadows at any moment.
+    sells = []  // FIXME: [lib.copper_dagger, lib.bronze_dagger]
+
+    when talk(actor: .quest(talking_shop, active), self, topic) {
+        tell(self, actor) |
+            Mirabel? It's a bleedin' shame, it is. Now, the Gray Hand is bad
+            enough, but they've got honor after a fashion. Pay their price, you
+            see, and they leave you alone. In a small town like this, the price
+            is not unbearable for a prosperous business. Or so I hear.
+
+            This job ain't the Hand's style. Someone else must be workin' town.
+            I pity them if the Hand gets its, uh, hands on them...
+
+        advance_quest(actor, talking_shop, 'dagger_vendor)
+    }
+
+    when talk(actor, self, topic) {
+        show(actor) "Jimmy looks around warily."
+
+        tell(self, actor) |
+            Hey stranger, keep yer distance. If ya be needin' a dagger, yer in
+            the right place. Pick one ya like an' leave yer silver on the table
+            on yer way out.
+    }
+}
+
+deflocation dagger_shop: location {
+    name = "Shivs n' Such"
+    description = "This shop sells all manner of knives and daggers."
+    domain = 'indoor
+    surface = 'wood
+    contents = [dagger_vendor]
+    exits = [lib.exit_doorway -> 'east to muggers_alley_2]
+}
+
+// crow bar
+
+def barkeep: lib.npc {
+    brief = "a barkeep"
+    pose = "stands behind the counter."
+    sells = []  // FIXME:
+}
+
+def scarecrow: lib.npc {
+    brief = "the scarecrow"
+    pose = "sits alone at a table."
+    description = |
+        The scarecrow is a gaunt young man with a nest of straw-colored hair.
+        His clothes are dirty and ill-fitting.
+
+    when use(actor: .quest(scare_the_scarecrow, scare), item: mistmarsh.giant_centipede_head, self) {
+        show(actor) "The scarecrow recoils in horror."
+        tell(self, actor) |
+            Gah! Get that thing away from me and I'll tell you anything!
+
+        await sleep(1)
+        show(actor) "You ask the scarecrow about Evend."
+        await sleep(1)
+
+        tell(self, actor) |
+            Evend? Yeah, he's back. He brought two goons with him. They're holed
+            up in a shack along the road that leads toward the forest, west of
+            here. He's changed...he was always a little dark, but now he
+            honestly scares me a little.
+
+        advance_quest(actor, scare_the_scarecrow)
+    }
+}
+
+deflocation crow_bar: location {
+    name = "The Crow Bar"
+    description = |
+        This shadowy, smoke-filled room contains a handful of mismatched tables
+        and chairs. A stained wooden counter runs along the west wall.
+    domain = 'indoor
+    surface = 'wood
+    contents = [barkeep, scarecrow]
+    exits = [lib.exit_doorway -> 'east to muggers_alley_3]
+
+    after enter_location(actor: .quest(scare_the_scarecrow, scare), location, entry) {
+        show_tutorial(actor, 'scare) |
+            To scare the scarecrow, just `use` a giant centipede head on him.
+    }
+}
+
+// warehouse
+
+def warehouse: location {
+    domain = 'indoor
+    surface = 'wood
+    subregion = "Warehouse"
+}
+
+deflocation warehouse_anteroom: warehouse {
+    name = "Anteroom"
+    description = |
+        This cramped room has stained walls and an uneven wooden floor. The
+        air is heavy with smoke.
+    exits = [lib.exit_doorway -> 'west to muggers_alley_3,
+             lib.doorway -> 'east to warehouse_storeroom,
+             lib.stairway -> 'up to warehouse_office]
+}
+
+def vagabond_trainer: lib.npc {
+    brief = "Shady Roger"
+    pose = "sits in a chair with his feet on the desk."
+    description = |
+        Roger is a scrawny man with three days' stubble. His gaze is constantly
+        scanning the room, as if he expects an enemy to appear at any moment. He
+        wears well-worn leather garments and a bandolier of knives across his
+        chest.
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            I see you found our secret lair. Well, not so secret, really; if it
+            were we'd have no recruits!
+
+            I am a representative of the Gray Hand. My brothers and sisters work
+            to achieve our goals through subtlety, misdirection, and the
+            occasional knife in the back. Brute force is for suckers! As for
+            magic, well...not everyone likes to spend their days reading musty
+            old scrolls. I'd rather be out in the streets, where the action is!
+
+            I can teach you some of the basic skills favored by my guild. Type
+            `guild info` for more information, or type `learn` to see what you
+            can learn from me.
+    }
+}
+
+deflocation warehouse_office: warehouse {
+    name = "Office"
+    description = |
+        A huge mahogany desk dominates this small room. Shelves along the walls
+        are packed with numerous scrolls, ledgers, and other documents.
+    contents = [vagabond_trainer]
+    exits = [lib.stairway -> 'down to warehouse_anteroom]
+}
+
+deflocation warehouse_storeroom: warehouse {
+    name = "Storeroom"
+    description = |
+        This large room has a high ceiling supported by heavy beams. All shapes
+        and sizes of crates, barrels, and boxes are stacked on the floor.
+    exits = [lib.doorway -> 'west to warehouse_anteroom,
+             lib.doorway -> 'east to warehouse_meeting_room]
+}
+
+/* TODO: remove trap, for testing. Also the trap should attack the target to
+    apply the aura, which allows for evasion.
+
+proto fire-aura (damage-aura)
+  (name "firestorm")
+  (icon 'fire)
+  (attack-verb "burns")
+  (damage-type :fire)
+  (total-damage 30)
+  (duration 15)
+  (tick-interval 3))
+
+proto fire-trap (entity)
+  (brief "a fire trap")
+  (hidden t))
+*/
+
+deflocation warehouse_meeting_room: warehouse {
+    name = "Meeting Room"
+    description = |
+        This cramped room contains a long table and numerous chairs and stools.
+    exits = [lib.doorway -> 'west to warehouse_storeroom]
+    // FIXME: contents = [fire_trap()]
+
+    after enter_location(actor: avatar, location, entry) {
+        // FIXME: apply_aura(self, actor, fire_aura())
+    }
+}
+
+// south road
+
+def south_road: location {
+    name = "South Road"
+    description = |
+        This dirt road connects the village square with the south gate.
+    domain = 'outdoor
+    surface = 'dirt
+}
+
+deflocation south_road_1: south_road {
+    exits = [dirt_road -> 'north to square_s, dirt_road -> 'south to south_road_2,
+             lib.entry_doorway -> 'east to looted_shop]
+}
+
+deflocation south_road_2: south_road {
+    exits = [dirt_road -> 'north to south_road_1, dirt_road -> 'south to wall_street_3,
+             lib.entry_doorway -> 'east to spear_shop]
+}
+
+// looted shop
+
+def distraught_shopkeep: lib.npc {
+    brief = "Mirabel"
+    pose = "sweeps broken glass from the floor."
+    description = |
+        Mirabel is a middle-aged woman with chestnut hair in a tight bun.
+    offers_quests = [talking_shop, at_the_gates, scare_the_scarecrow, the_key_is_the_key,
+                     the_end_of_evend]
+
+    when talk(actor: .quest(the_end_of_evend, complete), self, topic) {
+        tell(self, actor) |
+            Hello again, {actor}. I hope you're staying out of trouble. I'm
+            still picking up the pieces, but life goes on. Take care.
+    }
+}
+
+deflocation looted_shop: location {
+    name = "Looted Shop"
+    description = |
+        It's hard to tell what this shop sells, since its entire inventory
+        appears to have been stolen. The thieves also damaged the furniture and
+        broke those few items they did not take.
+    domain = 'indoor
+    surface = 'wood
+    contents = [distraught_shopkeep]
+    exits = [lib.exit_doorway -> 'west to south_road_1]
+}
+
+defquest talking_shop {
+    name = "Talking Shop"
+    summary = |
+        Talk to shopkeepers around Arwyck who may have information about the
+        recent spate of thefts.
+    level = 2
+
+    phase active {
+        summary = |
+            Talk to shopkeepers around Arwyck who may have information about the
+            recent spate of thefts.
+        initial_state = ['sword_vendor, 'dagger_vendor, 'spear_vendor]
+    }
+
+    phase done {
+        summary = |
+            Report your findings to Mirabel.
+    }
+}
+
+extend distraught_shopkeep {
+    when talk(actor: .quest(talking_shop, available), self, topic) {
+        tell(self, actor) |
+            I'm sorry, but we're closed. As you can see, everything's been
+            stolen. But you look like a capable sort; maybe you can help me out?
+        offer_quest(self, talking_shop, actor)
+    }
+
+    after accept_quest(actor, quest: talking_shop, self) {
+        tell(self, actor) |
+            You're a gods-send. As you may be aware, thieves have broken into a
+            number of local shops recently. In most cases they took a few
+            valuables and caused a little damage. In my case, however, they were
+            less kind...I've no idea why.
+
+            Please talk to some of the other shopkeepers. Maybe they have some
+            information that can help me figure out why this happened to me?
+    }
+
+    when talk(actor: .quest(talking_shop, active), self, topic) {
+        tell(self, actor) |
+            Have you talked to the other shopkeepers yet? They should
+            be marked on your map, if that helps.
+    }
+
+    when talk(actor: .quest(talking_shop, done), self, topic) {
+        tell(self, actor) |
+            Thank you for your help. If my peers are correct, these thefts are
+            the work of a new player in town. I can't help but think my wayward
+            son may be involved.
+
+            From the look on your face, I can see I owe you an explanation.
+
+            I moved here from Irridel with my son, Evend, when he was a young
+            boy. Irridel, as you may know, is a much larger town to the south.
+            Evend hated it here and never forgave me for the move. Our
+            relationship slowly soured until, one day, we had a huge argument.
+            He left that night, swearing he wanted nothing more to do with
+            Arwyck or with me.
+
+            He was always a bitter, vengeful boy. In that way he takes after his
+            late father. If Evend is back in town, I'd like to know about it. I
+            have some friends who might know something more.
+
+        complete_quest(actor, talking_shop)
+    }
+}
+
+defquest at_the_gates {
+    name = "At the Gates"
+    summary = |
+        Talk to the gate guards in Arwyck to see if Mirabel's son has been
+        seen entering the town.
+    level = 2
+    required_quests = [talking_shop]
+
+    phase active {
+        summary = |
+            Ask the gate guards in Arwyck if they've seen Mirabel's son.
+        initial_state = ['west_gate, 'east_gate, 'south_gate]
+    }
+
+    phase done {
+        summary = |
+            Report your findings to Mirabel.
+    }
+}
+
+extend distraught_shopkeep {
+    when talk(actor: .quest(at_the_gates, available), self, topic) {
+        tell(self, actor) |
+            You've already been a great help, but I think I know how we can
+            determine if my son has come back to town.
+        offer_quest(self, at_the_gates, actor)
+    }
+
+    after accept_quest(actor, quest: at_the_gates, self) {
+        tell(self, actor) |
+            There are only three ways into town, if we ignore the docks...my son
+            was always deathly afraid of the sea. It just so happens that I am
+            friends with the guards at all three gates.
+
+            Go talk to the guards. If my son has dragged himself back to Arwyck,
+            one of them will have seen him.
+    }
+
+    when talk(actor: .quest(at_the_gates, active), self, topic) {
+        tell(self, actor) |
+            All three guards are very observant. You'll find them at the city
+            gates to the west, south, and east.
+    }
+
+    when talk(actor: .quest(at_the_gates, done), self, topic) {
+        show(actor) "Mirabel considers for a moment."
+        tell(self, actor) |
+            So, he's back, and he brought friends. This can't be good.
+
+            No doubt you've heard of the Gray Hand. Evend always wanted to join
+            them, but was rebuffed. It's surely not a good sign when even
+            thieves doubt your character.
+
+            Arwyck is a tiny place. A small gang with some ambition can cause a
+            lot of trouble. I know he's my son, but we need to put an end to
+            this before it gets out of hand.
+        complete_quest(actor, at_the_gates)
+    }
+}
+
+defquest scare_the_scarecrow {
+    name = "Scare the Scarecrow"
+    summary = |
+        Find a giant centipede head in Mistmarsh and use it to scare the
+        Scarecrow into providing information about Mirabel's son.
+    level = 2
+    required_quests = [at_the_gates]
+
+    phase get_a_head {
+        summary = |
+            Hunt giant centipedes in Mistmarsh to obtain one of their heads.
+    }
+
+    phase scare {
+        summary = |
+            Find the scarecrow and use the giant centipede head to scare him.
+    }
+
+    phase done {
+        summary = |
+            Return to Mirabel and tell her what you've learned.
+    }
+}
+
+extend distraught_shopkeep {
+    when talk(actor: .quest(scare_the_scarecrow, available), self, topic) {
+        tell(self, actor) |
+            We need to find where Evend is hiding. If you're willing to get your
+            hands dirty, I think we can find him.
+        offer_quest(self, scare_the_scarecrow, actor)
+    }
+
+    after accept_quest(avatar, quest: scare_the_scarecrow, self) {
+        tell(self, actor) |
+            There's a character in town called the scarecrow. He and Evend were
+            friends. He's well connected among the less savory types in town.
+
+            Normally I wouldn't expect him to rat out a friend, but the
+            scarecrow has a weakness...centipedes. He had a bad experience as a
+            child, I guess.
+
+            Scare him with a giant centipede head and I'm sure he'll become
+            talkative. Look for the centipedes in the swamp to the east.
+    }
+
+    when talk(actor: .quest(scare_the_scarecrow, get_a_head), self, topic) {
+        tell(self, actor) "Any luck finding a giant centipede head?"
+    }
+
+    when talk(actor: .quest(scare_the_scarecrow, scare), self, topic) {
+        tell(self, actor) |
+            Any luck with the scarecrow? I wish I could see his face when you
+            toss that giant head in his lap!
+    }
+
+    when talk(actor: .quest(scare_the_scarecrow, done), self, topic) {
+        tell(self, actor) |
+            Well, now we know where he is. All that's left is to get in, and I
+            know just the man to help us.
+    }
+}
+
+defquest the_key_is_the_key {
+    name = "The Key is the Key"
+    summary = "Get the items Kijian requires, then obtain a key to Evend's hideout."
+    level = 2
+    required_quests = [scare_the_scarecrow]
+
+    phase talk_to_kijian {
+        summary = "Talk to Kijian the locksmith."
+    }
+
+    phase get_items {
+        summary = "Get the items Kijian requires."
+    }
+
+    phase return_to_kijian {
+        summary = "Return the items to Kijian."
+    }
+
+    phase done {
+        summary = "Take the key to Mirabel."
+    }
+}
+
+extend distraught_shopkeep {
+    when talk(actor: .quest(the_key_is_the_key, available), self, topic) {
+        tell(self, actor) |
+            I'm sure Evend keeps his hideout locked up tight, but it so happens
+            I'm friends with the only locksmith in town.
+        offer_quest(self, the_key_is_the_key, actor)
+    }
+
+    after accept_quest(actor, quest: the_key_is_the_key, self) {
+        tell(self, actor) |
+            Go pay a visit to Kijian, the locksmith. He made just about every
+            lock in this town, and I'm sure he can help us. Be warned, he's
+            likely going to require something in return. You'll find his shop
+            just inside the wall on the south end of town.
+    }
+
+    when talk(actor: .quest(the_key_is_the_key, talk_to_kijian), self, topic) {
+        tell(self, actor) "Was Kijian willing to help?"
+    }
+
+    when talk(actor: .quest(the_key_is_the_key, done), self, topic) {
+        tell(self, actor) |
+            That's the key, then? The end is near. We've only one thing left to
+            do, and it is by far the hardest.
+        complete_quest(actor, the_key_is_the_key)
+    }
+}
+
+defquest the_end_of_evend {
+    name = "The End of Evend"
+    summary = "Enter Evend's hideout and defeat his gang."
+    level = 2
+    required_quests = [the_key_is_the_key]
+
+    phase active {
+        summary = "Defeat Evend and his gang."
+        initial_state = ['evend, 'thug1, 'thug2]
+    }
+
+    phase done {
+        summary = "Report to Mirabel."
+    }
+}
+
+def mirabels_ring: lib.ring {
+    brief = "Mirabel's ring"
+    description = |
+        This ring is one that Mirabel received from her late husband. It is a
+        simple copper band etched with a delicate pattern of twisting vines.
+    level = 2
+    trait = 'vitality
+}
+
+extend distraught_shopkeep {
+    when talk(actor: .quest(the_end_of_evend, available), self, topic) {
+        tell(self, actor) |
+            It breaks my heart to say this, but my son must be taught
+            a lesson. And you look like a willing teacher.
+    }
+
+    after accept_quest(actor, quest: the_end_of_evend, self) {
+        tell(self, actor) |
+            I fear you know what must be done. Head west, find Evend's hideout,
+            and defeat him. Watch out for his friends, they'll surely fight by
+            his side. I wish you luck.
+    }
+
+    when talk(actor: .quest(the_end_of_evend, active), self, topic) {
+        tell(self, actor) "Tell me...is it done?"
+    }
+
+    when talk(actor: .quest(the_end_of_evend, done), self, topic) {
+        tell(self, actor) |
+            I'm glad that's over, and I hope you were able to beat some sense
+            into Evend. His father never disciplined him, and once Evend was
+            older I dared not, given his dark moods.
+
+            Speaking of my late, no-good husband, he once gave me this ring. I
+            want you to take it. It triggers too many sad memories for me, but
+            you may find it useful.
+        receive_items(actor, [mirabels_ring], self)
+        complete_quest(actor, the_end_of_evend)
+    }
 }
