@@ -108,49 +108,40 @@ extension World {
             case .equal, .notEqual:
                 let rhs = stack.removeLast()
                 let lhs = stack.removeLast()
+                var equal = false
+
                 switch lhs {
+                case .nil:
+                    equal = rhs == .nil
+
                 case let .boolean(a):
-                    guard case let .boolean(b) = rhs else {
-                        throw ExecError.typeMismatch
-                    }
-                    switch op {
-                    case .equal: stack.append(.boolean(a == b))
-                    case .notEqual: stack.append(.boolean(a != b))
-                    default: break
+                    if case let .boolean(b) = rhs {
+                        equal = a == b
                     }
 
                 case let .number(a):
-                    guard case let .number(b) = rhs else {
-                        throw ExecError.typeMismatch
-                    }
-                    switch op {
-                    case .equal: stack.append(.boolean(a == b))
-                    case .notEqual: stack.append(.boolean(a != b))
-                    default: break
+                    if case let .number(b) = rhs {
+                        equal = a == b
                     }
 
                 case let .symbol(a):
-                    guard case let .symbol(b) = rhs else {
-                        throw ExecError.typeMismatch
-                    }
-                    switch op {
-                    case .equal: stack.append(.boolean(a == b))
-                    case .notEqual: stack.append(.boolean(a != b))
-                    default: break
+                    if case let .symbol(b) = rhs {
+                        equal = a == b
                     }
 
                 case let .entity(a):
-                    guard case let .entity(b) = rhs else {
-                        throw ExecError.typeMismatch
-                    }
-                    switch op {
-                    case .equal: stack.append(.boolean(a == b))
-                    case .notEqual: stack.append(.boolean(a != b))
-                    default: break
+                    if case let .entity(b) = rhs {
+                        equal = a == b
                     }
 
                 default:
-                    throw ExecError.typeMismatch
+                    break
+                }
+                
+                switch op {
+                case .equal: stack.append(.boolean(equal))
+                case .notEqual: stack.append(.boolean(!equal))
+                default: break
                 }
 
             case .less, .lessEqual, .greater, .greaterEqual:
