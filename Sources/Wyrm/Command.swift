@@ -288,8 +288,8 @@ Help is available on the following topics. Type `help` followed by the topic of
 interest for more information.
 """
 
-func primaryCommandVerbs() -> [String] {
-    allCommands.map({ $0.grammar.verbs.first! }).sorted()
+func commandsWithHelp() -> [String] {
+    allCommands.compactMap({ $0.help != nil ? $0.grammar.verbs[0] : nil }).sorted()
 }
 
 let helpCommand = Command("help 1:topic 1:subtopic") { actor, verb, clauses in
@@ -316,8 +316,7 @@ let helpCommand = Command("help 1:topic 1:subtopic") { actor, verb, clauses in
             }
         }
     } else {
-        let verbs = primaryCommandVerbs()
-        actor.showLinks(helpIntro, "help", verbs)
+        actor.showLinks(helpIntro, "help", commandsWithHelp())
     }
 }
 
