@@ -483,6 +483,9 @@ extension World {
 
     func evalInitializer(_ node: ParseNode, in module: Module) throws -> Value {
         switch node {
+        case .nil:
+            return .nil
+
         case let .boolean(b):
             return .boolean(b)
 
@@ -554,7 +557,7 @@ extension World {
                 }
 
             default:
-                throw EvalError.typeMismatch("invalid operaands of \(op)")
+                throw EvalError.typeMismatch("invalid operands of \(op)")
             }
 
         case let .conjuction(lhs, rhs):
