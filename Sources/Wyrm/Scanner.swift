@@ -23,6 +23,7 @@ enum Token: Hashable {
     case await, `return`, `fallthrough`
     case leads, oneway, to, of
 
+    case `nil`
     case boolean(Bool)
     case number(Double)
     case symbol(String)
@@ -229,6 +230,7 @@ class Scanner {
     }
 
     private let keywords: [String:Token] = [
+        "nil": .nil,
         "true": .boolean(true),
         "false": .boolean(false),
         "def": .def,

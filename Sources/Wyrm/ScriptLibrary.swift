@@ -22,6 +22,7 @@ struct ScriptLibrary {
         ("change_name", wrap(changeName)),
         ("change_race", wrap(changeRace)),
         ("complete_quest", wrap(completeQuest)),
+        ("find_exit", wrap(findExit)),
         ("give_item", wrap(giveItem)),
         ("isa", wrap(isa)),
         ("len", wrap(len)),
@@ -147,6 +148,10 @@ struct ScriptLibrary {
 
     static func removeExit(direction: Direction, location: Location) -> Entity? {
         return location.removeExit(direction)
+    }
+
+    static func findExit(location: Location, direction: Direction) -> Portal? {
+        return location.findExit(direction)
     }
 
     static func oppositeDirection(direction: Direction) -> Direction {

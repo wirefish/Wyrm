@@ -12,6 +12,7 @@ indirect enum ParseNode {
     typealias QuestPhase = (String, [Member])
 
     // Literal values.
+    case `nil`
     case boolean(Bool)
     case number(Double)
     case string(Text)
@@ -651,7 +652,7 @@ class Parser {
 
     private func lookingAtExpr() -> Bool {
         switch currentToken {
-        case .boolean, .number, .string, .symbol, .identifier, .minus, .not, .star, .lparen, .lsquare:
+        case .nil, .boolean, .number, .string, .symbol, .identifier, .minus, .not, .star, .lparen, .lsquare:
             return true
         default:
             return false
@@ -661,6 +662,9 @@ class Parser {
     private func parseExpr(_ prec: Precedence = .or) -> ParseNode? {
         var node: ParseNode?
         switch currentToken {
+        case .nil:
+            node = .nil
+            advance()
         case let .boolean(b):
             node = .boolean(b)
             advance()

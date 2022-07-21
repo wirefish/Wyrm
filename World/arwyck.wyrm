@@ -1879,7 +1879,7 @@ def monkey: lib.npc {
             await sleep(15)
 
             var exit = find_exit(self.location, self.move_direction)
-            if exit {
+            if exit != nil {
                 travel(self, exit)
             } else {
                 show_near(self, "The monkey scratches itself and appears to sigh.")
@@ -2265,4 +2265,230 @@ deflocation shack: location {
     surface = 'wood
     contents = [evend, goon, ruffian]
     exits = [lib.exit_doorway -> 'north to forest_road_2]
+}
+
+// secluded grove
+
+def grove: location {
+    name = "Secluded Grove"
+    description = |
+        This beautiful grove of aspens and birches seems unnaturally quiet,
+        especially given the proximity of the village.
+    domain = 'outdoor
+    surface = 'forest
+}
+
+deflocation grove_sw: grove {
+    exits = [narrow_path -> 'south to forest_road_3, narrow_path -> 'north to grove_nw,
+             narrow_path -> 'east to grove_se]
+}
+
+def druid_trainer: lib.npc {
+    brief = "Raspin Redleaf"
+    pose = "tends to a nearby tree."
+    description = |
+        Raspin is a wiry, rugged-looking man who wears plain brown clothes well
+        suited to travel in the wilderness. His wide leather belt holds numerous
+        small pouches as well as a pair of long, curved daggers."
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Welcome, friend. I am Raspin, a representative of the Circle of the
+            Grove.
+
+            My guild teaches skills that draw upon the power of nature to heal,
+            sustain, and---when needed---destroy. Type `learn` to see what I can
+            teach you, or type `help skills` for more general information.
+    }
+}
+
+deflocation grove_nw: grove {
+    contents = [druid_trainer]
+    exits = [narrow_path -> 'south to grove_sw, narrow_path -> 'east to grove_ne]
+}
+
+deflocation grove_ne: grove {
+    exits = [narrow_path -> 'west to grove_nw, narrow_path -> 'south to grove_se,
+             narrow_path -> 'north to tidy_garden]
+}
+
+def staff_vendor: lib.npc {
+    brief = "Ilivirian"
+    pose = "polishes one of the many staves on display."
+    description = "Ilivirian is a very tall elf with long golden hair."
+    sells = []  // FIXME: [pine_staff, oak_staff]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Welcome, traveler. Are you in need of a staff, perchance? Type `buy`
+            to see what I have available.
+    }
+}
+
+deflocation grove_se: grove {
+    contents = [staff_vendor]
+    exits = [narrow_path -> 'north to grove_ne, narrow_path -> 'west to grove_sw]
+}
+
+// garden
+
+def botany_trainer: lib.npc {
+    brief = "Gariande"
+    pose = "is busily tying up bundles of herbs."
+    description = |
+        Gariande is an very old woman with deep wrinkles on her face. Her
+        steel-gray hair is tied in a bun.
+    teaches = []  // FIXME:
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Come for some sweet corn? Or perhaps a few tomatoes? Well, you're
+            out of luck: they're not for sale. But if you want to `learn` about
+            botany, then you've come to the right place. I represent the
+            Botanists' Guild in these parts. Type `guild info` to learn more.
+    }
+}
+
+def botany_vendor: lib.npc {
+    brief = "Bonnos"
+    pose = "is watering the plants."
+    description = |
+        Bonnos is a man of perhaps thirty years, with perhaps ten years' worth
+        of dirt under his fingernails.
+    sells = []  // FIXME: [lib:botany/copper_sickle]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Nice to meet you. Grandmother keeps me quite busy here, so I don't
+            meet many travelers. If you've come to learn about botany, you can
+            `buy` the tools you'll need from me.
+    }
+}
+
+deflocation tidy_garden: location {
+    name = "Tidy Garden"
+    description = |
+        This small plot is filled with rows of carefully-tended vegetables and
+        herbs.
+    domain = 'outdoor
+    surface = 'grass
+    contents = [botany_trainer, botany_vendor]
+    exits = [narrow_path -> 'south to grove_ne]
+}
+
+// forest gate
+
+defquest find_my_son {
+    name = "Find My Son"
+    summary = |
+        Find Miranda's son, who disappeared with his friend while picking
+        berries in Silverwood.
+    level = 2
+
+    phase active {
+        summary = "Find Miranda's soon in the Silverwood."
+    }
+
+    phase done {
+        summary = "Report to Miranda."
+    }
+}
+
+def miranda: lib.npc {
+    brief = "Miranda Mathers"
+    description = |
+        Miranda is a stout middle-aged woman. She wears practical clothing that
+        has seen numerous repairs over the years.
+    offers_quests = [find_my_son]
+
+    when talk(actor: .quest(find_my_son, available), self, topic) {
+        tell(self, actor) |
+            I know we've never met, but I have nobody else to turn to. My son is
+            missing. Will you help me?
+    }
+
+    after accept_quest(actor, quest: find_my_son, self) {
+        tell(self, actor) |
+            Oh, thank the gods! My son went into the woods west of here to pick
+            some berries with his friend. He has been there dozens of times
+            without any problems, but today he never returned. I'm so worried!
+
+            Please...find my boy. I don't know what I'd do if I lost him.
+    }
+
+    when talk(actor: .quest(find_my_son, active), self, topic) {
+        tell(self, actor) |
+            Have you found my boy? He should be in the forest to the west.
+    }
+
+    when talk(actor: .quest(find_my_son, done), self, topic) {
+        tell(self, actor) |
+            Thank the gods you found him! He may be a little rascal, but he's
+            *my* little rascal and I love him to death.
+        complete_quest(actor, find_my_son)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) "A pleasant day to you!"
+    }
+}
+
+def rhody: lib.npc {
+    brief = "Rhody Mathers"
+    pose = "fidgets nearby."
+    description = |
+        Rhody is a young boy, perhaps eight years old. Every now and then you
+        catch him glancing westward, toward the forest.
+
+    func visible(observer) {
+        var state = quest_phase(observer, find_my_son)
+        return state == 'done || state == 'complete
+    }
+
+    // FIXME: move this to the Rhody in the forest.
+    when talk(actor: .quest(find_my_son, active), self, topic) {
+        tell(self, actor) |
+            Hi! Do I know you? Oh, my mom sent you? I'm sorry she got so
+            worried. I guess I should head back. Nice to meet you!
+        show(avatar) |
+            Rhody wipes his face with his sleeve then heads north, back toward
+            Arwyck.
+        advance_quest(actor, find_my_son)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Hello again! Don't tell my mom, but as soon as her back is turned
+            I'm gonna sneak into the forest for more berries!
+    }
+}
+
+def forest_guard: lib.npc {
+    brief = "the gate guard"
+    pose = "keeps an eye on the road."
+
+    when talk(actor: .quest(at_the_gates, active), self, topic) {
+        tell(self, actor) "Mirabel's son?"
+        show(actor) "The guard spits into the dirt."
+        tell(self, actor) |
+            I know of him. Always a troublemaker. But I haven't seen him in
+            ages, thank the gods.
+        advance_quest(actor, at_the_gates, 'west_gate)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Be wary in the forest, traveler. Those spiders are no joke.
+    }
+}
+
+deflocation forest_gate: location {
+    name = "Forest Gate"
+    description = |
+        A stout wooden stockade separates Arwyck from the forest to the west. A
+        narrow gate allows access to the wilderness beyond.
+    domain = 'outdoor
+    surface = 'dirt
+    contents = [miranda, rhody, forest_guard]
+    exits = [dirt_road -> 'east to forest_road_3, dirt_road -> 'west to silverwood.road_Z14]
 }

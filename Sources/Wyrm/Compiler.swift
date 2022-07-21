@@ -254,6 +254,9 @@ class Compiler {
 
     func compile(_ node: ParseNode, _ block: inout ScriptFunction) {
         switch node {
+        case .nil:
+            block.emit(.pushNil)
+
         case let .boolean(b):
             block.emit(b ? .pushTrue : .pushFalse)
 
