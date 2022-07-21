@@ -99,7 +99,7 @@ class World {
     let rootPath: String
     var modules = [String:Module]()
     let builtins = Module("__BUILTINS__")
-    var startableEntities = [Entity]()
+    var locations = [Location]()
     var extensions = [Extension]()
     let db = Database()
     var avatarPrototype: Avatar!
@@ -200,14 +200,12 @@ class World {
 
 extension World {
     func start() {
-        for entity in startableEntities {
-            entity.handleEvent(.when, "start_world", args: [])
-
-            if let location = entity as? Location {
-                for entity in location.contents {
-                    entity.location = location
-                    entity.handleEvent(.when, "start_world", args: [])
-                }
+        logger.info("starting \(locations.count) locations")
+        for location in locations {
+            location.handleEvent(.when, "start_world", args: [])
+            for entity in location.contents {
+                entity.location = location
+                entity.handleEvent(.when, "start_world", args: [])
             }
         }
     }
@@ -295,7 +293,7 @@ extension World {
     }
 
     private func loadEntity(_ node: ParseNode, into module: Module) {
-        guard case let .entity(name, prototypeRef, members, handlers, methods, startable) = node else {
+        guard case let .entity(name, prototypeRef, members, handlers, methods, isLocation) = node else {
             fatalError("invalid call to loadEntity")
         }
 
@@ -334,8 +332,8 @@ extension World {
         }
 
         module.bindings[name] = .entity(entity)
-        if startable {
-            startableEntities.append(entity)
+        if isLocation {
+            locations.append(entity as! Location)
         }
     }
 
@@ -440,7 +438,7 @@ extension World {
     }
 
     private func twinPortals() {
-        for entity in startableEntities {
+        for entity in locations {
             guard let location = entity as? Location else {
                 continue
             }

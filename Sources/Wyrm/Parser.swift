@@ -47,7 +47,7 @@ indirect enum ParseNode {
 
     // Top-level definitions.
     case entity(name: String, prototype: ValueRef, members: [Member],
-                handlers: [Handler], methods: [Method], startable: Bool)
+                handlers: [Handler], methods: [Method], isLocation: Bool)
     case quest(name: String, members: [Member], phases: [QuestPhase])
     case race(name: String, members: [Member])
     case `extension`(ref: ValueRef, handlers: [Handler], methods: [Method])
@@ -221,9 +221,9 @@ class Parser {
             }
         }
 
-        let startable = def == .deflocation
         return .entity(name: name, prototype: prototype, members: members,
-                       handlers: handlers, methods: methods, startable: startable)
+                       handlers: handlers, methods: methods,
+                       isLocation: def == .deflocation)
     }
 
     private func parseMember() -> ParseNode.Member? {
