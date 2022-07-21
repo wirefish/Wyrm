@@ -35,13 +35,13 @@ class Portal: PhysicalEntity {
     }
 
     static let accessors = [
-        "direction": accessor(\Portal.direction),
-        "destination": accessor(\Portal.destination),
-        "is_closeable": accessor(\Portal.isCloseable),
-        "key": accessor(\Portal.key),
-        "state": accessor(\Portal.state),
-        "exit_message": accessor(\Portal.exitMessage),
-        "twin": accessor(\Portal.twin),
+        "direction": Accessor(\Portal.direction),
+        "destination": Accessor(\Portal.destination),
+        "is_closeable": Accessor(\Portal.isCloseable),
+        "key": Accessor(\Portal.key),
+        "state": Accessor(\Portal.state),
+        "exit_message": Accessor(\Portal.exitMessage),
+        "twin": Accessor(\Portal.twin),
     ]
 
     override func get(_ member: String) -> Value? {

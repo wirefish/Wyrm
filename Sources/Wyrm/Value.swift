@@ -93,6 +93,7 @@ protocol ValueDictionary: AnyObject {
 enum ValueError: Error {
     case expected(String)
     case unknownMember(String)
+    case readOnlyMember
 }
 
 // A pair of functions used to get and set the value of a particular property
@@ -100,23 +101,26 @@ enum ValueError: Error {
 struct Accessor {
     let get: (ValueDictionary) -> Value
     let set: (ValueDictionary, Value) throws -> Void
+
+    init<T: ValueDictionary, V: ValueRepresentable>
+    (_ keyPath: ReferenceWritableKeyPath<T, V>) {
+        get = { ($0 as! T)[keyPath: keyPath].toValue() }
+        set = {
+            guard let value = V.fromValue($1) else {
+                throw ValueError.expected(String(describing: V.self))
+            }
+            ($0 as! T)[keyPath: keyPath] = value
+        }
+    }
+
+    init<T: ValueDictionary, V: ValueRepresentable>
+    (readOnly keyPath: KeyPath<T, V>) {
+        get = { ($0 as! T)[keyPath: keyPath].toValue() }
+        set = { (_, _) in throw ValueError.readOnlyMember }
+    }
 }
 
 extension ValueDictionary {
-    static func accessor<T: ValueDictionary, V: ValueRepresentable>
-    (_ keyPath: ReferenceWritableKeyPath<T, V>) -> Accessor {
-        return Accessor(
-            get: {
-                return ($0 as! T)[keyPath: keyPath].toValue()
-            },
-            set: {
-                guard let value = V.fromValue($1) else {
-                    throw ValueError.expected(String(describing: V.self))
-                }
-                ($0 as! T)[keyPath: keyPath] = value
-            })
-    }
-
     func getMember(_ member: String, _ accessors: [String:Accessor]) -> Value? {
         return accessors[member]?.get(self)
     }

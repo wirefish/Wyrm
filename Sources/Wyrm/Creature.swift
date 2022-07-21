@@ -38,15 +38,15 @@ class Creature: PhysicalEntity, Combatant, Questgiver {
     }
 
     private static let accessors = [
-        "level": accessor(\Creature.level),
-        "min_health": accessor(\Creature.minHealth),
-        "attack_coeff": accessor(\Creature.attack_coeff),
-        "defense_coeff": accessor(\Creature.defense_coeff),
-        "health_coeff": accessor(\Creature.health_coeff),
-        "weapons": accessor(\Creature.weapons),
-        "offers_quests": accessor(\Creature.offersQuests),
-        "sells": accessor(\Creature.sells),
-        "teaches": accessor(\Creature.teaches),
+        "level": Accessor(\Creature.level),
+        "min_health": Accessor(\Creature.minHealth),
+        "attack_coeff": Accessor(\Creature.attack_coeff),
+        "defense_coeff": Accessor(\Creature.defense_coeff),
+        "health_coeff": Accessor(\Creature.health_coeff),
+        "weapons": Accessor(\Creature.weapons),
+        "offers_quests": Accessor(\Creature.offersQuests),
+        "sells": Accessor(\Creature.sells),
+        "teaches": Accessor(\Creature.teaches),
     ]
 
     override func get(_ member: String) -> Value? {

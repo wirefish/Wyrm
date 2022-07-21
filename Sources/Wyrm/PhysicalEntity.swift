@@ -26,14 +26,14 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     }
 
     private static let accessors = [
-        "brief": accessor(\PhysicalEntity.brief),
-        "pose": accessor(\PhysicalEntity.pose),
-        "description": accessor(\PhysicalEntity.description),
-        "icon": accessor(\PhysicalEntity.icon),
-        "is_obvious": accessor(\PhysicalEntity.isObvious),
-        "alts": accessor(\PhysicalEntity.alts),
-        "size": accessor(\PhysicalEntity.size),
-        "location": accessor(\PhysicalEntity.location),
+        "brief": Accessor(\PhysicalEntity.brief),
+        "pose": Accessor(\PhysicalEntity.pose),
+        "description": Accessor(\PhysicalEntity.description),
+        "icon": Accessor(\PhysicalEntity.icon),
+        "is_obvious": Accessor(\PhysicalEntity.isObvious),
+        "alts": Accessor(\PhysicalEntity.alts),
+        "size": Accessor(\PhysicalEntity.size),
+        "location": Accessor(\PhysicalEntity.location),
     ]
 
     override func get(_ member: String) -> Value? {

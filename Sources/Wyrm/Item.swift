@@ -36,12 +36,12 @@ class Item: PhysicalEntity, Codable {
     }
 
     private static let accessors = [
-        "stack_limit": accessor(\Item.stackLimit),
-        "count": accessor(\Item.count),
-        "level": accessor(\Item.level),
-        "use_verbs": accessor(\Item.useVerbs),
-        "quest": accessor(\Item.quest),
-        "price": accessor(\Item.price),
+        "stack_limit": Accessor(\Item.stackLimit),
+        "count": Accessor(\Item.count),
+        "level": Accessor(\Item.level),
+        "use_verbs": Accessor(\Item.useVerbs),
+        "quest": Accessor(\Item.quest),
+        "price": Accessor(\Item.price),
     ]
 
     override func get(_ member: String) -> Value? {

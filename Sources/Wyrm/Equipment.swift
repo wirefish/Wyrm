@@ -101,10 +101,10 @@ class Equipment: Item {
     }
 
     private static let accessors = [
-        "slot": accessor(\Equipment.slot),
-        "quality": accessor(\Equipment.quality),
-        "trait": accessor(\Equipment.trait),
-        "capacity": accessor(\Equipment.capacity),
+        "slot": Accessor(\Equipment.slot),
+        "quality": Accessor(\Equipment.quality),
+        "trait": Accessor(\Equipment.trait),
+        "capacity": Accessor(\Equipment.capacity),
     ]
 
     override func get(_ member: String) -> Value? {
@@ -149,11 +149,11 @@ class Weapon: Equipment {
     }
 
     private static let accessors = [
-        "damage_type": accessor(\Weapon.damageType),
-        "speed": accessor(\Weapon.speed),
-        "variance": accessor(\Weapon.variance),
-        "attack_verb": accessor(\Weapon.attackVerb),
-        "critical_verb": accessor(\Weapon.criticalVerb),
+        "damage_type": Accessor(\Weapon.damageType),
+        "speed": Accessor(\Weapon.speed),
+        "variance": Accessor(\Weapon.variance),
+        "attack_verb": Accessor(\Weapon.attackVerb),
+        "critical_verb": Accessor(\Weapon.criticalVerb),
     ]
 
     override func get(_ member: String) -> Value? {

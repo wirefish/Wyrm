@@ -17,8 +17,8 @@ final class Race: ValueDictionary, CustomDebugStringConvertible {
     }
 
     static let accessors = [
-        "brief": accessor(\Race.brief),
-        "description": accessor(\Race.description),
+        "brief": Accessor(\Race.brief),
+        "description": Accessor(\Race.description),
     ]
 
     func get(_ member: String) -> Value? {
@@ -45,8 +45,28 @@ enum Gender: Codable, ValueRepresentableEnum {
     })
 }
 
+// XP required to for from level - 1 to level.
+func xpRequiredForLevel(_ level: Int) -> Int {
+    1000 + (level - 1) * (level - 2) * 500
+}
+
+// Base XP awarded for killing a creature of a given level. This can be reduced
+// if the killer's level is higher.
+func xpAwardedForLevel(_ level: Int) -> Int {
+    10 + 10 * level
+}
+
+// Base XP awarded for completing a quest of a given level.
+func questXPForLevel(_ level: Int) -> Int {
+    100 + 100 * level
+}
+
 final class Avatar: PhysicalEntity {
     var level = 1
+
+    // Experience gained toward next level.
+    var xp = 0
+
     var race: Race?
     var gender: Gender?
     var name: String?
@@ -86,10 +106,12 @@ final class Avatar: PhysicalEntity {
     var handler: WebSocketHandler?
 
     private static let accessors = [
-        "race": accessor(\Avatar.race),
-        "gender": accessor(\Avatar.gender),
-        "name": accessor(\Avatar.name),
-        "location": accessor(\Avatar.location),
+        "level": Accessor(readOnly: \Avatar.level),
+        "xp": Accessor(readOnly: \Avatar.xp),
+        "race": Accessor(\Avatar.race),
+        "gender": Accessor(\Avatar.gender),
+        "name": Accessor(\Avatar.name),
+        "location": Accessor(readOnly: \Avatar.location),
     ]
 
     override func get(_ member: String) -> Value? {

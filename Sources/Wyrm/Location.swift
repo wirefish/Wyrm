@@ -29,14 +29,14 @@ class Location: Entity {
     }
 
     static let accessors = [
-        "name": accessor(\Location.name),
-        "description": accessor(\Location.description),
-        "contents": accessor(\Location.contents),
-        "exits": accessor(\Location.exits),
-        "tutorial": accessor(\Location.tutorial),
-        "domain": accessor(\Location.domain),
-        "surface": accessor(\Location.surface),
-        "subregion": accessor(\Location.subregion),
+        "name": Accessor(\Location.name),
+        "description": Accessor(\Location.description),
+        "contents": Accessor(\Location.contents),
+        "exits": Accessor(\Location.exits),
+        "tutorial": Accessor(\Location.tutorial),
+        "domain": Accessor(\Location.domain),
+        "surface": Accessor(\Location.surface),
+        "subregion": Accessor(\Location.subregion),
     ]
 
     override func get(_ member: String) -> Value? {
