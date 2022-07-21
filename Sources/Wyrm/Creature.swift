@@ -9,6 +9,7 @@ class Creature: PhysicalEntity, Combatant, Questgiver {
     // Attackable
     var level = 1
     var health = ClampedInt(1, maxValue: 1)
+    var minHealth = 0
     var attack_coeff = 1.0
     var defense_coeff = 1.0
     var health_coeff = 1.0
@@ -38,6 +39,7 @@ class Creature: PhysicalEntity, Combatant, Questgiver {
 
     private static let accessors = [
         "level": accessor(\Creature.level),
+        "min_health": accessor(\Creature.minHealth),
         "attack_coeff": accessor(\Creature.attack_coeff),
         "defense_coeff": accessor(\Creature.defense_coeff),
         "health_coeff": accessor(\Creature.health_coeff),

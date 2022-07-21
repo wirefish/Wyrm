@@ -28,7 +28,7 @@ def backpack: equipment {
 
 def ring: equipment {
     brief = "a ring"
-    slot = 'either_finger
+    slot = 'eitherFinger
 }
 
 // weapons

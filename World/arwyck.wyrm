@@ -1723,16 +1723,17 @@ defquest the_key_is_the_key {
     level = 2
     required_quests = [scare_the_scarecrow]
 
-    phase talk_to_kijian {
+    phase find_kijian {
         summary = "Talk to Kijian the locksmith."
     }
 
-    phase get_items {
-        summary = "Get the items Kijian requires."
+    phase gather_items {
+        summary = "Give Kijian a silky spiderweb and a kobold trinket."
+        initial_state = ['silky_spiderweb, 'kobold_trinket]
     }
 
-    phase return_to_kijian {
-        summary = "Return the items to Kijian."
+    phase key_ready {
+        summary = "Talk to Kijian to obtain the key."
     }
 
     phase done {
@@ -1776,7 +1777,7 @@ defquest the_end_of_evend {
 
     phase active {
         summary = "Defeat Evend and his gang."
-        initial_state = ['evend, 'thug1, 'thug2]
+        initial_state = ['evend, 'goon, 'ruffian]
     }
 
     phase done {
@@ -1823,4 +1824,445 @@ extend distraught_shopkeep {
         receive_items(actor, [mirabels_ring], self)
         complete_quest(actor, the_end_of_evend)
     }
+}
+
+// spear shop
+
+def spear_vendor: lib.npc {
+    brief = "Miglin"
+    pose = "lounges against the wall."
+    description = |
+        Miglin appears to be human, but his features are strangely reptilian.
+    sells = []  // FIXME: [copper_spear, bronze_spear]
+
+    when talk(actor: .quest(talking_shop, active), self, topic) {
+        tell(self, actor) |
+            Ah, poor Mirabel. She sold a variety of knickknacks, but nothing of
+            particular value. To be honest I can't figure why she'd be targeted
+            like this.
+
+            Times have been tough since her son, who had been helping with the
+            shop, left town. Rumor has it he headed off to a bigger city to seek
+            his fortune. Haven't seen him since.
+        advance_quest(actor, talking_shop, 'spear_vendor)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Miglin's my name. I make the best spears in town. True, they are the
+            only spears in town, but that doesn't disprove my claim. Type `buy`
+            to see what I have for sale.
+    }
+}
+
+deflocation spear_shop: location {
+    name = "Pointy Sticks, Ltd."
+    description = "A variety of spears are artfully arranged along the walls."
+    domain = 'indoor
+    surface = 'wood
+    contents = [spear_vendor]
+    exits = [lib.exit_doorway -> 'west to south_road_2]
+}
+
+// wall street
+
+def monkey: lib.npc {
+    brief = "a costumed monkey"
+    pose = "hops from foot to foot."
+    description = "The monkey wears a fitted red coat and a yellow cap."
+
+    move_direction = 'east
+
+    when start_world() {
+        while true {
+            show_near(self, "The monkey dances a lively jig.")
+            await sleep(15)
+
+            var exit = find_exit(self.location, self.move_direction)
+            if exit {
+                travel(self, exit)
+            } else {
+                show_near(self, "The monkey scratches itself and appears to sigh.")
+                self.move_direction = opposite_direction(self.move_direction)
+            }
+            await sleep(5)
+        }
+    }
+
+    after emote(actor: .quest(dance_monkey, active), message) {
+        if (contains_substring(message, "dance")) {
+            show_near(self) "The monkey claps wildly at {actor}'s dance moves!"
+            complete_quest(actor, dance_monkey)
+        }
+    }
+}
+
+def wall_street: location {
+    name = "Wall Street"
+    description = |
+        This narrow cobbled lane parallels the low wall that marks the southern
+        boundary of the village.
+    domain = 'outdoor
+    surface = 'stone
+}
+
+deflocation wall_street_1: wall_street {
+    contents = [monkey]
+    exits = [cobbled_road -> 'east to wall_street_2,
+             lib.entry_doorway -> 'north to lodge_workshop,
+             lib.entry_doorway -> 'west to front_desk]
+}
+
+deflocation wall_street_2: wall_street {
+    exits = [cobbled_road -> 'west to wall_street_1, cobbled_road -> 'east to wall_street_3]
+}
+
+def wall_street_sign: fixture {
+    brief = "a directional sign"
+    pose = "stands at the crossroads."
+    description = |
+        Wooden arrows affixed atop the signpost read as follows:
+
+        | North: Village Square
+        | West: Armor Emporium
+        | South: Perenvale
+        | East: Crafters' Hall
+}
+
+deflocation wall_street_3: wall_street {
+    contents = [wall_street_sign]
+    exits = [cobbled_road -> 'west to wall_street_2, cobbled_road -> 'east to wall_street_4,
+             cobbled_road -> 'south to south_gate, dirt_road -> 'north to south_road_2]
+}
+
+deflocation wall_street_4: wall_street {
+    exits = [cobbled_road -> 'west to wall_street_3, cobbled_road -> 'east to wall_street_5,
+             lib.entry_doorway -> 'south to locksmith_shop]
+}
+
+deflocation wall_street_5: wall_street {
+    exits = [cobbled_road -> 'west to wall_street_4, cobbled_road -> 'east to wall_street_6]
+}
+
+deflocation wall_street_6: wall_street {
+    exits = [cobbled_road -> 'west to wall_street_5, alley -> 'north to muggers_alley_3,
+             lib.entry_doorway -> 'east to crafters_hall_1nw]
+}
+
+// armor emporium
+
+def armor_emporium: location {
+    subregion = "Armor Emporium"
+    domain = 'indoor
+    surface = 'wood
+}
+
+def armor_greeter: lib.npc {
+    brief = "a heavily-armored man"
+    pose = "stands proudly behind a small desk."
+    description = |
+        The man wears a mish-mash of various types of armor, including three
+        different helms stacked atop one another.
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Well met! The vendors beyond can provide you with armor of all
+            types. Peruse their wares and be sure to buy something, you'll need
+            the protection once you venture outside the town.
+
+            Be aware that armor comes in three basic types: light, medium, and
+            heavy. Each type provides more protection than the last, but also
+            incurs more penalties in terms of your speed and ability to cast
+            magic spells. Choose wisely!
+    }
+}
+
+deflocation front_desk: armor_emporium {
+    name = "Front Desk"
+    description = |
+        A number of battered shields hang on the walls here, displaying the
+        coats-of-arms of prominent area families.
+    contents = [armor_greeter]
+    exits = [lib.exit_doorway -> 'east to wall_street_1,
+             lib.doorway -> 'north to medium_armor_shop,
+             lib.doorway -> 'west to light_armor_shop]
+}
+
+def leather_armor_vendor: lib.npc {
+    brief = "Lingum"
+    description = |
+        The armor vendor is a goblin, and rather small even for his kind. He
+        wears a conical leather hat that has been dyed bright green.
+    sells = []
+    // FIXME: [thin_leather_cap, thin_leather_tunic, thin_leather_gloves,
+    // thin_leather_leggings, thin_leather_boots]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Greetings, greetings! Welcome to my humble shop, where you can `buy`
+            leather armor in all shapes and sizes. Leather is the most versatile
+            of materials and affords much-needed protection to an adventurer
+            such as yourself.
+    }
+}
+
+deflocation light_armor_shop: armor_emporium {
+    name = "Lingum's Leathers"
+    description = |
+        This room smells of tanned animal skin. Leather garments are displayed
+        on numerous wicker manneqins.
+    contents = [leather_armor_vendor]
+    exits = [lib.doorway -> 'east to front_desk, lib.doorway -> 'north to heavy_armor_shop]
+
+    tutorial = |
+        Light armor, such as that sold here, provides decent protection and does
+        not slow you down or put your magic spells at risk of failure.
+}
+
+def medium_armor_vendor: lib.npc {
+    brief = "Chiana"
+    description = |
+        The vendor is a white-haired sidhe woman, slim almost to the point of
+        gauntness. She wears an exquisite knee-length shirt of gleaming
+        chainmail.
+    sells = []
+    // FIXME: [brass_chain_coif, brass_chain_shirt, brass_chain_gloves,
+    // brass_chain_leggings, brass_chain_boots]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Feel free to peruse my wares. If you choose to `buy` from me, you
+            can be assured of the finest quality.
+    }
+}
+
+deflocation medium_armor_shop: armor_emporium {
+    name = "Chiana's Chainmail"
+    contents = [medium_armor_vendor]
+    exits = [lib.doorway -> 'south to front_desk, lib.doorway -> 'west to heavy_armor_shop]
+
+    tutorial = |
+        Chiana sells medium armor. It provides more protection than light armor
+        but less than heavy armor. It slows your actions slightly and adds a
+        small chance that your magic spells will fail.
+}
+
+def heavy_armor_vendor: lib.npc {
+    brief = "Palla"
+    description = |
+        Palla is a dwarven woman. She wears a gaily-colored cotton dress and her
+        waist in girded with a belt of polished steel plates.
+    sells = []
+    // FIXME: [brass_plate_coif, brass_plate_shirt, brass_plate_gloves,
+    // brass_plate_leggings, brass_plate_boots]
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Plate armor provides the most protection, it's true! But it is far
+            too heavy to wear all day while tending my shop.
+    }
+}
+
+deflocation heavy_armor_shop: armor_emporium {
+    name = "Palla's Platemail"
+    contents = [heavy_armor_vendor]
+    exits = [lib.doorway -> 'south to light_armor_shop, lib.doorway -> 'east to medium_armor_shop]
+
+    tutorial = |
+        The heavy armor sold here provides the most protection, but also
+        slows you down considerably and substantially increases the chance your
+        magic spells will fail.
+}
+
+// FIXME: crafters' hall
+
+// south gate
+
+def south_guard: lib.npc {
+    brief = "the gate guard"
+    pose = "stands at attention, spear in hand."
+
+    when talk(actor: .quest(at_the_gates, active), self, topic) {
+        tell(self, actor) |
+            Ah, that boy was always a pain in my arse. I can't blame his mother.
+            She's a good woman and did her best. Have I seen him lately? No, he
+            hasn't passed through my gate, that's for certain.
+        advance_quest(actor, at_the_gates, 'south_gate)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            To the south you'll find Perenvale. It's a nice place to visit
+            as long as you avoid the centaurs that roam the plains.
+    }
+}
+
+deflocation south_gate: location {
+    name = "South Gate"
+    domain = 'outdoor
+    surface = 'stone
+    contents = [south_guard]
+    exits = [cobbled_road -> 'north to wall_street_3]
+}
+
+// locksmith shop
+
+def pewter_key: item {
+    brief = "a tiny pewter key"
+    description = |
+        Kijian the locksmith assures you this key will open the door to Evend's
+        hideout.
+    icon = 'silver_key
+    // FIXME: bound = true
+}
+
+def locksmith: lib.npc {
+    brief = "Kijian"
+
+    when talk(actor: .quest(the_key_is_the_key, find_kijian), self, topic) {
+        tell(self, actor) |
+            So Mirabel needs to unlock a door, eh? Well of course I'm happy to
+            help. I can make a key to open that lock, but while I work I'll need
+            you to do something for me.
+
+            To the west of town, in Silverwood, you can find giant spiders. I
+            need one of their silky spiderwebs for a side project. Don't ask.
+
+            Also, just north of the forest, there's an abandoned mine that's
+            infested with kobolds. I want to study one of their trinkets.
+
+            Bring me both of those items, and I'll give you the key.
+        advance_quest(actor, the_key_is_the_key)
+    }
+
+    when talk(actor: .quest(the_key_is_the_key, gather_items), self, topic) {
+        tell(self, actor) |
+            Did you get the spiderweb and kobold trinket? Hand 'em over and
+            you'll get your key.
+    }
+
+    when give_item(actor: .quest(the_key_is_the_key, gather_items), item: silverwood.silky_spiderweb, self) {
+        tell(self, actor) "Ho ho, that really *is* quite silky!"
+        advance_quest(actor, the_key_is_the_key, 'silky_spiderweb)
+    }
+
+    when give_item(actor: .quest(the_key_is_the_key, gather_items), item: copper_mine.kobold_trinket, self) {
+        tell(self, actor) |
+            Ho ho, that isn't quite what I imagined, but still very interesting!
+        advance_quest(actor, the_key_is_the_key, 'kobold_trinket)
+    }
+
+    when talk(actor: .quest(the_key_is_the_key, key_ready), self, topic) {
+        receive_items(actor, [pewter_key], self)
+        tell(self, actor) |
+            There's your key. Tell Mirabel I wish her all the best.
+        advance_quest(actor, the_key_is_the_key)
+    }
+
+    when talk(actor, self, topic) {
+        tell(self, actor) |
+            Hullo! Welcome to my shop. Sorry, but we're not quite
+            open for business yet. Please come again.
+    }
+}
+
+deflocation locksmith_shop: location {
+    name = "Kijian's Locks and Keys"
+    description = |
+        This shop is empty but for a battered workbench and a few crates stacked
+        in the corner.
+    domain = 'indoor
+    surface = 'wood
+    contents = [locksmith]
+    exits = [lib.exit_doorway -> 'north to wall_street_4]
+}
+
+// forest road
+
+def forest_road: location {
+    name = "Forest Road"
+    description = |
+        This narrow dirt road runs between the village and a small forest to
+        the west.
+    domain = 'outdoor
+    surface = 'dirt
+}
+
+deflocation forest_road_1: forest_road {
+    exits = [dirt_road -> 'east to square_sw, dirt_road -> 'west to forest_road_2]
+}
+
+def shack_door: portal {
+    key = pewter_key
+}
+
+deflocation forest_road_2: forest_road {
+    exits = [dirt_road -> 'east to forest_road_1, dirt_road -> 'west to forest_road_3,
+             shack_door -> 'south to shack]
+}
+
+deflocation forest_road_3: forest_road {
+    exits = [dirt_road -> 'east to forest_road_2, dirt_road -> 'west to forest_gate,
+             narrow_path -> 'north to grove_sw]
+}
+
+// shack
+
+def gang_member: creature {
+    level = 1
+    min_health = 10
+
+    // FIXME:
+    func visible(observer) {
+        return quest_phase(observer, the_end_of_evend) == 'active
+    }
+
+    after kill(actor, self, weapon) {
+        show_near(self) "{self:D} falls to his knees in submission."
+        if advance_quest(actor, the_end_of_evend, self.quest_key) {
+            tell(evend, actor) |
+                I don't know how, but you've beaten us all. I guess we're not
+                strong enough to run this town. For now.
+            show(actor) |
+                Evend motions to his henchmen, and all three of them stumble out
+                of the shack.
+        }
+
+        await sleep(60)
+        // FIXME:
+        self.health = self.max_health
+    }
+}
+
+def evend: gang_member {
+    brief = "Evend"
+    weapons = []  // FIXME: lib.sword
+    quest_key = 'evend
+
+    after enter_location(actor: .quest(the_end_of_evend, active), location, entry) {
+        tell(self, actor) |
+            Hey! How did you get in? You'd better turn around and
+            leave, or my friends here will make you sorry.
+    }
+}
+
+def goon: gang_member {
+    brief = "a barrel-chested goon"
+    weapons = []  // FIXME: lib.mace
+}
+
+def ruffian: gang_member {
+    brief = "a lanky ruffian"
+    weapons = []  // FIXME: lib.dagger
+}
+
+deflocation shack: location {
+    name = "Evend's Hideout"
+    description = |
+        Despite the ramshackle appearance of its exterior, the interior of this
+        shack is quite comfortable.
+    domain = 'indoor
+    surface = 'wood
+    contents = [evend, goon, ruffian]
+    exits = [lib.exit_doorway -> 'north to forest_road_2]
 }

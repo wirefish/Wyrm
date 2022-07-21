@@ -48,7 +48,12 @@ class ScriptFunction: Callable {
     }
 
     func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {
-        return try World.instance.exec(self, args: args, context: context + [module])
+        do {
+            return try World.instance.exec(self, args: args, context: context + [module])
+        } catch {
+            logger.warning("error in script function: \(error)")
+            throw error
+        }
     }
 }
 

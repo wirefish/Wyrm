@@ -30,3 +30,4 @@
 
 - give command
 
+- fix enums to use snake case as their value representation

@@ -19,7 +19,7 @@ class Portal: PhysicalEntity {
     var direction: Direction = .in
     var destination: ValueRef?
     var isCloseable = false
-    var lockableWith: Item?
+    var key: Item?
     var state = PortalState.open
     var exitMessage: String?
     weak var twin: Portal?
@@ -28,7 +28,7 @@ class Portal: PhysicalEntity {
         let other = other as! Portal
         size = other.size
         isCloseable = other.isCloseable
-        lockableWith = other.lockableWith
+        key = other.key
         state = other.state
         twin = other.twin
         super.copyProperties(from: other)
@@ -38,7 +38,7 @@ class Portal: PhysicalEntity {
         "direction": accessor(\Portal.direction),
         "destination": accessor(\Portal.destination),
         "is_closeable": accessor(\Portal.isCloseable),
-        "lockable_with": accessor(\Portal.lockableWith),
+        "key": accessor(\Portal.key),
         "state": accessor(\Portal.state),
         "exit_message": accessor(\Portal.exitMessage),
         "twin": accessor(\Portal.twin),

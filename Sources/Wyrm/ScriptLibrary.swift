@@ -28,6 +28,7 @@ struct ScriptLibrary {
         ("log_debug", logDebug),
         ("offer_quest", wrap(offerQuest)),
         ("opposite_direction", wrap(oppositeDirection)),
+        ("quest_phase", wrap(questPhase)),
         ("random", wrap(random)),
         ("random_element", wrap(randomElement)),
         ("receive_items", wrap(receiveItems)),
@@ -180,6 +181,16 @@ struct ScriptLibrary {
 
     static func completeQuest(avatar: Avatar, quest: Quest) {
         avatar.completeQuest(quest)
+    }
+
+    static func questPhase(avatar: Avatar, quest: Quest) -> Value {
+        if let state = avatar.activeQuests[quest.ref] {
+            return .symbol(state.phase)
+        } else if avatar.completedQuests[quest.ref] != nil {
+            return .symbol("complete")
+        } else {
+            return .nil
+        }
     }
 
     // Inventory-related functions.
