@@ -105,44 +105,15 @@ extension World {
                 default: break
                 }
 
-            case .equal, .notEqual:
+            case .equal:
                 let rhs = stack.removeLast()
                 let lhs = stack.removeLast()
-                var equal = false
+                stack.append(.boolean(lhs == rhs))
 
-                switch lhs {
-                case .nil:
-                    equal = rhs == .nil
-
-                case let .boolean(a):
-                    if case let .boolean(b) = rhs {
-                        equal = a == b
-                    }
-
-                case let .number(a):
-                    if case let .number(b) = rhs {
-                        equal = a == b
-                    }
-
-                case let .symbol(a):
-                    if case let .symbol(b) = rhs {
-                        equal = a == b
-                    }
-
-                case let .entity(a):
-                    if case let .entity(b) = rhs {
-                        equal = a == b
-                    }
-
-                default:
-                    break
-                }
-                
-                switch op {
-                case .equal: stack.append(.boolean(equal))
-                case .notEqual: stack.append(.boolean(!equal))
-                default: break
-                }
+            case .notEqual:
+                let rhs = stack.removeLast()
+                let lhs = stack.removeLast()
+                stack.append(.boolean(lhs != rhs))
 
             case .less, .lessEqual, .greater, .greaterEqual:
                 let rhs = stack.removeLast()
