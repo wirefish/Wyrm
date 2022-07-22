@@ -8,7 +8,7 @@
 
 - better way to get reasonable default size for various entity subclasses
 
-- make spawn() generate an event
+- make spawn() generate an event, at least enterLocation
 
 - events for take/put/etc?
 
@@ -31,3 +31,11 @@
 - gather command, gathering nodes
 
 - location inherit domain from region?
+
+- add hidden and implied flags to PhysicalEntity, replace isObvious with implied.
+
+- add bound flag to Item.
+
+- use an option set for all the flags? would need Accessor to work.
+
+- drop loot. One idea: take the list of avatars on the enemy list, keeping those that are alive and at the same location. Generate the list of items. Then randomly sort the list of avatars and assign an item to each person in the randomized list, repeating until all items are assigned. Maybe have a way of saying "everyone gets this item" for special drops.
