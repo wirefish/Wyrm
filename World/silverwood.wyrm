@@ -1,0 +1,108 @@
+// Silverwood is a low-level area adjacent to Arwyck.
+
+/* FIXME:
+defregion silverwood {
+    name = "Silverwood"
+    description = |
+        The Silverwood is a small forest nestled in the hills west of Arwyck. It
+        is known for the giant spiders that frequently accost unwary travelers.
+    climate = 'temperate
+}
+*/
+
+// portals
+
+def canyon_portal: lib.continuing_portal {
+    brief = "a canyon"
+}
+
+def forest_portal: lib.continuing_portal {
+    brief = "a forest"
+}
+
+def road_portal: lib.continuing_portal {
+    brief = "a road"
+}
+
+def stream_portal: lib.continuing_portal {
+    brief = "a stream"
+}
+
+def trail_portal: lib.continuing_portal {
+    brief = "a trail"
+}
+
+// spiders
+
+def silky_spiderweb: lib.resource {
+    brief = "a silky spiderweb"
+    description = "This spiderweb can be turned into thread by a skilled weaver."
+    alts = ["silky web"]
+    level = 1
+}
+
+def giant_spider: creature {
+    brief = "a giant forest spider"
+    pose = "hangs from a nearby branch."
+    description = |
+        This enormous webspinner has luminous eyes and long, hairy legs. Its
+        kind prefer to lurk in the forest canopy, awaiting the opportunity to
+        drop down upon unsuspecting prey.
+    entry_pose = "drops down from the branches above."
+    level = 1
+    weapons = [lib.bite]
+    // FIXME: loot = [[0.75, 1, 1, silky_spiderweb]]
+
+    before kill(actor, self, weapon) {
+        spawn(giant_spider, self.location, random(20, 60))
+    }
+}
+
+// resources
+
+def button_mushroom: lib.resource {
+    brief = "a button mushroom"
+    icon = 'mushroom
+    level = 1
+}
+
+def button_mushroom_cluster: fixture {  // FIXME: lib.botany_node
+    brief = "a cluster of button mushrooms"
+    pose = "grows under a nearby tree."
+    icon = 'mushroom
+    required_rank = 1
+    difficulty = 50
+    resource_yield = [[1.0, 1, 3, button_mushroom]]
+}
+
+// bridge
+
+def stream_from_above: fixture {
+    brief = "a gurgling stream"
+    description = |
+        The stream passes under the bridge, flowing to the south.
+    alts = ["down", "water"]
+    implied = true
+}
+
+deflocation bridge_W14: location {
+    name = "Stone Bridge"
+    description = |
+        You stand on an arched bridge of white stone that spans the gurgling
+        stream below.
+    domain = 'outdoor
+    surface = 'stone
+    contents = [stream_from_above]
+    exits = [road_portal -> 'west to road_V14, road_portal -> 'east to road_Y14]
+}
+
+deflocation under_the_bridge: location {
+    name = "Under the Bridge"
+    description = |
+        The stream passes beneath an arched bridge of white stone. Someone has
+        scratched a few words into the underside of the bridge; it is nearly
+        illegible, but you think it says "Anthony was here."
+    z_offset = -1
+    surface = 'water
+    exits = [stream_portal -> 'north to stream_W13, stream_portal -> 'south to stream_W15]
+}

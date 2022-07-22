@@ -107,3 +107,9 @@ def silver_coin: item {
 def food: item {
     stack_limit = 100
 }
+
+// Resources
+
+def resource: item {
+    stack_limit = 1000
+}
