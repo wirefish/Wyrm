@@ -18,6 +18,23 @@ for i in 2...50 {
 }
 */
 
+struct ItemFlags: OptionSet {
+    let rawValue: UInt8
+
+    static let hidden = ItemFlags(rawValue: 1 << 0)
+    static let implied = ItemFlags(rawValue: 1 << 1)
+}
+
+extension ItemFlags {
+    static let bound = ItemFlags(rawValue: 1 << 2)
+}
+
+print(MemoryLayout<ItemFlags>.size)
+print(MemoryLayout<ItemFlags>.stride)
+
+let f: ItemFlags = [.bound, .implied]
+print(f.rawValue)
+
 world.start()
 
 if let server = GameServer(config) {

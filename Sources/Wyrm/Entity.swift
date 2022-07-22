@@ -5,6 +5,7 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+@dynamicMemberLookup
 class Entity: ValueDictionary {
     static var idIterator = (1...).makeIterator()
 
@@ -31,6 +32,10 @@ class Entity: ValueDictionary {
         let entity = Self.init(withPrototype: prototype)
         entity.copyProperties(from: self)
         return entity
+    }
+
+    subscript(dynamicMember name: String) -> Value? {
+        extraMembers[name]
     }
 
     final func isa(_ ref: ValueRef) -> Bool {
