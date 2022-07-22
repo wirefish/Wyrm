@@ -57,7 +57,7 @@ final class QuestPhase: ValueDictionary {
 
     static let accessors = [
         "summary": Accessor(\QuestPhase.summary),
-        "initial_state": Accessor(\QuestPhase.initialState),
+        "initialState": Accessor(\QuestPhase.initialState),
     ]
 
     func get(_ member: String) -> Value? {
@@ -86,7 +86,7 @@ final class Quest: ValueDictionary, CustomDebugStringConvertible, Matchable {
         "name": Accessor(\Quest.name),
         "summary": Accessor(\Quest.summary),
         "level": Accessor(\Quest.level),
-        "required_quests": Accessor(\Quest.requiredQuests),
+        "requiredQuests": Accessor(\Quest.requiredQuests),
     ]
 
     func get(_ member: String) -> Value? {

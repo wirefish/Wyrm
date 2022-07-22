@@ -37,10 +37,10 @@ class Portal: PhysicalEntity {
     static let accessors = [
         "direction": Accessor(\Portal.direction),
         "destination": Accessor(\Portal.destination),
-        "is_closeable": Accessor(\Portal.isCloseable),
+        "isCloseable": Accessor(\Portal.isCloseable),
         "key": Accessor(\Portal.key),
         "state": Accessor(\Portal.state),
-        "exit_message": Accessor(\Portal.exitMessage),
+        "exitMessage": Accessor(\Portal.exitMessage),
         "twin": Accessor(\Portal.twin),
     ]
 

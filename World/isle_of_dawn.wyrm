@@ -10,12 +10,12 @@ defregion {
         evil that threatens Atalea.
 }
 
-def isle_location: location {
+def isleLocation: location {
     domain = 'outdoor
     surface = 'grass
 }
 
-def gravel_path: portal {
+def gravelPath: portal {
     brief = "a gravel path"
     description = |
         The path's surface of finely crushed white stone contrasts with the lush
@@ -24,16 +24,16 @@ def gravel_path: portal {
 
 // hilltop
 
-def standing_stones: fixture {
+def standingStones: fixture {
     brief = "ring of standing stones"
     description = |
         You count nine stones, each about 12 feet tall and four feet wide. The
         faint remains of ornate tracery are barely visible upon their weathered
         surfaces.
-    is_obvious = false
+    isObvious = false
 }
 
-deflocation hilltop: isle_location {
+deflocation hilltop: isleLocation {
     name = "Hilltop"
     description = |
         You are standing atop a low hill in the center of a small island. A ring
@@ -53,13 +53,13 @@ deflocation hilltop: isle_location {
 
         Head `south` to begin your adventure!
 
-    contents = [standing_stones!]
-    exits = [gravel_path -> 'south to pavilion]
+    contents = [standingStones!]
+    exits = [gravelPath -> 'south to pavilion]
 }
 
 // pavilion
 
-def spirit_warden: lib.npc {
+def spiritWarden: lib.npc {
     brief = "the spirit warden"
     pose = "stands nearby, smiling amiably."
     description = |
@@ -67,7 +67,7 @@ def spirit_warden: lib.npc {
         tall. His long white hair and wispy beard frame a wrinkled, grinning
         face. He wears dark blue robes with gold embroidered trim.
 
-    after enter_location(actor: .quest(choose_a_race, available), location, entry) {
+    after enterLocation(actor: .quest(chooseARace, available), location, entry) {
         await sleep(1)
         if actor.location == location {
             show(actor, "The spirit warden beckons in your direction.")
@@ -91,7 +91,7 @@ def spirit_warden: lib.npc {
     }
 }
 
-deflocation pavilion: isle_location {
+deflocation pavilion: isleLocation {
     name = "Pavilion"
     description = |
         An open-air pavilion stands a few feet from the path. Its silk canopy is
@@ -103,13 +103,13 @@ deflocation pavilion: isle_location {
         their behalf. For example, type `talk warden` to talk to the spirit
         warden. He may have something interesting to say.
 
-    contents = [spirit_warden!]
-    exits = [gravel_path -> 'north to hilltop, gravel_path -> 'south to wildflower_field]
+    contents = [spiritWarden!]
+    exits = [gravelPath -> 'north to hilltop, gravelPath -> 'south to wildflowerField]
 }
 
-// wildflower_field
+// wildflowerField
 
-defquest choose_a_race {
+defquest chooseARace {
     name = "Let's Get Physical"
     summary = |
         Choose your physical form by meditating at one of the racial shrines on
@@ -124,30 +124,30 @@ defquest choose_a_race {
     }
 }
 
-def officious_kobold: lib.npc {
+def officiousKobold: lib.npc {
     brief =  "an officious kobold"
     pose = "sits at a low table in the shade of a large umbrella."
     description = |
         The kobold is a tiny humanoid with reptilian features, sparse wiry hair,
         and knobbly gray skin. It is, however, impeccably groomed.
-    offers_quests = [choose_a_race]
+    offersQuests = [chooseARace]
 
-    when talk(actor: .quest(choose_a_race, available), self, topic) {
+    when talk(actor: .quest(chooseARace, available), self, topic) {
         tell(self, actor) |
             Hello, friend! As you may have noticed, your current body is just a
             ghostly manifestation of your spirit. To fix that you'll need to
             select a race and take on a physical form. It just so happens I can
             help you do exactly that!
 
-        offer_quest(self, choose_a_race, actor)
+        offerQuest(self, chooseARace, actor)
 
-        show_tutorial(actor, 'offer_quest) |
+        showTutorial(actor, 'offerQuest) |
             The kobold is offering you a quest! Quests are tasks set for you by
             the denizens of the world. Completing them can provide you with many
             kinds of rewards. Type `help quests` for more information.
     }
 
-    after accept_quest(actor, quest: choose_a_race, self) {
+    after acceptQuest(actor, quest: chooseARace, self) {
         tell(self, actor) |
             Excellent! To the west you will find several shrines, each dedicated
             to a different race. Talk to the caretaker at each shrine to learn
@@ -159,19 +159,19 @@ def officious_kobold: lib.npc {
 
             Return to me once you have completed this task.
 
-        show_tutorial(actor, 'accept_quest) |
+        showTutorial(actor, 'acceptQuest) |
             You can use the `quest` command to see the quests you've accepted
             and track your progress toward their completion.
     }
 
-    when talk(actor: .quest(choose_a_race, active), self, topic) {
+    when talk(actor: .quest(chooseARace, active), self, topic) {
         tell(self, actor) |
             Have you selected a race yet? The caretakers to the west will be
             more than happy to describe their races and help you make the right
             decision.
     }
 
-    when talk(actor: .quest(choose_a_race, done), self, topic) {
+    when talk(actor: .quest(chooseARace, done), self, topic) {
         tell(self, actor) |
             A fine choice! I had no doubt you would choose to become
             {actor.race:i}. I am something of an expert in these matters, after
@@ -182,7 +182,7 @@ def officious_kobold: lib.npc {
             friend Dhalia, the seamstress; talk to her and she will make sure
             you go forth in style.
 
-        complete_quest(actor, choose_a_race)
+        completeQuest(actor, chooseARace)
     }
 
     when talk(actor, self, topic) {
@@ -194,7 +194,7 @@ def officious_kobold: lib.npc {
     }
 }
 
-deflocation wildflower_field: isle_location {
+deflocation wildflowerField: isleLocation {
     name = "Field of Wildflowers"
     description = |
         Flowers of every color and description bloom in the expansive fields
@@ -211,14 +211,14 @@ deflocation wildflower_field: isle_location {
 
         The kobold has a quest for you. Try typing `talk kobold`.
 
-    contents = [officious_kobold!]
-    exits = [gravel_path -> 'north to pavilion, gravel_path -> 'south to clothing_stall,
-             gravel_path -> 'west to human_shrine]
+    contents = [officiousKobold!]
+    exits = [gravelPath -> 'north to pavilion, gravelPath -> 'south to clothingStall,
+             gravelPath -> 'west to humanShrine]
 }
 
-// human_shrine
+// humanShrine
 
-def human_caretaker: lib.npc {
+def humanCaretaker: lib.npc {
     brief = "the human caretaker"
     pose = "stands nearby with a welcoming expression."
     description = |
@@ -226,7 +226,7 @@ def human_caretaker: lib.npc {
         outfit and a broad-brimmed hat. Various gardening tools hang from her
         wide leather belt.
 
-    when talk(actor: .quest(choose_a_race, active), self, topic) {
+    when talk(actor: .quest(chooseARace, active), self, topic) {
         tell(self, actor) |
             Hello, traveler. I imagine you are curious about humans. Here is
             what I can tell you.
@@ -246,17 +246,17 @@ def human_caretaker: lib.npc {
     }
 }
 
-deflocation human_shrine: isle_location {
+deflocation humanShrine: isleLocation {
     name = "Shrine of Humanity"
     description = |
         This part of the isle is a large garden. Plants bearing flowers, fruits,
         and vegetables are arranged in orderly rows. The soil is dark and
         fertile.
-    contents = [human_caretaker!]
-    exits = [gravel_path -> 'east to wildflower_field, gravel_path -> 'north to elven_shrine,
-             gravel_path -> 'west to ogre_shrine]
+    contents = [humanCaretaker!]
+    exits = [gravelPath -> 'east to wildflowerField, gravelPath -> 'north to elvenShrine,
+             gravelPath -> 'west to ogreShrine]
 
-    when meditate(actor: .quest(choose_a_race, active)) {
+    when meditate(actor: .quest(chooseARace, active)) {
         show(actor) |
             A calming warmth suffuses your being. The caretaker smiles
             broadly as she reaches out to you with her open hand, holding it
@@ -267,8 +267,8 @@ deflocation human_shrine: isle_location {
             her fingers which quickly grows brighter. When she opens her
             hand she holds a tiny seedling, its delicate leaves unfolding
             before your eyes.
-        change_race(actor, lib.human)
-        advance_quest(actor, choose_a_race)
+        changeRace(actor, lib.human)
+        advanceQuest(actor, chooseARace)
     }
 
     when meditate(actor) {
@@ -276,9 +276,9 @@ deflocation human_shrine: isle_location {
     }
 }
 
-// elven_shrine
+// elvenShrine
 
-def wooden_sculpture: fixture {
+def woodenSculpture: fixture {
     brief = "a wooden sculpture"
     pose = "stands in the middle of the ring of trees."
     description = |
@@ -289,7 +289,7 @@ def wooden_sculpture: fixture {
         glass. The bowl contains clear, cold water.
 }
 
-def elven_caretaker: lib.npc {
+def elvenCaretaker: lib.npc {
     brief = "the elven caretaker"
     pose = "kneels beside one of the trees, her eyes closed."
     description = |
@@ -297,7 +297,7 @@ def elven_caretaker: lib.npc {
         and long, silver hair arranged in complex braids. She wears a pale green
         dress with embroidered trim.
 
-    when talk(actor: .quest(choose_a_race, active), self, topic) {
+    when talk(actor: .quest(chooseARace, active), self, topic) {
         tell(self, actor) |
             Greetings, stranger. Be welcome in this place. No doubt you have
             come here to learn something about my people. I will tell you what I
@@ -321,17 +321,17 @@ def elven_caretaker: lib.npc {
     }
 }
 
-deflocation elven_shrine: isle_location {
+deflocation elvenShrine: isleLocation {
     name = "Shrine of the Forest"
     description = |
         A low wooden fence surrounds a perfect ring of thirteen graceful birch
         trees. The area radiates an aura of tranquility.
     surface = "forest"
-    contents = [wooden_sculpture!, elven_caretaker!]
-    exits = [gravel_path -> 'south to human_shrine, gravel_path -> 'north to sidhe_shrine,
-             gravel_path -> 'west to goblin_shrine]
+    contents = [woodenSculpture!, elvenCaretaker!]
+    exits = [gravelPath -> 'south to humanShrine, gravelPath -> 'north to sidheShrine,
+             gravelPath -> 'west to goblinShrine]
 
-    when meditate(actor: .quest(choose_a_race, active)) {
+    when meditate(actor: .quest(chooseARace, active)) {
         show(actor) |
             The caretaker approaches the nearby sculpture and raises her hands
             to the sky. Motes of light rise from the bowl atop the sculpture;
@@ -343,8 +343,8 @@ deflocation elven_shrine: isle_location {
             After a few moments the wind dies down and the motes dissolve into
             tiny sparkling flecks which quickly disperse in the dying breeze.
             The clearing is calm once again.
-        change_race(actor, lib.elf)
-        advance_quest(actor, choose_a_race)
+        changeRace(actor, lib.elf)
+        advanceQuest(actor, chooseARace)
     }
 
     when meditate(actor) {
@@ -352,9 +352,9 @@ deflocation elven_shrine: isle_location {
     }
 }
 
-// sidhe_shrine
+// sidheShrine
 
-def sidhe_caretaker: lib.npc {
+def sidheCaretaker: lib.npc {
     brief = "the sidhe caretaker"
     pose = "stands nearby, lost in thought."
     description = |
@@ -362,7 +362,7 @@ def sidhe_caretaker: lib.npc {
         white hair is pulled back into a ponytail that nearly reaches the
         ground. He wears dark robes of a rather elaborate and archaic style.
 
-    when talk(actor: .quest(choose_a_race, active), self, topic) {
+    when talk(actor: .quest(chooseARace, active), self, topic) {
         tell(self, actor) |
             Well, well. Another hero, reborn. I suppose I should tell you
             something of my race, although I find it unlikely you were fortunate
@@ -383,23 +383,23 @@ def sidhe_caretaker: lib.npc {
     }
 }
 
-def alien_tree: fixture {
+def alienTree: fixture {
     brief = "a tree"
     description = |
         The tree is clearly very old. You get a strange sense that it does not
         belong in this world.
-    is_obvious = false
+    isObvious = false
 }
 
-def runed_boulder: fixture {
+def runedBoulder: fixture {
     brief = "a boulder"
     description = |
         Upon closer inspection, you notice that the entire surface of the
         boulder is covered with tiny rune-like markings.
-    is_obvious = false
+    isObvious = false
 }
 
-deflocation sidhe_shrine: isle_location {
+deflocation sidheShrine: isleLocation {
     name = "Shrine of Shadows"
     description = |
         A lone tree grows atop an enormous granite boulder. Its gnarled, gray
@@ -407,10 +407,10 @@ deflocation sidhe_shrine: isle_location {
         The tree's twisted branches splay outward and its dense leaves form a
         solid canopy that condemns this part of the isle to perpetual shadow.
     surface = "forest"
-    contents = [sidhe_caretaker!, alien_tree!, runed_boulder!]
-    exits = [gravel_path -> 'south to elven_shrine, gravel_path -> 'west to dwarven_shrine]
+    contents = [sidheCaretaker!, alienTree!, runedBoulder!]
+    exits = [gravelPath -> 'south to elvenShrine, gravelPath -> 'west to dwarvenShrine]
 
-    when meditate(actor: .quest(choose_a_race, active)) {
+    when meditate(actor: .quest(chooseARace, active)) {
         show(actor) |
             As you begin your meditation, the shadows in the area deepen. The
             leaves above begin to rustle, as if the tree is growing restless.
@@ -423,8 +423,8 @@ deflocation sidhe_shrine: isle_location {
             their calls, but the meaning of your words is lost as soon as they
             are uttered. Apparently satisfied, the figures disappear; the
             shadows retreat.
-        change_race(actor, lib.sidhe)
-        advance_quest(actor, choose_a_race)
+        changeRace(actor, lib.sidhe)
+        advanceQuest(actor, chooseARace)
     }
 
     when meditate(actor) {
@@ -432,9 +432,9 @@ deflocation sidhe_shrine: isle_location {
     }
 }
 
-// dwarven_shrine
+// dwarvenShrine
 
-def dwarven_caretaker: lib.npc {
+def dwarvenCaretaker: lib.npc {
     brief = "the dwarven caretaker"
     pose = "stands proudly amid the statues."
     description = |
@@ -444,7 +444,7 @@ def dwarven_caretaker: lib.npc {
         belt. His long, red beard falls across a belly that has seen a few pints
         of ale in its day.
 
-    when talk(actor: .quest(choose_a_race, active), self, topic) {
+    when talk(actor: .quest(chooseARace, active), self, topic) {
         tell(self, actor) |
             Well met! If it's a dwarf ye wanna be, then ye be at tha
             right place. I kinna imagine wantin' ta be anythin' else!
@@ -459,16 +459,16 @@ def dwarven_caretaker: lib.npc {
     }
 }
 
-deflocation dwarven_shrine: isle_location {
+deflocation dwarvenShrine: isleLocation {
     name = "Shrine of the Mountain"
     description = |
         Rows of stone statues stand in the tall grass, each depicting a stout
         warrior with a grim expression and glowing amber eyes. The statues are
         arrayed in formation like soldiers marching to battle.
-    contents = [dwarven_caretaker!]
-    exits = [gravel_path -> 'east to sidhe_shrine, gravel_path -> 'south to goblin_shrine]
+    contents = [dwarvenCaretaker!]
+    exits = [gravelPath -> 'east to sidheShrine, gravelPath -> 'south to goblinShrine]
 
-    when meditate(actor: .quest(choose_a_race, active)) {
+    when meditate(actor: .quest(chooseARace, active)) {
         show(actor) |
             The caretaker grasps his maul with both hands and holds it out
             before him. After a moment the hammer begins to vibrate and erupts
@@ -480,8 +480,8 @@ deflocation dwarven_shrine: isle_location {
             stone, bright as steel. May you bring honor to clan and king."
 
             Without warning the shaking stops and the light dissipates.
-        change_race(actor, lib.dwarf)
-        advance_quest(actor, choose_a_race)
+        changeRace(actor, lib.dwarf)
+        advanceQuest(actor, chooseARace)
     }
 
     when meditate(actor) {
@@ -489,7 +489,7 @@ deflocation dwarven_shrine: isle_location {
     }
 }
 
-// goblin_shrine
+// goblinShrine
 
 def chessboard: fixture {
     brief = "a stone chessboard"
@@ -498,10 +498,10 @@ def chessboard: fixture {
         The chessboard is remarkable for its pieces: each is a finely detailed
         and garishly-painted rendition of a creature who looks much like the
         caretaker. The pieces are so realistic they seem almost alive.
-    is_obvious = false
+    isObvious = false
 }
 
-def goblin_caretaker: lib.npc {
+def goblinCaretaker: lib.npc {
     brief = "the goblin caretaker"
     pose = "stands beside a chessboard, apparently pondering his next move."
     description = |
@@ -509,7 +509,7 @@ def goblin_caretaker: lib.npc {
         contrast with his somewhat comical proportions and garish attire, his
         large dark eyes evince a keen intellect.
 
-    when talk(actor: .quest(choose_a_race, active), self, topic) {
+    when talk(actor: .quest(chooseARace, active), self, topic) {
         tell(self, actor) |
             Hello, friend! I can't tell you how happy I am to see your interest
             in goblinkind. We are a misunderstood folk! Let me set the record
@@ -534,17 +534,17 @@ def goblin_caretaker: lib.npc {
     }
 }
 
-deflocation goblin_shrine: isle_location {
+deflocation goblinShrine: isleLocation {
     name = "Shrine of Fortune"
     description = |
         The ground here has been cleared, leveled, and surfaced with
-        multi_colored bricks.
+        multiColored bricks.
     surface = "stone"
-    contents = [chessboard!, goblin_caretaker!]
-    exits = [gravel_path -> 'north to dwarven_shrine, gravel_path -> 'south to ogre_shrine,
-             gravel_path -> 'east to elven_shrine]
+    contents = [chessboard!, goblinCaretaker!]
+    exits = [gravelPath -> 'north to dwarvenShrine, gravelPath -> 'south to ogreShrine,
+             gravelPath -> 'east to elvenShrine]
 
-    when meditate(actor: .quest(choose_a_race, active)) {
+    when meditate(actor: .quest(chooseARace, active)) {
         show(actor) |
             As soon as you close your eyes, you have a vision of the world
             around you getting larger...or are you getting smaller? For a moment
@@ -552,9 +552,9 @@ deflocation goblin_shrine: isle_location {
 
             Once the dizziness passes, you open your eyes to find that your
             stature and greenish skin now match those of the caretaker.
-        change_race(actor, lib.goblin)
+        changeRace(actor, lib.goblin)
         tell(self, actor) "Huzzah! Welcome to the family!"
-        advance_quest(actor, choose_a_race)
+        advanceQuest(actor, chooseARace)
     }
 
     when meditate(actor) {
@@ -562,9 +562,9 @@ deflocation goblin_shrine: isle_location {
     }
 }
 
-// ogre_shrine
+// ogreShrine
 
-def ogre_caretaker: lib.npc {
+def ogreCaretaker: lib.npc {
     brief = "the ogre caretaker"
     pose = "is here, casually pulverizing rocks with his hammer."
     description = |
@@ -572,7 +572,7 @@ def ogre_caretaker: lib.npc {
         wears an iron helm, iron gauntlets, and a breechclout. He carries an
         enormous iron sledgehammer.
 
-    when talk(actor: .quest(choose_a_race, active), self, topic) {
+    when talk(actor: .quest(chooseARace, active), self, topic) {
         tell(self, actor) |
             Ugh. I be ogre of few words, but I know what you want. I tell you of
             my kin. We big. We strong. Done!
@@ -581,7 +581,7 @@ def ogre_caretaker: lib.npc {
     }
 }
 
-deflocation ogre_shrine: isle_location {
+deflocation ogreShrine: isleLocation {
     name = "Shrine of Strength"
     description = |
         This area is choked with a haphazard collection of rough stone blocks,
@@ -589,18 +589,18 @@ deflocation ogre_shrine: isle_location {
         have been crudely painted with scenes of carnage featuring enormous
         warriors laying waste to their tiny assailants.
     surface = "stone"
-    contents = [ogre_caretaker!]
-    exits = [gravel_path -> 'north to goblin_shrine, gravel_path -> 'east to human_shrine]
+    contents = [ogreCaretaker!]
+    exits = [gravelPath -> 'north to goblinShrine, gravelPath -> 'east to humanShrine]
 
-    when meditate(actor: .quest(choose_a_race, active)) {
+    when meditate(actor: .quest(chooseARace, active)) {
         show(actor) |
             The caretaker selects a boulder and tosses it on the ground before
             you. He then steps over, raises his hammer, and crushes the rock as
             he lets out an enormous belly laugh.
 
             Rocks fly around. Muscles grow. Brain shrink.
-        change_race(actor, lib.ogre)
-        advance_quest(actor, choose_a_race)
+        changeRace(actor, lib.ogre)
+        advanceQuest(actor, chooseARace)
     }
 
     when meditate(actor) {
@@ -608,39 +608,39 @@ deflocation ogre_shrine: isle_location {
     }
 }
 
-// clothing_stall
+// clothingStall
 
-def simple_shirt: lib.shirt {
+def simpleShirt: lib.shirt {
     brief = "a simple cotton shirt"
     description = |
         The shirt is well-made and comfortable if not entirely fashionable.
 }
 
-def simple_pants: lib.pants {
+def simplePants: lib.pants {
     brief = "a pair of cotton pants"
     description = |
         The pants are made of thick brown cloth. They have been patched only a
         handful of times.
 }
 
-def canvas_shoes: lib.shoes {
+def canvasShoes: lib.shoes {
     brief = "a pair of canvas shoes"
     description = |
         These low shoes have a sturdy sole. They seem suitable for walking
         long distances.
 }
 
-def small_backpack: lib.backpack {
+def smallBackpack: lib.backpack {
     brief = "a small canvas backpack"
     description = |
         The backpack has wide leather straps and a drawstring closure.
 }
 
-defquest get_some_clothes {
+defquest getSomeClothes {
     name = "Cover Up"
     summary = |
         Pick a white tulip for Dhalia, then exchange it for a set of clothes.
-    required_quests = [choose_a_race]
+    requiredQuests = [chooseARace]
 
     phase active {
         summary = "Pick a white tulip from the fields east of the clothing stall."
@@ -658,41 +658,41 @@ def seamstress: lib.npc {
         Dhalia is a human woman of indeterminate age. She wears silver-rimmed
         spectacles and an impeccably-tailored dress decorated with a floral
         pattern.
-    offers_quests = [get_some_clothes]
+    offersQuests = [getSomeClothes]
 
-    when talk(actor: .quest(get_some_clothes, available), self, topic) {
+    when talk(actor: .quest(getSomeClothes, available), self, topic) {
         tell(self, actor) |
             Greetings! Did our mutual kobold friend send you my way? It
             certainly seems you have need of my wares. I will happily provide
             you with an outfit that should serve your needs, but I must ask a
             favor in return.
-        offer_quest(self, get_some_clothes, actor)
+        offerQuest(self, getSomeClothes, actor)
     }
 
-    after accept_quest(actor, quest: get_some_clothes, self) {
+    after acceptQuest(actor, quest: getSomeClothes, self) {
         tell(self, actor) |
             Wonderful! You see, I am very fond of white tulips, but my work here
             prevents me from taking the time to gather them. Would you head to
             the east and get one for me?
     }
 
-    when talk(actor: .quest(get_some_clothes, active), self, topic) {
+    when talk(actor: .quest(getSomeClothes, active), self, topic) {
         tell(self, actor) |
             Have you found a white tulip for me? They're just to the east.
     }
 
-    when talk(actor: .quest(get_some_clothes, done), self, topic) {
-        give_item(actor, white_tulip, self)
+    when talk(actor: .quest(getSomeClothes, done), self, topic) {
+        giveItem(actor, whiteTulip, self)
 
         tell(self, actor) |
             Why thank you, this tulip is lovely! Your timing is perfect; I have
             just finished selecting an outfit for you.
 
-        receive_items(actor, [simple_shirt, simple_pants, canvas_shoes, small_backpack], self)
+        receiveItems(actor, [simpleShirt, simplePants, canvasShoes, smallBackpack], self)
 
-        complete_quest(actor, get_some_clothes)
+        completeQuest(actor, getSomeClothes)
 
-        show_tutorial(actor, 'items) |
+        showTutorial(actor, 'items) |
             The seamstress has given you several items; type `inventory` or
             `inv` to list them.
 
@@ -707,69 +707,69 @@ def seamstress: lib.npc {
     }
 }
 
-deflocation clothing_stall: isle_location {
+deflocation clothingStall: isleLocation {
     name = "Clothing Stall"
     description = |
         A wooden market stall has been erected beside the path. Its counter is
         piled with basic clothing items in myriad styles and sizes.
     contents = [seamstress!]
-    exits = [gravel_path -> 'north to wildflower_field, gravel_path -> 'south to fountain_plaza,
-             gravel_path -> 'east to tulip_field_sw]
+    exits = [gravelPath -> 'north to wildflowerField, gravelPath -> 'south to fountainPlaza,
+             gravelPath -> 'east to tulipFieldSw]
 }
 
-// tulip_field
+// tulipField
 
-def white_tulip: item {
+def whiteTulip: item {
     brief = "a white tulip"
     pose = "draws your attention."
     description = |
         The tulip is quite lovely; you can see why Dhalia prizes them.
     size = 'small  // FIXME:
-    entry_pose = "catches your eye."
-    quest = get_some_clothes
-    stack_limit = 1
+    entryPose = "catches your eye."
+    quest = getSomeClothes
+    stackLimit = 1
 
     when take(actor, self, source) {
-        spawn(white_tulip, source, 15)
-        advance_quest(actor, get_some_clothes)
+        spawn(whiteTulip, source, 15)
+        advanceQuest(actor, getSomeClothes)
     }
 }
 
-def tulip_field_portal: lib.continuing_portal {
+def tulipFieldPortal: lib.continuingPortal {
     brief = "the tulip field"
 }
 
-def tulip_field: isle_location {
+def tulipField: isleLocation {
     name = "Field of Tulips"
     description = |
         Tulips in myriad colors have been planted here.
     surface = 'flowers
-    contents = [white_tulip]
+    contents = [whiteTulip]
 }
 
-deflocation tulip_field_sw: tulip_field {
+deflocation tulipFieldSw: tulipField {
     tutorial = |
         Some items can be picked up using the `take` command. For example, type
         `take tulip` to take a white tulip when you see one. Picking up an item
         places it into your inventory. Use the `inventory` command to list the
         items you are carrying.
-    exits = [gravel_path -> 'west to clothing_stall, tulip_field_portal -> 'east to tulip_field_se,
-             tulip_field_portal -> 'north to tulip_field_nw]
+    exits = [gravelPath -> 'west to clothingStall, tulipFieldPortal -> 'east to tulipFieldSe,
+             tulipFieldPortal -> 'north to tulipFieldNw]
 }
 
-deflocation tulip_field_se: tulip_field {
-    exits = [tulip_field_portal -> 'west to tulip_field_sw, tulip_field_portal -> 'north to tulip_field_ne]
+deflocation tulipFieldSe: tulipField {
+    exits = [tulipFieldPortal -> 'west to tulipFieldSw, tulipFieldPortal -> 'north to tulipFieldNe]
 }
 
-deflocation tulip_field_nw: tulip_field {
-    exits = [tulip_field_portal -> 'east to tulip_field_ne, tulip_field_portal -> 'south to tulip_field_sw]
+deflocation tulipFieldNw: tulipField {
+    exits = [tulipFieldPortal -> 'east to tulipFieldNe, tulipFieldPortal -> 'south to tulipFieldSw]
 }
 
-deflocation tulip_field_ne: tulip_field {
-    exits = [tulip_field_portal -> 'west to tulip_field_nw, tulip_field_portal -> 'south to tulip_field_se]
+deflocation tulipFieldNe: tulipField {
+    exits = [tulipFieldPortal -> 'west to tulipFieldNw, tulipFieldPortal -> 'south to tulipFieldSe]
 }
 
-// fountain_plaza
+// fountainPlaza
 
 def fountain: fixture {
     brief = "a stone fountain"
@@ -780,12 +780,12 @@ def fountain: fixture {
         pillar, creating a delightful sound as it lands at the figures' feet.
 }
 
-defquest choose_a_gender {
+defquest chooseAGender {
     name = "He or She?"
     summary = |
         Select your gender by meditating at one of the shrines near Fountain
         Plaza, then return to the cherub.
-    required_quests = [get_some_clothes]
+    requiredQuests = [getSomeClothes]
 
     phase active {
         summary = |
@@ -805,33 +805,33 @@ def cherub: lib.npc {
         Although its stature and harmless aspect are those of a child, its dark
         and penetrating eyes make it clear this is a creature both ancient and
         wise.
-    offers_quests = [choose_a_gender]
+    offersQuests = [chooseAGender]
 
-    when talk(actor: .quest(choose_a_gender, available), self, topic) {
+    when talk(actor: .quest(chooseAGender, available), self, topic) {
         tell(self, actor) |
             Another new arrival! Good to see you. We're certain to need more
             heroes of your caliber before long. Right now, though, it's high
             time you chose a gender. I assume you remember the difference
             between males and females from your previous life?
-        offer_quest(self, choose_a_gender, actor)
+        offerQuest(self, chooseAGender, actor)
     }
 
-    after accept_quest(actor, quest: choose_a_gender, self) {
+    after acceptQuest(actor, quest: chooseAGender, self) {
         tell(self, actor) |
             To the east and west you will find statues that symbolize the two
             sexes. Simply `meditate` near the statue that represents your
             preferred gender. Come back to me when you're done.
     }
 
-    when talk(actor: .quest(choose_a_gender, active), self, topic) {
+    when talk(actor: .quest(chooseAGender, active), self, topic) {
         tell(self, actor) "Did you find the statues? They're hard to miss!"
     }
 
-    when talk(actor: .quest(choose_a_gender, done), self, topic) {
+    when talk(actor: .quest(chooseAGender, done), self, topic) {
         tell(self, actor) |
             You did it! I must admit I'm somewhat surprised by your
             choice. No matter; I'm sure I'll get used to it. Eventually.
-        complete_quest(actor, choose_a_gender)
+        completeQuest(actor, chooseAGender)
     }
 
     when talk(actor, self, topic) {
@@ -840,19 +840,19 @@ def cherub: lib.npc {
     }
 }
 
-deflocation fountain_plaza: isle_location {
+deflocation fountainPlaza: isleLocation {
     name = "Fountain Plaza"
     description = |
         This hexagonal plaza is paved with multi-colored stone tiles.
     surface = 'stone
     contents = [fountain!, cherub!]
-    exits = [gravel_path -> 'north to clothing_stall, gravel_path -> 'south to circle_of_names,
-             gravel_path -> 'west to male_shrine, gravel_path -> 'east to female_shrine]
+    exits = [gravelPath -> 'north to clothingStall, gravelPath -> 'south to circleOfNames,
+             gravelPath -> 'west to maleShrine, gravelPath -> 'east to femaleShrine]
 }
 
-// male_shrine
+// maleShrine
 
-def male_statue: fixture {
+def maleStatue: fixture {
     brief = "a large marble statue"
     pose = "stands in the center of the plaza."
     description = |
@@ -862,26 +862,26 @@ def male_statue: fixture {
         perfect male.
 }
 
-deflocation male_shrine: isle_location {
+deflocation maleShrine: isleLocation {
     name = "Shrine of Masculinity"
     descrpiton = |
         Low shrubs, cut in complex geometric patterns, surround a plaza covered
         with white gravel.
-    contents = [male_statue!]
-    exits = [gravel_path -> 'east to fountain_plaza]
+    contents = [maleStatue!]
+    exits = [gravelPath -> 'east to fountainPlaza]
 
-    when meditate(actor: .quest(choose_a_gender, active)) {
+    when meditate(actor: .quest(chooseAGender, active)) {
         show(actor) |
             The statue's mouth begins to move and a deep voice intones several
             archaic words you don't understand.
-        change_gender(actor, 'male)
-        advance_quest(actor, choose_a_gender)
+        changeGender(actor, 'male)
+        advanceQuest(actor, chooseAGender)
     }
 }
 
-// female_shrine
+// femaleShrine
 
-def female_statue: fixture {
+def femaleStatue: fixture {
     brief = "a large jade statue"
     pose = "stands in the center of the area."
     description = |
@@ -890,27 +890,27 @@ def female_statue: fixture {
         your mind's eye to reflect your personal ideal of femininity.
 }
 
-deflocation female_shrine: isle_location {
+deflocation femaleShrine: isleLocation {
     name = "Shrine of Femininity"
     description = |
         A multitude of flowering vines have been trained to ornate trellises
-        that surround a bowl_shaped area covered with a carpet of blossoming
+        that surround a bowlShaped area covered with a carpet of blossoming
         clover.
-    contents =  [female_statue!]
-    exits = [gravel_path -> 'west to fountain_plaza]
+    contents =  [femaleStatue!]
+    exits = [gravelPath -> 'west to fountainPlaza]
 
-    when meditate(actor: .quest(choose_a_gender, active)) {
+    when meditate(actor: .quest(chooseAGender, active)) {
         show(actor) |
             The statue slowly turns its head to face you and says several arcane
             words in a powerful, mellifluous voice.
-        change_gender(actor, 'female)
-        advance_quest(actor, choose_a_gender)
+        changeGender(actor, 'female)
+        advanceQuest(actor, chooseAGender)
     }
 }
 
-// circle_of_names
+// circleOfNames
 
-def tree_of_names: fixture {
+def treeOfNames: fixture {
     brief = "a beautiful tree"
     pose = "grows in the center of the lawn."
     description = |
@@ -919,12 +919,12 @@ def tree_of_names: fixture {
         using the same flowing script.
 }
 
-defquest choose_a_name {
+defquest chooseAName {
     name = "Nameless No More"
     summary = |
         Choose your name by saying it in the presence of the orb of naming, then
         return to the mistress of names."
-    required_quests = [choose_a_gender]
+    requiredQuests = [chooseAGender]
 
     phase active {
         summary = |
@@ -937,26 +937,26 @@ defquest choose_a_name {
     }
 }
 
-def mistress_of_names: lib.npc {
+def mistressOfNames: lib.npc {
     brief = "the mistress of names"
     pose = "stands beneath the tree."
     description = |
         The mistress of names is a short, slender woman of indeterminate age.
         Her long auburn hair is bound in a loose ponytail. She wears a pair of
         horn-rimmed spectacles and her clothing is rumpled and ink-stained.
-    offers_quests = [choose_a_name]
+    offersQuests = [chooseAName]
 
-    when talk(actor: .quest(choose_a_name, available), self, topic) {
+    when talk(actor: .quest(chooseAName, available), self, topic) {
         tell(self, actor) |
             Oh, hello. I didn't see you standing there. I hope you haven't been
             waiting long. How can I help you?
 
             Ah! You need a name, don't you. You've come to the right place; I'd
             be happy to help you out.
-        offer_quest(self, choose_a_name, actor)
+        offerQuest(self, chooseAName, actor)
     }
 
-    after accept_quest(actor, quest: choose_a_name, self) {
+    after acceptQuest(actor, quest: chooseAName, self) {
         tell(self, actor) |
             Just to the east you'll see a magical orb. Find it and say the word.
             Literally! Stand next to the orb and `say` the word you want to have
@@ -967,25 +967,25 @@ def mistress_of_names: lib.npc {
             other heroes who have passed this way.
     }
 
-    when talk(actor: .quest(choose_a_name, active), self, topic) {
+    when talk(actor: .quest(chooseAName, active), self, topic) {
         tell(self, actor) |
             Still going incognito? You'll find the orb of naming just to the
             east.
     }
 
-    when talk(actor: .quest(choose_a_name, done), self, topic) {
+    when talk(actor: .quest(chooseAName, done), self, topic) {
         tell(self, actor) |
             Yes, what is it? Of course, you've chosen your name! Let
             me see, where is my pen? Ah, there it is. And now to write your name...how
             did you spell it, again? Just a few strokes of the pen, and...done!
 
-        complete_quest(actor, choose_a_name)
+        completeQuest(actor, chooseAName)
 
         tell(self, actor) |
             {actor} is a fine name. Wear it proudly.
     }
 
-    when talk(actor: .quest(choose_a_name, complete), self, topic) {
+    when talk(actor: .quest(chooseAName, complete), self, topic) {
         tell(self, actor) |
             Ah, {actor}. I just love the sound of your name! It simply rolls off
             the tongue.
@@ -996,19 +996,19 @@ def mistress_of_names: lib.npc {
     }
 }
 
-deflocation circle_of_names: isle_location {
+deflocation circleOfNames: isleLocation {
     name = "Circle of Names"
     description = |
         You stand within a wide circle of well-tended lawn surrounded by a low
         stone wall.
-    contents = [tree_of_names!, mistress_of_names!]
-    exits = [gravel_path -> 'north to fountain_plaza, gravel_path -> 'east to clifftop,
-             gravel_path -> 'south to guard_station]
+    contents = [treeOfNames!, mistressOfNames!]
+    exits = [gravelPath -> 'north to fountainPlaza, gravelPath -> 'east to clifftop,
+             gravelPath -> 'south to guardStation]
 }
 
 // clifftop
 
-def orb_of_naming: fixture {
+def orbOfNaming: fixture {
     brief = "the orb of naming"
     pose = "hovers a few feet above the ground."
     description = |
@@ -1016,13 +1016,13 @@ def orb_of_naming: fixture {
         smooth and cloudy. If a creature speaks a word within its presence, the
         orb has the power to make that word the creature's name.
 
-    after say(actor: .quest(choose_a_name, active), message) {
+    after say(actor: .quest(chooseAName, active), message) {
         show(actor) |
             The orb begins to glow, dimly at first, then much more brightly.
             Sparks skitter across its smooth surface and you feel an
             uncomfortable tingle beneath your skin.
-        if change_name(actor, message) {
-            advance_quest(actor, choose_a_name)
+        if changeName(actor, message) {
+            advanceQuest(actor, chooseAName)
         } else {
             show(actor) |
                 The sparks subside and the orb's glow dims; nothing seems to
@@ -1031,7 +1031,7 @@ def orb_of_naming: fixture {
     }
 }
 
-deflocation clifftop: isle_location {
+deflocation clifftop: isleLocation {
     name = "Windy Clifftop"
     description = |
         You stand atop a rocky cliff that falls perhaps a hundred feet to a
@@ -1047,13 +1047,13 @@ deflocation clifftop: isle_location {
         suitable, that word will become your name. Choose wisely.
 
     surface = 'stone
-    contents = [orb_of_naming!]
-    exits = [gravel_path -> 'west to circle_of_names]
+    contents = [orbOfNaming!]
+    exits = [gravelPath -> 'west to circleOfNames]
 }
 
-// guard_station
+// guardStation
 
-def worn_dagger: lib.dagger {
+def wornDagger: lib.dagger {
     brief = "a worn dagger"
     description = |
         The dagger has a pitted copper blade and a smooth wooden handle.
@@ -1061,11 +1061,11 @@ def worn_dagger: lib.dagger {
     quality = 'poor
 }
 
-defquest kill_some_plants {
+defquest killSomePlants {
     name = "Weed Control"
     summary = |
         Prove your worth to the guard by killing a vineling. Lashleaf? Whatever.
-    required_quests = [choose_a_name]
+    requiredQuests = [chooseAName]
 
     phase active {
         summary = "Kill a vineling. Lashleaf? Whatever."
@@ -1082,18 +1082,18 @@ def guard: lib.npc {
     description = |
         The guard wears a long chainmail shirt and carries a double-bladed axe.
         His bristly red beard spills out across his ample belly.
-    offers_quests = [kill_some_plants]
+    offersQuests = [killSomePlants]
 
-    when talk(actor: .quest(kill_some_plants, available), self, topic) {
+    when talk(actor: .quest(killSomePlants, available), self, topic) {
         tell(self, actor) |
             Greetings, {actor}. It seems you're nearly ready to leave this
             place, but I have my doubts. Before I allow you to venture further,
             I'm going to teach you how to fight! You'll need to be able to
             handle a weapon if you want to survive in the real world.
-        offer_quest(self, kill_some_plants, actor)
+        offerQuest(self, killSomePlants, actor)
     }
 
-    after accept_quest(actor, quest: kill_some_plants, self) {
+    after acceptQuest(actor, quest: killSomePlants, self) {
         tell(self, actor) |
             West of here you'll find some...plants. Not normal plants, but
             vicious killers! Vinelings, I think they're called. Or maybe
@@ -1101,7 +1101,7 @@ def guard: lib.npc {
 
             I have a weapon for you. Here, take this.
 
-        receive_items(actor, [worn_dagger], self)
+        receiveItems(actor, [wornDagger], self)
 
         tell(self, actor) |
             Go ahead, `equip` that dagger and kill one of those plants. Strike
@@ -1109,20 +1109,20 @@ def guard: lib.npc {
             let you pass.
     }
 
-    when talk(actor: .quest(kill_some_plants, active), self, topic) {
+    when talk(actor: .quest(killSomePlants, active), self, topic) {
         tell(self, actor) |
             Any progress so far? Kill one of those plant things and we'll talk.
     }
 
-    when talk(actor: .quest(kill_some_plants, done), self, topic) {
+    when talk(actor: .quest(killSomePlants, done), self, topic) {
         tell(self, actor) |
             Great job! I'll confess, those things give me the heebie jeebies.
             Plants shouldn't writhe around like that. Please, feel free to head
             south whenever you like.
-        complete_quest(actor, kill_some_plants)
+        completeQuest(actor, killSomePlants)
     }
 
-    when talk(actor: .quest(kill_some_plants, complete), self, topic) {
+    when talk(actor: .quest(killSomePlants, complete), self, topic) {
         show(actor) "The guard salutes smartly."
         tell(self, actor) "Good to see you again, plant-slayer."
     }
@@ -1131,7 +1131,7 @@ def guard: lib.npc {
         show(actor) "The guard grunts in your general direction."
     }
 
-    allow exit_location(actor: .quest(kill_some_plants, incomplete), location, portal) {
+    allow exitLocation(actor: .quest(killSomePlants, incomplete), location, portal) {
         if portal.direction == 'south {
             show(actor) "The guard moves with unexpected agility to block your path."
             tell(self, actor) |
@@ -1144,11 +1144,11 @@ def guard: lib.npc {
     }
 }
 
-def iron_gate: portal {
+def ironGate: portal {
     brief = "an iron gate"
 }
 
-deflocation guard_station: isle_location {
+deflocation guardStation: isleLocation {
     name = "Guard Station"
     description = "A small guard post stands alongside the path."
 
@@ -1164,17 +1164,17 @@ deflocation guard_station: isle_location {
         more about skills in general.
 
     contents = [guard!]
-    exits = [gravel_path -> 'north to circle_of_names, gravel_path -> 'west to overgrown_field_se,
-             iron_gate -> 'south to cobbled_square]
+    exits = [gravelPath -> 'north to circleOfNames, gravelPath -> 'west to overgrownFieldSe,
+             ironGate -> 'south to cobbledSquare]
 }
 
-// overgrown_field
+// overgrownField
 
-def lashling_tendril: lib.natural_weapon {
+def lashlingTendril: lib.naturalWeapon {
     brief = "a thorny tendril"
-    damage_type = 'slashing
-    attack_verb = "whips"
-    critical_verb = "lashes"
+    damageType = 'slashing
+    attackVerb = "whips"
+    criticalVerb = "lashes"
 }
 
 def lashling: creature {
@@ -1184,34 +1184,34 @@ def lashling: creature {
         The lashling is a small mass of writhing vines and weeds that has
         somehow gained the ability to move, albeit very slowly. Sharp thorns
         protrude from the ends of its leafy, tentacle-like appendages.
-    entry_message = "A lashling emerges from beneath the weeds."
+    entryMessage = "A lashling emerges from beneath the weeds."
 
     level = 1
-    attack_coeff = 0.5
-    defense_coeff = 0.5
-    weapons = [lashling_tendril]
+    attackCoeff = 0.5
+    defenseCoeff = 0.5
+    weapons = [lashlingTendril]
 
     before kill(actor, self, weapon) {
         spawn(lashling, self.location, 15)
     }
 
     after kill(actor, self, weapon) {
-        advance_quest(actor, kill_some_plants)
+        advanceQuest(actor, killSomePlants)
     }
 }
 
-def overgrown_field: isle_location {
+def overgrownField: isleLocation {
     name = "Overgrown Field"
     description = "Tangled vines and weeds make it difficult to move through this area."
     surface = 'weeds
     contents = [lashling]
 }
 
-def overgrown_field_portal: lib.continuing_portal {
+def overgrownFieldPortal: lib.continuingPortal {
     brief = "the overgrown field"
 }
 
-deflocation overgrown_field_se: overgrown_field {
+deflocation overgrownFieldSe: overgrownField {
     tutorial = |
         To begin attacking a lashling, type `attack lashling`. You will
         automatically perform basic attacks with the weapon in your main hand.
@@ -1221,37 +1221,37 @@ deflocation overgrown_field_se: overgrown_field {
         you will gain access to a variety of special maneuvers that you can use
         during combat. Type `help combat` to learn more.
 
-    exits = [overgrown_field_portal -> 'west to overgrown_field_sw,
-             overgrown_field_portal -> 'north to overgrown_field_ne,
-             gravel_path -> 'east to guard_station]
+    exits = [overgrownFieldPortal -> 'west to overgrownFieldSw,
+             overgrownFieldPortal -> 'north to overgrownFieldNe,
+             gravelPath -> 'east to guardStation]
 }
 
-deflocation overgrown_field_sw: overgrown_field {
-    exits = [overgrown_field_portal -> 'east to overgrown_field_se,
-             overgrown_field_portal -> 'north to overgrown_field_nw]
+deflocation overgrownFieldSw: overgrownField {
+    exits = [overgrownFieldPortal -> 'east to overgrownFieldSe,
+             overgrownFieldPortal -> 'north to overgrownFieldNw]
 }
 
-deflocation overgrown_field_ne: overgrown_field {
-    exits = [overgrown_field_portal -> 'west to overgrown_field_nw,
-             overgrown_field_portal -> 'south to overgrown_field_se]
+deflocation overgrownFieldNe: overgrownField {
+    exits = [overgrownFieldPortal -> 'west to overgrownFieldNw,
+             overgrownFieldPortal -> 'south to overgrownFieldSe]
 }
 
-deflocation overgrown_field_nw: overgrown_field {
-    exits = [overgrown_field_portal -> 'east to overgrown_field_ne,
-             overgrown_field_portal -> 'south to overgrown_field_sw]
+deflocation overgrownFieldNw: overgrownField {
+    exits = [overgrownFieldPortal -> 'east to overgrownFieldNe,
+             overgrownFieldPortal -> 'south to overgrownFieldSw]
 }
 
-// cobbled_square
+// cobbledSquare
 
-def sandy_path: portal {
+def sandyPath: portal {
     brief = "a sandy path"
 }
 
-def cobbled_lane: portal {
+def cobbledLane: portal {
     brief = "a cobbled lane"
 }
 
-deflocation cobbled_square: isle_location {
+deflocation cobbledSquare: isleLocation {
     name = "Cobbled Square"
     description = |
         The fresh smell of the sea pleasantly fills this small seaside plaza.
@@ -1264,66 +1264,66 @@ deflocation cobbled_square: isle_location {
         who can induct you into their guilds and teach you a variety of skills."
 
     surface = 'stone
-    exits = [iron_gate -> 'north to guard_station, sandy_path -> 'west to beach_east,
-             cobbled_lane -> 'east to pier, lib.entry_doorway -> 'south to dockmaster_shack]
+    exits = [ironGate -> 'north to guardStation, sandyPath -> 'west to beachEast,
+             cobbledLane -> 'east to pier, lib.entryDoorway -> 'south to dockmasterShack]
 }
 
 // beach
 
-def shiny_seashell: item {
+def shinySeashell: item {
     brief = "a shiny seashell"
     description = |
         The seashell's polished surface is covered with an intricate pattern of
         white and orange whorls.
     alts = ["a shiny shell"]
-    stack_limit = 10
+    stackLimit = 10
     size = 'tiny
 
     when take(actor, self, source) {
-        spawn(shiny_seashell, source, random(1800, 7200))
+        spawn(shinySeashell, source, random(1800, 7200))
     }
 }
 
-def beach_portal: lib.continuing_portal {
+def beachPortal: lib.continuingPortal {
     brief = "the beach"
 }
 
-def beach_location: isle_location {
+def beachLocation: isleLocation {
     name = "Rocky Beach"
     description = "The sand on this narrow beach is full of pebbles and shell fragments."
     domain = 'outdoor
     surface = 'sand
 }
 
-deflocation beach_east: beach_location {
-    exits = [beach_portal -> 'west to beach_center, sandy_path -> 'east to cobbled_square]
+deflocation beachEast: beachLocation {
+    exits = [beachPortal -> 'west to beachCenter, sandyPath -> 'east to cobbledSquare]
 }
 
-deflocation beach_center: beach_location {
-    exits = [beach_portal -> 'west to beach_west, beach_portal -> 'east to beach_east]
+deflocation beachCenter: beachLocation {
+    exits = [beachPortal -> 'west to beachWest, beachPortal -> 'east to beachEast]
 }
 
-deflocation beach_west: beach_location {
-    exits = [beach_portal -> 'east to beach_center]
-    contents = [shiny_seashell!]
+deflocation beachWest: beachLocation {
+    exits = [beachPortal -> 'east to beachCenter]
+    contents = [shinySeashell!]
 }
 
-// dockmaster_shack
+// dockmasterShack
 
-def bundle_of_documents: item {
+def bundleOfDocuments: item {
     brief = "a bundle[s] of documents"
     description = |
         The documents are rather mundane shipping records. A scrawled note on
         top reads, "Pay the messenger 10 silver. Q.M."
-    quest = document_delivery
+    quest = documentDelivery
 }
 
-defquest document_delivery {
+defquest documentDelivery {
     name = "On to Arwyck"
     summary = |
         Deliver the dockmaster's documents to the surly stevedore at the
         Arwyck docks.
-    required_quests = [kill_some_plants]
+    requiredQuests = [killSomePlants]
 
     phase active {
         summary = "Find the surly stevedore in Arwyck."
@@ -1341,19 +1341,19 @@ def dockmaster: lib.npc {
         The dockmaster is a grizzled man with a short salt-and-pepper beard. His
         left eye is covered with a leather patch, but his right eye harbors a
         dangerous gleam.
-    offers_quests = [document_delivery]
+    offersQuests = [documentDelivery]
 
-    when talk(actor: .quest(document_delivery, available), self, topic) {
+    when talk(actor: .quest(documentDelivery, available), self, topic) {
         tell(self, actor) |
             You there. I've an errand that needs doing if you've a mind to earn
             some coin.
-        offer_quest(self, document_delivery, actor)
+        offerQuest(self, documentDelivery, actor)
     }
 
-    after accept_quest(actor, quest: document_delivery, self) {
+    after acceptQuest(actor, quest: documentDelivery, self) {
         tell(self, actor) "Good, good. Take these."
 
-        receive_items(actor, [bundle_of_documents], self)
+        receiveItems(actor, [bundleOfDocuments], self)
 
         tell(self, actor) |
             I need you to deliver those to my man in Arwyck. Surly fellow near
@@ -1361,62 +1361,62 @@ def dockmaster: lib.npc {
             The ship to Arwyck leaves from the dock outside.
     }
 
-    when talk(actor: .quest(document_delivery, active), self, topic) {
+    when talk(actor: .quest(documentDelivery, active), self, topic) {
         tell(self, actor) |
             What are you doing here? My man needs those documents. The *Siren*
             departs for Arwyck from the dock just east of here.
     }
 
-    when talk(actor: .quest(document_delivery, complete), self, topic) {
+    when talk(actor: .quest(documentDelivery, complete), self, topic) {
         tell(self, actor) |
             Thanks for helping me out before. I might have more errands for you
             in the future; be sure to check back.
     }
 }
 
-def desktop_documents: fixture {
+def desktopDocuments: fixture {
     brief = "document"
     description = |
         You discreetly scan the papers on top of the pile. They appear to be
         schedules, manifests, and other such shipping-related documents.
-    is_obvious = false
+    isObvious = false
 }
 
-def wine_bottles: fixture {
+def wineBottles: fixture {
     brief = "wine bottle"
     description = |
         You may have been dead for hundreds of years, but wine hasn't changed
         all that much; you still recognize the cheap stuff when you see it.
-    is_obvious = false
+    isObvious = false
 }
 
-deflocation dockmaster_shack: isle_location {
+deflocation dockmasterShack: isleLocation {
     name = "Dockmaster's Shack"
     description = |
         This one-room structure is dominated by a large desk that is piled with
         documents and empty wine bottles.
     domain = 'indoor
     surface = 'wood
-    contents = [dockmaster!, desktop_documents, wine_bottles]
-    exits = [lib.exit_doorway -> 'north to cobbled_square,
-             lib.stairway -> 'down to dockmaster_basement]
+    contents = [dockmaster!, desktopDocuments, wineBottles]
+    exits = [lib.exitDoorway -> 'north to cobbledSquare,
+             lib.stairway -> 'down to dockmasterBasement]
 }
 
-// dockmaster_basement
+// dockmasterBasement
 
-deflocation dockmaster_basement: isle_location {
+deflocation dockmasterBasement: isleLocation {
     name = "Basement of the Dockmaster's Shack"
     description = |
         This low, damp space is more of a crawlspace than a basement. Several
         barrels and crates have been pushed into one corner of the dirt floor.
     domain = 'indoor
     surface = 'dirt
-    exits = [lib.stairway -> 'up to dockmaster_shack]
+    exits = [lib.stairway -> 'up to dockmasterShack]
 }
 
 // pier
 
-def dock_sign: fixture {
+def dockSign: fixture {
     brief = "an informative sign"
     pose = "is posted here."
     description = |
@@ -1424,7 +1424,7 @@ def dock_sign: fixture {
         passengers across the sea to the village of Arwyck.
 }
 
-deflocation pier: isle_location {
+deflocation pier: isleLocation {
     name = "Sturdy Pier"
     description = |
         This stone pier juts out into the sea, giving ships that visit the
@@ -1435,8 +1435,8 @@ deflocation pier: isle_location {
         Once the ship reaches its destination, move `south` to disembark.
 
     surface = 'stone
-    contents = [dock_sign]
-    exits = [cobbled_lane -> 'west to cobbled_square]
+    contents = [dockSign]
+    exits = [cobbledLane -> 'west to cobbledSquare]
 }
 
 def gangplank: portal {
@@ -1457,7 +1457,7 @@ def sailor: lib.npc {
     }
 }
 
-deflocation the_siren: lib.route_follower {
+deflocation theSiren: lib.routeFollower {
     name = "The *Siren*"
     description = |
         This sturdy single-masted vessel makes frequent trips between the Isle
@@ -1468,5 +1468,5 @@ deflocation the_siren: lib.route_follower {
     icon = 'boat
     contents = [sailor]
 
-    route = [gangplank -> 'west to pier, gangplank -> 'south to arwyck.west_dock]
+    route = [gangplank -> 'west to pier, gangplank -> 'south to arwyck.westDock]
 }

@@ -1,6 +1,6 @@
 // Races and prototype for avatars.
 
-defrace reborn_hero {
+defrace rebornHero {
     brief = "a reborn hero"
     description = |
         You see a shimmering humanoid form that seems only partially corporeal,
@@ -33,7 +33,7 @@ defrace ogre {
 
 def avatar: avatar {
     size = 'medium
-    race = reborn_hero
+    race = rebornHero
 }
 
 // Non-player characters.
@@ -48,7 +48,7 @@ def trainer: npc {
     teaches = []  // FIXME:
 }
 
-def mining_trainer: trainer {
+def miningTrainer: trainer {
 }
 
 // Portals
@@ -57,11 +57,11 @@ def doorway: portal {
     brief = "a doorway"
 }
 
-def entry_doorway: portal {
+def entryDoorway: portal {
     brief = "a doorway"
 }
 
-def exit_doorway: portal {
+def exitDoorway: portal {
     brief = "a doorway"
 }
 
@@ -69,7 +69,7 @@ def stairway: portal {
     brief = "a stairway"
 }
 
-def continuing_portal: portal {
+def continuingPortal: portal {
     pose = "continues to the $."
 }
 
@@ -86,30 +86,30 @@ def pickaxe: equipment {
     slot = 'tool
 }
 
-def copper_pickaxe: pickaxe {
+def copperPickaxe: pickaxe {
     brief = "a copper pickaxe"
 }
 
-def bronze_pickaxe: pickaxe {
+def bronzePickaxe: pickaxe {
     brief = "a bronze pickaxe"
 }
 
 // Currency
 
-def silver_coin: item {
+def silverCoin: item {
     brief = "a silver coin"
     description = "Silver coins are the common currency of the realm."
-    stack_limit = 10000
+    stackLimit = 10000
 }
 
 // Consumables
 
 def food: item {
-    stack_limit = 100
+    stackLimit = 100
 }
 
 // Resources
 
 def resource: item {
-    stack_limit = 1000
+    stackLimit = 1000
 }

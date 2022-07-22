@@ -39,12 +39,12 @@ class Creature: PhysicalEntity, Combatant, Questgiver {
 
     private static let accessors = [
         "level": Accessor(\Creature.level),
-        "min_health": Accessor(\Creature.minHealth),
-        "attack_coeff": Accessor(\Creature.attack_coeff),
-        "defense_coeff": Accessor(\Creature.defense_coeff),
-        "health_coeff": Accessor(\Creature.health_coeff),
+        "minHealth": Accessor(\Creature.minHealth),
+        "attackCoeff": Accessor(\Creature.attack_coeff),
+        "defenseCoeff": Accessor(\Creature.defense_coeff),
+        "healthCoeff": Accessor(\Creature.health_coeff),
         "weapons": Accessor(\Creature.weapons),
-        "offers_quests": Accessor(\Creature.offersQuests),
+        "offersQuests": Accessor(\Creature.offersQuests),
         "sells": Accessor(\Creature.sells),
         "teaches": Accessor(\Creature.teaches),
     ]

@@ -35,30 +35,30 @@ def ring: equipment {
 
 def dagger: weapon {
     slot = 'eitherHand
-    damage_type = 'piercing
+    damageType = 'piercing
     speed = 1.5
 }
 
 // natural weapons
 
-def natural_weapon: weapon {
+def naturalWeapon: weapon {
     speed = 3.0
 }
 
-def fist: natural_weapon {
-    damage_type = 'crushing
-    attack_verb = "bashes"
-    critical_verb = "crushes"
+def fist: naturalWeapon {
+    damageType = 'crushing
+    attackVerb = "bashes"
+    criticalVerb = "crushes"
 }
 
-def claw: natural_weapon {
-    damage_type = 'slashing
-    attack_verb = "swipes"
-    critical_verb = "slashes"
+def claw: naturalWeapon {
+    damageType = 'slashing
+    attackVerb = "swipes"
+    criticalVerb = "slashes"
 }
 
-def bite: natural_weapon {
-    damage_type = 'piercing
-    attack_verb = "bites"
-    critical_verb = "tears"
+def bite: naturalWeapon {
+    damageType = 'piercing
+    attackVerb = "bites"
+    criticalVerb = "tears"
 }

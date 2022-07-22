@@ -30,7 +30,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
         "pose": Accessor(\PhysicalEntity.pose),
         "description": Accessor(\PhysicalEntity.description),
         "icon": Accessor(\PhysicalEntity.icon),
-        "is_obvious": Accessor(\PhysicalEntity.isObvious),
+        "isObvious": Accessor(\PhysicalEntity.isObvious),  // FIXME: -> implied
         "alts": Accessor(\PhysicalEntity.alts),
         "size": Accessor(\PhysicalEntity.size),
         "location": Accessor(\PhysicalEntity.location),

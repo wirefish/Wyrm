@@ -36,10 +36,10 @@ class Item: PhysicalEntity, Codable {
     }
 
     private static let accessors = [
-        "stack_limit": Accessor(\Item.stackLimit),
+        "stackLimit": Accessor(\Item.stackLimit),
         "count": Accessor(\Item.count),
         "level": Accessor(\Item.level),
-        "use_verbs": Accessor(\Item.useVerbs),
+        "useVerbs": Accessor(\Item.useVerbs),
         "quest": Accessor(\Item.quest),
         "price": Accessor(\Item.price),
     ]
