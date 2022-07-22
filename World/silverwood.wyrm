@@ -48,7 +48,7 @@ def giantSpider: creature {
     entryPose = "drops down from the branches above."
     level = 1
     weapons = [lib.bite]
-    // FIXME: loot = [[0.75, 1, 1, silkySpiderweb]]
+    loot = [[0.75, 1, 1, silkySpiderweb]]
 
     before kill(actor, self, weapon) {
         spawn(giantSpider, self.location, random(20, 60))
