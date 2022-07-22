@@ -38,6 +38,10 @@ extension StringProtocol {
     func suffix(after pos: Self.Index) -> Self.SubSequence {
         return suffix(from: index(after: pos))
     }
+
+    func capitalized() -> String {
+        return prefix(1).uppercased() + dropFirst()
+    }
 }
 
 extension RandomAccessCollection where Element: Comparable {

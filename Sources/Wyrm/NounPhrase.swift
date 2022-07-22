@@ -14,10 +14,6 @@ func trimmed(_ s: String) -> Substring {
     }
 }
 
-func capitalized(_ s: String) -> String {
-    return s.prefix(1).uppercased() + s.dropFirst()
-}
-
 func splitArticle(_ s: Substring) -> (String, Substring) {
     if s.hasPrefix("a ") {
         return ("a", s.dropFirst(2))
@@ -98,7 +94,7 @@ struct NounPhrase: Codable {
             return singular
         } else if format.contains(.plural) || count > 1 {
             if format.contains(.noQuantity) || count == 1 {
-                return format.contains(.capitalized) ? capitalized(plural) : plural
+                return format.contains(.capitalized) ? plural.capitalized() : plural
             } else {
                 return "\(count) \(plural)"
             }
@@ -109,7 +105,7 @@ struct NounPhrase: Codable {
             case .indefinite: out = "\(article!) \(singular)"
             case .definite: out = "the \(singular)"
             }
-            return format.contains(.capitalized) ? capitalized(out) : out
+            return format.contains(.capitalized) ? out.capitalized() : out
         }
     }
 }

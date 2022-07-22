@@ -290,6 +290,8 @@ extension ValueRepresentableEnum {
     }
 }
 
+// MARK: - representing referenced objects
+
 extension Entity: ValueRepresentable {
     static func fromValue(_ value: Value) -> Self? {
         switch value {
