@@ -5,6 +5,26 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+final class Region: ValueDictionary {
+    var name: String?
+    var description: String?
+    var domain: String?
+
+    static let accessors = [
+        "name": Accessor(\Region.name),
+        "description": Accessor(\Region.description),
+        "domain": Accessor(\Region.domain),
+    ]
+
+    func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors)
+    }
+
+    func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors)
+    }
+}
+
 class Location: Entity {
     var name = ""
     var description = ""
@@ -13,6 +33,7 @@ class Location: Entity {
     var tutorial: String?
     var domain: String?
     var surface: String?
+    var region: Region?
     var subregion: String?
 
     override func copyProperties(from other: Entity) {

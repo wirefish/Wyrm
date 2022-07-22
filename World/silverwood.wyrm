@@ -1,14 +1,11 @@
 // Silverwood is a low-level area adjacent to Arwyck.
 
-/* FIXME:
-defregion silverwood {
+defregion {
     name = "Silverwood"
     description = |
         The Silverwood is a small forest nestled in the hills west of Arwyck. It
         is known for the giant spiders that frequently accost unwary travelers.
-    climate = 'temperate
 }
-*/
 
 // portals
 

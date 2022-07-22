@@ -8,6 +8,13 @@
 // Finally, the town has its own short quest arc involving a rash of thefts from
 // various shops.
 
+defregion {
+    name = "Arwyck"
+    description = |
+        This once-sleepy hamlet has recently become a hub of adventuring
+        activity.
+}
+
 // General prototypes.
 
 def rutted_path: portal {

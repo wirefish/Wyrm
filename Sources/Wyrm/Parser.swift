@@ -50,6 +50,7 @@ indirect enum ParseNode {
                 handlers: [Handler], methods: [Method], isLocation: Bool)
     case quest(name: String, members: [Member], phases: [QuestPhase])
     case race(name: String, members: [Member])
+    case region(members: [Member])
     case `extension`(ref: ValueRef, handlers: [Handler], methods: [Method])
 
     // True if this node can syntactically be on the left side of an assignment.
@@ -164,6 +165,8 @@ class Parser {
             return parseQuest()
         case .defrace:
             return parseRace()
+        case .defregion:
+            return parseRegion()
         case .extend:
             return parseExtension()
         default:
@@ -448,17 +451,29 @@ class Parser {
 
     private func parseRace() -> ParseNode? {
         assert(match(.defrace))
-
         guard case let .identifier(name) = consume() else {
             error("expected identifier after defrace")
             return nil
         }
-
         guard match(.lbrace) else {
             error("expected { at start of race body")
             return nil
         }
+        return .race(name: name, members: parseMembers())
+    }
 
+    // MARK: - parsing regions
+
+    private func parseRegion() -> ParseNode? {
+        assert(match(.defregion))
+        guard match(.lbrace) else {
+            error("expected { at start of region body")
+            return nil
+        }
+        return .region(members: parseMembers())
+    }
+
+    private func parseMembers() -> [ParseNode.Member] {
         var members = [ParseNode.Member]()
         while !(match(.rbrace)) {
             switch currentToken {
@@ -467,13 +482,12 @@ class Parser {
                     members.append(member)
                 }
             default:
-                error("unexpected token \(currentToken) in race body")
+                error("unexpected token \(currentToken)")
                 advance()
                 break
             }
         }
-
-        return .race(name: name, members: members)
+        return members
     }
 
     // MARK: - parsing extensions

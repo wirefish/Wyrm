@@ -13,6 +13,7 @@ import XCTest
 class Module: ValueDictionary {
     let name: String
     var bindings = [String:Value]()
+    var region: Region?
 
     init(_ name: String) {
         self.name = name
@@ -283,6 +284,9 @@ extension World {
             case .race:
                 loadRace(def, into: module)
 
+            case .region:
+                loadRegion(def, into: module)
+
             case .extension:
                 loadExtension(def, into: module)
 
@@ -310,7 +314,7 @@ extension World {
             do {
                 try entity.set(name, to: try evalInitializer(initialValue, in: module))
             } catch {
-                print("\(entity.ref!) \(name) \(error)")
+                logger.error("\(entity.ref!) \(name) \(error)")
             }
         }
 
@@ -333,7 +337,9 @@ extension World {
 
         module.bindings[name] = .entity(entity)
         if isLocation {
-            locations.append(entity as! Location)
+            let location = entity as! Location
+            location.region = module.region
+            locations.append(location)
         }
     }
 
@@ -349,7 +355,7 @@ extension World {
             do {
                 try quest.set(name, to: try evalInitializer(initialValue, in: module))
             } catch {
-                print("\(quest.ref) \(name): \(error)")
+                logger.error("\(quest.ref) \(name): \(error)")
             }
         }
 
@@ -359,7 +365,7 @@ extension World {
                 do {
                     try phase.set(name, to: try evalInitializer(initialValue, in: module))
                 } catch {
-                    print("\(quest.ref) \(phaseName) \(name): \(error)")
+                    logger.error("\(quest.ref) \(phaseName) \(name): \(error)")
                 }
             }
             quest.phases.append(phase)
@@ -380,11 +386,34 @@ extension World {
             do {
                 try race.set(name, to: try evalInitializer(initialValue, in: module))
             } catch {
-                print("\(race.ref) \(name): \(error)")
+                logger.error("\(race.ref) \(name): \(error)")
             }
         }
 
         module.bindings[name] = .race(race)
+    }
+
+    private func loadRegion(_ node: ParseNode, into module: Module) {
+        guard case let .region(members) = node else {
+            fatalError("invalid call to loadRegion")
+        }
+
+        let region = Region()
+
+        // Initialize the members.
+        for (name, initialValue) in members {
+            do {
+                try region.set(name, to: try evalInitializer(initialValue, in: module))
+            } catch {
+                logger.error("defregion \(module.name): \(error)")
+            }
+        }
+
+        if module.region == nil {
+            module.region = region
+        } else {
+            logger.warning("ignoring duplicate region definition in module \(module.name)")
+        }
     }
 
     private func loadExtension(_ node: ParseNode, into module: Module) {

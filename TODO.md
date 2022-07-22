@@ -31,3 +31,7 @@
 - give command
 
 - fix enums to use snake case as their value representation
+
+- gather command, gathering nodes
+
+- location inherit domain from region?
