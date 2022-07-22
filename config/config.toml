@@ -6,4 +6,4 @@ port = 8000
 root_path = "/Users/craig/Projects/Wyrm/World"
 database_path = "/var/wyrm/wyrm.db"
 avatar_prototype = "lib.avatar"
-start_location = "isle_of_dawn.hilltop"
+start_location = "isleOfDawn.hilltop"
