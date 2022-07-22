@@ -88,7 +88,7 @@ extension Avatar {
         if first != inventory.endIndex {
             show("You give \(inventory[first...].describe()) to \(target.describeBriefly([.definite])).")
             for item in inventory.contents[first...] {
-                triggerEvent("give_item", in: location, participants: [self, item, target],
+                triggerEvent("giveItem", in: location, participants: [self, item, target],
                              args: [self, item, target]) {}
             }
             // FIXME:

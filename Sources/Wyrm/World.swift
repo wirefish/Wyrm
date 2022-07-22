@@ -203,10 +203,10 @@ extension World {
     func start() {
         logger.info("starting \(locations.count) locations")
         for location in locations {
-            location.handleEvent(.when, "start_world", args: [])
+            location.handleEvent(.when, "startWorld", args: [])
             for entity in location.contents {
                 entity.location = location
-                entity.handleEvent(.when, "start_world", args: [])
+                entity.handleEvent(.when, "startWorld", args: [])
             }
         }
     }

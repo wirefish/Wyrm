@@ -12,6 +12,7 @@ def routeFollower: location {
             addExit(entries[pos], dest)
             addExit(route[pos], self)
             announce(dest, 3, "{self.name} arrives at {dest.name}.")
+            updateMap(dest)
             await sleep(20)
 
             // Announce departure to the next destination.
@@ -24,6 +25,8 @@ def routeFollower: location {
             announce(dest, 3, "{self.name} departs for {nextDest.name}.")
             removeExit(entries[pos].direction, dest)
             removeExit(route[pos].direction, self)
+            updateMap(dest)
+            updateMap(self)
             await sleep(3)
 
             pos = nextPos

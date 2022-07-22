@@ -178,7 +178,7 @@ struct QuestOffer: Offer {
             return
         }
 
-        triggerEvent("accept_quest", in: avatar.location, participants: [avatar, questgiver],
+        triggerEvent("acceptQuest", in: avatar.location, participants: [avatar, questgiver],
                              args: [avatar, quest, questgiver]) {
             let phase = quest.phases.first!
             avatar.activeQuests[quest.ref] = QuestState(phase: phase.label, state: phase.initialState)

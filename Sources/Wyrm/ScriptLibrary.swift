@@ -42,6 +42,7 @@ struct ScriptLibrary {
         ("tell", wrap(tell)),
         ("travel", wrap(travel)),
         ("trunc", wrap(trunc)),
+        ("updateMap", wrap(updateMap)),
     ]
 
     // Basic utility functions.
@@ -95,9 +96,7 @@ struct ScriptLibrary {
     static func announce(location: Location, radius: Int, message: String) {
         let map = Map(at: location, radius: radius)
         for cell in map.cells {
-            for entity in cell.location.contents {
-                (entity as? Avatar)?.showNotice(message)
-            }
+            cell.location.updateAll { $0.showNotice(message) }
         }
     }
 
@@ -110,11 +109,18 @@ struct ScriptLibrary {
     }
 
     static func showNear(actor: PhysicalEntity, message: String) {
-        actor.location.showAll(message)
+        actor.location.updateAll { $0.show(message) }
     }
 
     static func tell(actor: PhysicalEntity, avatar: Avatar, message: String) {
         avatar.showSay(actor, "says", message, false)
+    }
+
+    static func updateMap(location: Location) {
+        let map = Map(at: location)
+        for cell in map.cells {
+            cell.location.updateAll { $0.showMap() }
+        }
     }
 
     // Functions that change attributes of an avatar.
@@ -159,18 +165,13 @@ struct ScriptLibrary {
     }
 
     static func travel(actor: PhysicalEntity, exit: Portal) -> Bool {
-        guard let destRef = exit.destination,
-              let dest = World.instance.lookup(destRef)?.asEntity(Location.self) else {
-            return false
-        }
-        actor.travel(to: dest, direction: exit.direction, via: exit)
-        return true
+        return actor.travel(via: exit)
     }
 
     // Quest-related functions.
 
     static func offerQuest(npc: PhysicalEntity, quest: Quest, avatar: Avatar) -> Bool {
-        return triggerEvent("offer_quest", in: avatar.location, participants: [npc, avatar],
+        return triggerEvent("offerQuest", in: avatar.location, participants: [npc, avatar],
                             args: [npc, quest, avatar]) {
             avatar.receiveOffer(QuestOffer(questgiver: npc, quest: quest))
             avatar.showNotice("""

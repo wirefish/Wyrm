@@ -102,10 +102,10 @@ class Location: Entity {
         }
     }
 
-    func showAll(_ message: String) {
+    func updateAll(_ fn: (Avatar) -> Void) {
         for entity in contents {
             if let avatar = entity as? Avatar {
-                avatar.show(message)
+                fn(avatar)
             }
         }
     }

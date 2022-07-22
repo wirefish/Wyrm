@@ -12,7 +12,7 @@ class Map {
     let radius: Int
     var cells: [Cell]
 
-    init(at startLocation: Location, radius: Int) {
+    init(at startLocation: Location, radius: Int = 3) {
         self.radius = radius
         guard case let .absolute(moduleName, _) = startLocation.ref,
               let module = World.instance.modules[moduleName] else {
@@ -55,7 +55,7 @@ extension Avatar {
     static let trainerBit = 1 << 16
 
     func showMap() {
-        let map = Map(at: location, radius: 3)
+        let map = Map(at: location)
         sendMessage("showMap",
                     .string(location.name),
                     .string(location.region?.name ?? ""),

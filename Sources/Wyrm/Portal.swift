@@ -119,42 +119,54 @@ let goCommand = Command("go|head direction", aliases: goAliases, help: goHelp) {
     }
     let portal = matches.first!
 
-    guard let destinationRef = portal.destination,
-          let destination = World.instance.lookup(destinationRef, context: location.ref!)?
-            .asEntity(Location.self) else {
-        actor.show("A strange force prevents you from going that way.")
-        return
-    }
-
-    actor.travel(to: destination, direction: portal.direction, via: portal)
+    actor.travel(via: portal)
 }
 
 // MARK: - travel-related extensions
 
 extension PhysicalEntity {
-    func travel(to destination: Location, direction: Direction, via portal: Portal) {
+    @discardableResult
+    func travel(via portal: Portal) -> Bool {
         let avatar = self as? Avatar
-        let entry = destination.findExit(direction.opposite)
+
         guard let location = self.container as? Location else {
             avatar?.show("You don't have any way to leave this place.")
-            return
+            return false
         }
 
-        guard triggerEvent("exit_location", in: location, participants: [self, portal],
+        guard let destinationRef = portal.destination,
+              let destination = World.instance.lookup(destinationRef, context: location.ref!)?
+                .asEntity(Location.self) else {
+            avatar?.show("A strange force prevents you from going that way.")
+            return false
+        }
+
+        let entry = destination.findExit(portal.direction.opposite)
+        guard triggerEvent("exitLocation", in: location, participants: [self, portal],
                            args: [self, location, portal], body: {
             avatar?.willExitLocation(via: portal)
             location.remove(self)
-            location.showAll("\(self.describeBriefly([.capitalized, .indefinite])) heads \(portal.direction).")
+            let exitMessage = "\(self.describeBriefly([.capitalized, .indefinite])) heads \(portal.direction)."
+            location.updateAll {
+                $0.show(exitMessage)
+                $0.removeNeighbor(self)
+            }
         }) else {
-            return
+            return false
         }
 
-        triggerEvent("enter_location", in: destination, participants: [self, entry!],
+        triggerEvent("enterLocation", in: destination, participants: [self, entry!],
                      args: [self, destination, entry!]) {
-            destination.showAll("\(self.describeBriefly([.capitalized, .indefinite])) arrives from the \(entry!.direction).")
+            let enterMessage = "\(self.describeBriefly([.capitalized, .indefinite])) arrives from the \(entry!.direction)."
+            destination.updateAll {
+                $0.show(enterMessage)
+                $0.updateNeighbor(self)
+            }
             destination.insert(self)
             avatar?.didEnterLocation(via: entry!)
         }
+
+        return true
     }
 }
 

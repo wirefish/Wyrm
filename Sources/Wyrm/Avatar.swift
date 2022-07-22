@@ -225,7 +225,7 @@ extension Avatar: WebSocketDelegate {
             updateInventory(inventory)
             updateEquipment(equipped.keys)
 
-            triggerEvent("enter_location", in: location, participants: [self],
+            triggerEvent("enterLocation", in: location, participants: [self],
                          args: [self, location]) {
                 location.insert(self)
                 locationChanged()
