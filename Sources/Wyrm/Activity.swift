@@ -4,6 +4,7 @@
 //
 
 protocol Activity: AnyObject {
+    var name: String { get }
     func begin()
     func cancel()
 }
@@ -31,35 +32,6 @@ extension Actor {
 
     func activityFinished() {
         self.activity = nil
-    }
-}
-
-class RepeatedActivity<T: Actor>: Activity {
-    weak var actor: T?
-    let firstDelay: Double
-    let delay: Double
-    let body: (T) -> Void
-
-    init(actor: T, delay: Double, firstDelay: Double? = nil, body: @escaping (T) -> Void) {
-        self.actor = actor
-        self.firstDelay = firstDelay ?? delay
-        self.delay = delay
-        self.body = body
-    }
-
-    func begin() {
-        World.schedule(delay: firstDelay) { self.perform() }
-    }
-
-    func cancel() {
-        self.actor = nil
-    }
-
-    private func perform() {
-        if let actor = self.actor {
-            self.body(actor)
-            World.schedule(delay: self.delay) { self.perform() }
-        }
     }
 }
 

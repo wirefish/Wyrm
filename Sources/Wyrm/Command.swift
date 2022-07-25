@@ -328,6 +328,7 @@ let allCommands = [
     attackCommand,
     declineCommand,
     equipCommand,
+    gatherCommand,
     goCommand,
     helpCommand,
     inventoryCommand,

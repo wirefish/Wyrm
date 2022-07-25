@@ -7,6 +7,8 @@
 
 import Foundation
 
+// MARK: - Race
+
 final class Race: ValueDictionary, CustomDebugStringConvertible {
     let ref: ValueRef
     var brief: NounPhrase?
@@ -37,12 +39,37 @@ final class Race: ValueDictionary, CustomDebugStringConvertible {
     var debugDescription: String { "<Race \(ref)>" }
 }
 
-enum Gender: Codable, ValueRepresentableEnum {
-    case male, female
+// MARK: - Skill
 
-    static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
-        (String(describing: $0), $0)
-    })
+final class Skill: ValueDictionary, Matchable, CustomDebugStringConvertible {
+    let ref: ValueRef
+    var name: String?
+    var description: String?
+    var maxRank = 200
+
+    init(ref: ValueRef) {
+        self.ref = ref
+    }
+
+    static let accessors = [
+        "name": Accessor(\Skill.name),
+        "description": Accessor(\Skill.description),
+        "maxRank": Accessor(\Skill.maxRank),
+    ]
+
+    func get(_ member: String) -> Value? {
+        getMember(member, Self.accessors)
+    }
+
+    func set(_ member: String, to value: Value) throws {
+        try setMember(member, to: value, Self.accessors)
+    }
+
+    var debugDescription: String { "<Skill \(ref)>" }
+
+    func match(_ tokens: ArraySlice<String>) -> MatchQuality {
+        return name?.match(tokens) ?? .none
+    }
 }
 
 // XP required to for from level - 1 to level.
@@ -59,6 +86,16 @@ func xpAwardedForLevel(_ level: Int) -> Int {
 // Base XP awarded for completing a quest of a given level.
 func questXPForLevel(_ level: Int) -> Int {
     100 + 100 * level
+}
+
+// MARK: - Avatar
+
+enum Gender: Codable, ValueRepresentableEnum {
+    case male, female
+
+    static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
+        (String(describing: $0), $0)
+    })
 }
 
 final class Avatar: PhysicalEntity {

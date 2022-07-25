@@ -17,6 +17,7 @@ enum Value: Equatable {
     case entity(Entity)
     case quest(Quest)
     case race(Race)
+    case skill(Skill)
     case list(ValueList)
     case function(Callable)
     case module(Module)
@@ -35,6 +36,7 @@ enum Value: Equatable {
         case let .entity(e): return e
         case let .quest(q): return q
         case let .race(r): return r
+        case let .skill(s): return s
         case let .module(m): return m
         default: return nil
         }

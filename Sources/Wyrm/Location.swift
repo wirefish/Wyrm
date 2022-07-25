@@ -114,6 +114,7 @@ class Location: Entity {
 // MARK: - meditate command
 
 class Meditation: Activity {
+    let name = "meditating"
     weak var avatar: Avatar?
     let duration: Double
 

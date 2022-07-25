@@ -176,6 +176,7 @@ func damage(effectiveAttack: Double, weapon: Weapon) -> Int {
 
 // FIXME: This is a placeholder just to allow quest advancement.
 class Combat: Activity {
+    let name = "in combat"  // FIXME: with ...
     weak var avatar: Avatar?
     weak var target: Creature?
     let duration: Double
