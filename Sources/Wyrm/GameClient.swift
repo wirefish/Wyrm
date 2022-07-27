@@ -144,20 +144,16 @@ extension Avatar {
     }
 }
 
-struct AvatarState {
-    var name: String? {
-        didSet {
-            changes["name"] = .string(name)
-        }
+struct AvatarProperties: Encodable {
+    var name: String? = nil
+    var icon: String? = nil
+    var level: Int? = nil
+    var xp: Int? = nil
+    var maxXP: Int? = nil
+}
+
+extension Avatar {
+    func updateSelf(_ properties: AvatarProperties) {
+        sendMessage("updateAvatar", [properties])
     }
-
-    var level: Int?
-
-    var raceName: String? {
-        didSet {
-            changes["race"] = .string(raceName)
-        }
-    }
-
-    var changes = [String:ClientValue]()
 }

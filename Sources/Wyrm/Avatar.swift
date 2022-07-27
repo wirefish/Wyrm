@@ -72,23 +72,7 @@ final class Skill: ValueDictionary, Matchable, CustomDebugStringConvertible {
     }
 }
 
-// XP required to for from level - 1 to level.
-func xpRequiredForLevel(_ level: Int) -> Int {
-    1000 + (level - 1) * (level - 2) * 500
-}
-
-// Base XP awarded for killing a creature of a given level. This can be reduced
-// if the killer's level is higher.
-func xpAwardedForLevel(_ level: Int) -> Int {
-    10 + 10 * level
-}
-
-// Base XP awarded for completing a quest of a given level.
-func questXPForLevel(_ level: Int) -> Int {
-    100 + 100 * level
-}
-
-// MARK: - Avatar
+// MARK: - Gender
 
 enum Gender: Codable, ValueRepresentableEnum {
     case male, female
@@ -97,6 +81,8 @@ enum Gender: Codable, ValueRepresentableEnum {
         (String(describing: $0), $0)
     })
 }
+
+// MARK: - Avatar
 
 final class Avatar: PhysicalEntity {
     var level = 1
@@ -118,6 +104,9 @@ final class Avatar: PhysicalEntity {
 
     // A mapping from identifiers of completed quests to the time of completion.
     var completedQuests = [ValueRef:Int]()
+
+    // Karma available to learn skills.
+    var karma = 0
 
     // Current rank in all known skills.
     var skills = [ValueRef:Int]()
@@ -162,6 +151,39 @@ final class Avatar: PhysicalEntity {
     override func describeBriefly(_ format: Text.Format) -> String {
         name ?? race?.describeBriefly(format) ?? super.describeBriefly(format)
     }
+
+    static let karmaPerLevel = 10
+
+    func gainXP(_ amount: Int) {
+        show("You gain \(amount) experience.")
+        xp += amount
+        let required = xpRequiredForLevel(level + 1)
+        var update = AvatarProperties()
+        if xp >= required {
+            level += 1
+            xp -= required
+            showNotice("You are now level \(level)!")
+            show("You gain \(Self.karmaPerLevel) karma.")
+            karma += Self.karmaPerLevel
+
+            // TODO: update karma on skills pane
+            update.xp = xp
+            update.maxXP = xpRequiredForLevel(level + 1)
+        } else {
+            update.xp = xp
+        }
+        updateSelf(update)
+    }
+}
+
+// XP required to for from level - 1 to level.
+func xpRequiredForLevel(_ level: Int) -> Int {
+    1000 + (level - 1) * (level - 2) * 500
+}
+
+// Base XP awarded for completing a quest of a given level.
+func questXPForLevel(_ level: Int) -> Int {
+    100 + 100 * level
 }
 
 // MARK: - as Codable
@@ -169,7 +191,7 @@ final class Avatar: PhysicalEntity {
 extension Avatar: Codable {
     enum CodingKeys: CodingKey {
         case location, level, xp, race, gender, name, inventory, equipped
-        case activeQuests, completedQuests, skills, tutorialsOn, tutorialsSeen
+        case activeQuests, completedQuests, karma, skills, tutorialsOn, tutorialsSeen
     }
 
     convenience init(from decoder: Decoder) throws {
@@ -205,6 +227,9 @@ extension Avatar: Codable {
         equipped = try c.decode([EquipmentSlot:Equipment].self, forKey: .equipped)
         activeQuests = try c.decode([ValueRef:QuestState].self, forKey: .activeQuests)
         completedQuests = try c.decode([ValueRef:Int].self, forKey: .completedQuests)
+        if let karma = try? c.decodeIfPresent(Int.self, forKey: .karma) {
+            self.karma = karma
+        }
         skills = try c.decode([ValueRef:Int].self, forKey: .skills)
 
         tutorialsOn = try c.decode(Bool.self, forKey: .tutorialsOn)
@@ -225,6 +250,7 @@ extension Avatar: Codable {
         try c.encode(equipped, forKey: .equipped)
         try c.encode(activeQuests, forKey: .activeQuests)
         try c.encode(completedQuests, forKey: .completedQuests)
+        try c.encode(karma, forKey: .karma)
         try c.encode(skills, forKey: .skills)
         try c.encode(tutorialsOn, forKey: .tutorialsOn)
         try c.encode(tutorialsSeen, forKey: .tutorialsSeen)
@@ -251,17 +277,12 @@ extension Avatar: WebSocketDelegate {
         self.handler = handler
 
         if reconnecting {
-            sendMessage("showNotice", .string("Welcome back!"))
-            // TODO: update entire UI state.
-            updateInventory(inventory)
-            updateEquipment(equipped.keys)
+            showNotice("Welcome back!")
             locationChanged()
         } else {
-            // FIXME: figure out a portal to use.
-            // TODO: update entire UI state.
-            updateInventory(inventory)
-            updateEquipment(equipped.keys)
+            showNotice("Welcome to Atalea!")
 
+            // FIXME: figure out a portal to use.
             triggerEvent("enterLocation", in: location, participants: [self],
                          args: [self, location]) {
                 location.insert(self)
@@ -270,6 +291,14 @@ extension Avatar: WebSocketDelegate {
 
             savePeriodically()
         }
+
+        updateInventory(inventory)
+        updateEquipment(equipped.keys)
+
+        var update = AvatarProperties()
+        update.xp = xp
+        update.maxXP = xpRequiredForLevel(level + 1)
+        updateSelf(update)
     }
 
     func onClose(_ handler: WebSocketHandler) {
