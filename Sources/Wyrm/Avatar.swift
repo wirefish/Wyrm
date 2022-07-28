@@ -154,10 +154,14 @@ final class Avatar: PhysicalEntity {
 
     static let karmaPerLevel = 10
 
+    func xpRequiredForNextLevel() -> Int {
+        1000 + level * (level - 1) * 500
+    }
+
     func gainXP(_ amount: Int) {
         show("You gain \(amount) experience.")
         xp += amount
-        let required = xpRequiredForLevel(level + 1)
+        let required = xpRequiredForNextLevel()
         var update = AvatarProperties()
         if xp >= required {
             level += 1
@@ -168,7 +172,7 @@ final class Avatar: PhysicalEntity {
 
             // TODO: update karma on skills pane
             update.xp = xp
-            update.maxXP = xpRequiredForLevel(level + 1)
+            update.maxXP = xpRequiredForNextLevel()
         } else {
             update.xp = xp
         }
@@ -176,14 +180,9 @@ final class Avatar: PhysicalEntity {
     }
 }
 
-// XP required to for from level - 1 to level.
-func xpRequiredForLevel(_ level: Int) -> Int {
-    1000 + (level - 1) * (level - 2) * 500
-}
-
 // Base XP awarded for completing a quest of a given level.
 func questXPForLevel(_ level: Int) -> Int {
-    100 + 100 * level
+    150 + 150 * level
 }
 
 // MARK: - as Codable
@@ -297,7 +296,7 @@ extension Avatar: WebSocketDelegate {
 
         var update = AvatarProperties()
         update.xp = xp
-        update.maxXP = xpRequiredForLevel(level + 1)
+        update.maxXP = xpRequiredForNextLevel()
         updateSelf(update)
     }
 

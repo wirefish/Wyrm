@@ -130,22 +130,26 @@ extension Combatant {
     // Base XP awarded for killing a combatant based on its level. This can be
     // reduced if the killer's level is higher.
     func xpValue() -> Int {
-        10 + 10 * level
+        30 + 5 * level
     }
 }
 
 extension Avatar {
+    // Returns a dictionary containing all of the avatar's combat trait values,
+    // taking into account all modifiers from race, auras, and equipment.
     func computeTraits() -> [CombatTrait:Double] {
-        // TODO: take race and auras into account
+        // Base values derived from level.
         var traits: [CombatTrait:Double] = [
             .power: Double(level + 1) * 10.0,
             .protection: Double(level + 1) * 10.0,
         ]
+        // Add values from equipment.
         for item in equipped.values {
             if let trait = item.trait {
                 traits[trait, default: 0.0] += item.traitValue
             }
         }
+        // TODO: take race and auras into account
         return traits
     }
 }
@@ -224,7 +228,7 @@ class Combat: Activity {
                     avatar.gainXP(target.xpValue())
 
                     // FIXME: drop loot for all combatants
-                    
+
                     // FIXME: exit_location or exit_world event
                     avatar.location.remove(target)
                 }
