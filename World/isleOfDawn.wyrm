@@ -1195,7 +1195,7 @@ def lashling: creature {
         spawn(lashling, self.location, 15)
     }
 
-    after kill(actor, self, weapon) {
+    after kill(actor: .quest(killSomePlants, active), self, weapon) {
         advanceQuest(actor, killSomePlants)
     }
 }
