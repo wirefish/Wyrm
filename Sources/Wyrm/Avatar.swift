@@ -180,11 +180,6 @@ final class Avatar: PhysicalEntity {
     }
 }
 
-// Base XP awarded for completing a quest of a given level.
-func questXPForLevel(_ level: Int) -> Int {
-    150 + 150 * level
-}
-
 // MARK: - as Codable
 
 extension Avatar: Codable {

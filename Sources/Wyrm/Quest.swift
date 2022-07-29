@@ -118,6 +118,10 @@ final class Quest: ValueDictionary, CustomDebugStringConvertible, Matchable {
     func completableBy(_ avatar: Avatar) -> Bool {
         return avatar.activeQuests[ref]?.phase == phases.last!.label
     }
+
+    var xpValue: Int {
+        150 + 150 * level
+    }
 }
 
 protocol Questgiver {
@@ -269,6 +273,8 @@ extension Avatar {
 
         // Clean up forgotten quest items.
         discardItems { $0.quest == quest.ref }
+
+        gainXP(quest.xpValue)
 
         // FIXME:
         showMap()
