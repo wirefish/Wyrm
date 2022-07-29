@@ -457,7 +457,7 @@ extension World {
                 logger.warning("cannot apply extension to undefined entity \(ext.ref)")
                 continue
             }
-            entity.handlers += ext.handlers
+            entity.handlers = ext.handlers + entity.handlers
             entity.extraMembers.merge(ext.methods) { (old, new) -> Value in
                 logger.warning("extension cannot replace existing method")
                 return old
