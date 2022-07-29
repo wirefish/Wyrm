@@ -184,6 +184,10 @@ extension Avatar {
             updateEquipment([slot])
         }
     }
+
+    func hasEquipped(_ ref: ValueRef) -> Bool {
+        return equipped.values.contains { $0.isa(ref) }
+    }
 }
 
 // MARK: - inventory command

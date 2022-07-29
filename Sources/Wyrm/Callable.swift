@@ -25,10 +25,21 @@ enum Constraint: Equatable {
     // The argument must be an entity that has the specified entity in its prototype chain.
     case prototype(ValueRef)
 
-    // The argument must be an avatar that is currently at the specified phase of the
-    // specified quest. The meta-phase "available" means the quest can be accepted; the
-    // meta-phase "complete" means the quest has been completed.
+    // The argument must be an avatar that is currently at the specified phase
+    // of the specified quest. In addition to the phases defined by the quest,
+    // the following pseudo-phases can be used:
+    //
+    // "available" means the quest can be offered;
+    // "offered" means the quest has been offered but not accepted;
+    // "incomplete" means the quest has been accepted but not completed; and
+    // "complete" means the quest has been completed.
     case quest(ValueRef, String)
+
+    // The argument must be an avatar with the specified race.
+    case race(ValueRef)
+
+    // The argument must be an avatar with the specified item equipped.
+    case equipped(ValueRef)
 }
 
 struct Parameter {

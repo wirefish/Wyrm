@@ -35,21 +35,21 @@ struct EventHandler {
                     return false
                 }
             case let .quest(ref, phase):
-                guard let avatar = arg.asEntity(Avatar.self),
+                guard let avatar = Avatar.fromValue(arg),
                       case let .quest(quest) = World.instance.lookup(ref, context: fn.module) else {
                     return false
                 }
-                if phase == "available" {
-                    return quest.acceptableBy(avatar)
-                } else if phase == "offered" {
-                    return (avatar.offer as? QuestOffer)?.quest === quest
-                } else if phase == "complete" {
-                    return avatar.completedQuests[quest.ref] != nil
-                } else if phase == "incomplete" {
-                    return avatar.completedQuests[quest.ref] == nil
-                } else {
-                    return avatar.activeQuests[quest.ref]?.phase == phase
+                switch phase {
+                case "available": return quest.acceptableBy(avatar)
+                case "offered": return (avatar.offer as? QuestOffer)?.quest === quest
+                case "complete": return avatar.completedQuests[quest.ref] != nil
+                case "incomplete": return avatar.activeQuests[quest.ref]?.phase == phase
+                default: return avatar.activeQuests[quest.ref]?.phase == phase
                 }
+            case let .race(ref):
+                return Avatar.fromValue(arg)?.race?.ref == ref
+            case let .equipped(ref):
+                return Avatar.fromValue(arg)?.hasEquipped(ref) ?? false
             }
         }
     }
