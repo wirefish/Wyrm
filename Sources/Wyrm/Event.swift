@@ -27,12 +27,9 @@ struct EventHandler {
             case let .prototype(ref):
                 let ref = ref.toAbsolute(in: fn.module)
                 switch arg {
-                case let .entity(entity):
-                    return entity.isa(ref)
-                case let .quest(quest):
-                    return quest.ref == ref
-                default:
-                    return false
+                case let .entity(entity): return entity.isa(ref)
+                case let .quest(quest): return quest.ref == ref
+                default: return false
                 }
             case let .quest(ref, phase):
                 guard let avatar = Avatar.fromValue(arg),
