@@ -46,6 +46,10 @@ final class Skill: ValueDictionary, Matchable, CustomDebugStringConvertible {
     var name: String?
     var description: String?
     var maxRank = 200
+    var karmaPrice: Int?
+    var currencyPrice: Item?
+    var requiredSkills: [ValueRef]?
+    var exclusiveSkills: [ValueRef]?
 
     init(ref: ValueRef) {
         self.ref = ref
@@ -55,6 +59,10 @@ final class Skill: ValueDictionary, Matchable, CustomDebugStringConvertible {
         "name": Accessor(\Skill.name),
         "description": Accessor(\Skill.description),
         "maxRank": Accessor(\Skill.maxRank),
+        "karmaPrice": Accessor(\Skill.karmaPrice),
+        "currencyPrice": Accessor(\Skill.currencyPrice),
+        "requiredSkills": Accessor(\Skill.requiredSkills),
+        "exclusiveSkills": Accessor(\Skill.exclusiveSkills),
     ]
 
     func get(_ member: String) -> Value? {
