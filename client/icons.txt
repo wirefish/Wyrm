@@ -87,4 +87,5 @@ pink_creature   $unknown/smile-creature.png
 arched_chest    $loot/Chest_Type_1.png
 flat_chest      $loot/Chest_Type_2.png
 sack            $loot/Sack.png
+seashell        $loot/Sea_Shell.png
 tombstone       $unknown/tombstone.png

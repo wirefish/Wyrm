@@ -1278,6 +1278,7 @@ def shinySeashell: item {
     alts = ["a shiny shell"]
     stackLimit = 10
     size = 'tiny
+    icon = 'seashell
 
     when take(actor, self, source) {
         spawn(shinySeashell, source, random(1800, 7200))

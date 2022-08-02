@@ -54,7 +54,7 @@ function look(s) {
 
 function setIcon(element, icon) {
     if (icon)
-        element.style.backgroundImage = "url('icons/{0}.png')".format(icon);
+        element.className = 'icon ' + icon;
 }
 
 //
@@ -221,8 +221,7 @@ MessageHandler.prototype.updateInventory = function(inventory) {
             } else {
                 div = document.createElement('div');
                 div.id = 'inv_' + id;
-                if (item.icon)
-                    setIcon(div, item.icon);
+                setIcon(div, item.icon);
                 div.innerHTML = item.brief;
                 contents_div.insertBefore(div, null);
             }

@@ -445,9 +445,6 @@ a:link {
     height: 24px;
     text-indent: 28px;
     line-height: 20px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: left;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
@@ -478,9 +475,6 @@ a:link {
     margin-top: 3px;
     line-height: 20px;
     text-indent: 28px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: left;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;

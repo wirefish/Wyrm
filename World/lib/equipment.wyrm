@@ -22,6 +22,7 @@ def backpack: equipment {
     brief = "a backpack"
     slot = 'backpack
     capacity = 20
+    icon = 'backpack
 }
 
 // accessories
@@ -37,6 +38,7 @@ def dagger: weapon {
     slot = 'eitherHand
     damageType = 'piercing
     speed = 1.5
+    icon = 'dagger
 }
 
 // natural weapons

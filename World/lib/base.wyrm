@@ -99,6 +99,7 @@ def bronzePickaxe: pickaxe {
 def silverCoin: item {
     brief = "a silver coin"
     description = "Silver coins are the common currency of the realm."
+    icon = 'silver_coin
     stackLimit = 10000
 }
 

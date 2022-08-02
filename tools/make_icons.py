@@ -40,18 +40,13 @@ if __name__ == "__main__":
     with open(args.manifest[0]) as f:
         icons = read_manifest(f)
 
-    cols = math.ceil(math.sqrt(len(icons)))
-    rows = math.ceil(len(icons) / cols)
-
-    sheet = Image.new("RGBA", (cols * args.size, rows * args.size))
+    sheet = Image.new("RGBA", (args.size, len(icons) * args.size))
     offsets = {}
     for i, (name, path) in enumerate(icons.items()):
         with Image.open(path) as image:
             icon = image.resize((args.size, args.size))
-        x = (i % cols) * args.size
-        y = (i // cols) * args.size
-        sheet.paste(icon, (x, y))
-        offsets[name] = (x, y)
+        sheet.paste(icon, (0, i * args.size))
+        offsets[name] = (0, i * args.size)
 
     base = os.path.join(args.output_dir, args.base_name)
     sheet.save(base + ".png", "PNG")
