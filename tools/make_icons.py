@@ -40,19 +40,25 @@ if __name__ == "__main__":
     with open(args.manifest[0]) as f:
         icons = read_manifest(f)
 
-    sheet = Image.new("RGBA", (args.size, len(icons) * args.size))
+    images = [Image.new("RGBA", (args.size, len(icons) * args.size)),
+              Image.new("RGBA", (args.size * 2, len(icons) * args.size * 2))]
     offsets = {}
+
     for i, (name, path) in enumerate(icons.items()):
-        with Image.open(path) as image:
-            icon = image.resize((args.size, args.size))
-        sheet.paste(icon, (0, i * args.size))
+        with Image.open(path) as icon:
+            images[0].paste(icon.resize((args.size, args.size)), (0, i * args.size))
+            images[1].paste(icon.resize((args.size * 2, args.size * 2)), (0, i * args.size * 2))
         offsets[name] = (0, i * args.size)
 
     base = os.path.join(args.output_dir, args.base_name)
-    sheet.save(base + ".png", "PNG")
+    images[0].save(base + ".png", "PNG")
+    images[1].save(base + "@2x.png", "PNG")
 
     with open(base + ".css", "w") as f:
-        f.write(f".icon {{ background-image: url('images/{args.base_name}.png'); background-repeat: no-repeat; }}\n")
+        f.write(".icon {\n")
+        f.write(f"  background-image: image-set(url('images/{args.base_name}.png') 1x, url('images/{args.base_name}@2x.png') 2x);\n")
+        f.write(f"  background-repeat: no-repeat;")
+        f.write("}\n")
         for name, (x, y) in offsets.items():
             f.write(f".{name} {{ background-position: -{x}px -{y}px; }}\n")
 

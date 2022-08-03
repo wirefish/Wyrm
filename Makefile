@@ -5,8 +5,8 @@ CLIENTDIR = $(BUILDDIR)/client
 MDFILES = $(wildcard client/*.md)
 CPFILES = $(wildcard client/*.css) $(wildcard client/*.js) client/game.html
 
-.PHONY: client html images fonts
-client: html images fonts
+.PHONY: client html images fonts icons
+client: html images fonts icons
 
 html: $(MDFILES:%.md=$(BUILDDIR)/%.html) $(CPFILES:%=$(BUILDDIR)/%)
 
@@ -28,7 +28,7 @@ $(CLIENTDIR):
 FONTDIR = $(CLIENTDIR)/fonts
 FONTS = $(wildcard client/fonts/*.woff)
 fonts: $(FONTS:%=$(BUILDDIR)/%)
-$(CLIENTDIR)/fonts/%: client/fonts/% | $(FONTDIR)
+$(FONTDIR)/%: client/fonts/% | $(FONTDIR)
 	cp $< $@
 $(FONTDIR):
 	@mkdir -p $@
@@ -36,10 +36,15 @@ $(FONTDIR):
 IMAGEDIR = $(BUILDDIR)/client/images
 IMAGES = $(wildcard client/images/*)
 images: $(IMAGES:%=$(BUILDDIR)/%)
-$(CLIENTDIR)/images/%: client/images/% | $(IMAGEDIR)
+$(IMAGEDIR)/%: client/images/% | $(IMAGEDIR)
 	cp $< $@
 $(IMAGEDIR):
 	@mkdir -p $@
+
+icons: $(IMAGEDIR)/icons.png
+$(IMAGEDIR)/icons.png: tools/make_icons.py client/icons.txt | $(IMAGEDIR)
+	tools/make_icons.py client/icons.txt -o $(IMAGEDIR)
+	mv $(IMAGEDIR)/icons.css $(CLIENTDIR)
 
 # Documentation
 
