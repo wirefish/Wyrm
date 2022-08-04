@@ -1310,7 +1310,7 @@ def daggerVendor: lib.npc {
     description = |
         Jimmy is a greasy-haired young man whose eyes dart around nervously, as
         if he expects someone to leap from the shadows at any moment.
-    sells = []  // FIXME: [lib.copperDagger, lib.bronzeDagger]
+    sells = [lib.copperDagger, lib.bronzeDagger]
 
     when talk(actor: .quest(talkingShop, active), self, topic) {
         tell(self, actor) |
