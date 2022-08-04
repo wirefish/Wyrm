@@ -1043,7 +1043,7 @@ def maceVendor: lib.npc {
         Maury is a burly man with a full beard and little hair left atop his
         head. He looks strong enough to crack a few skulls without the aid of
         the weapons he sells.
-    sells = []  // FIXME: [copperMace, bronzeMace, copperMaul, bronzeMaul]
+    sells = [lib.copperMace, lib.bronzeMace, lib.copperMaul, lib.bronzeMaul]
 
     when talk(actor, self, topic) {
         tell(self, actor) |

@@ -34,12 +34,12 @@ def ring: equipment {
 
 // weapon types, related proficiency skills, and starter weapons
 
-// daggers
+// daggers (one-handed piercing)
 
 defskill daggerProficiency {
     name = "dagger proficiency"
     description = |
-        This skill confers proficiency when wielding a dagger.
+        This skill confers proficiency when wielding daggers.
     karmaPrice = 5
 }
 
@@ -63,9 +63,63 @@ def bronzeDagger: dagger {
     price = 20 of silverCoin
 }
 
-// TODO: maces (one-handed crushing)
+// maces (one-handed crushing)
 
-// TODO: mauls (two-handed crushing)
+defskill maceProficiency {
+    name = "mace proficiency"
+    description = |
+        This skill confers proficiency when wielding maces.
+    karmaPrice = 5
+}
+
+def mace: weapon {
+    slot = 'eitherHand
+    damageType = 'crushing
+    speed = 2.5
+    icon = 'mace
+    proficiency = maceProficiency
+}
+
+def copperMace: mace {
+    brief = "a copper mace"
+    level = 1
+    price = 10 of silverCoin
+}
+
+def bronzeMace: mace {
+    brief = "a bronze mace"
+    level = 5
+    price = 20 of silverCoin
+}
+
+// mauls (two-handed crushing)
+
+defskill maulProficiency {
+    name = "maul proficiency"
+    description = |
+        This skill confers proficiency when wielding mauls.
+    karmaPrice = 5
+}
+
+def maul: weapon {
+    slot = 'bothHands
+    damageType = 'crushing
+    speed = 3.0
+    icon = 'mace
+    proficiency = maulProficiency
+}
+
+def copperMaul: maul {
+    brief = "a copper maul"
+    level = 1
+    price = 10 of silverCoin
+}
+
+def bronzeMaul: maul {
+    brief = "a bronze maul"
+    level = 5
+    price = 20 of silverCoin
+}
 
 // TODO: swords (one-handed slashing/piercing)
 
