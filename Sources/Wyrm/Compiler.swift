@@ -483,7 +483,7 @@ class Compiler {
             compile(expr, &block)
             block.emit(.pop)
 
-        case .entity, .quest, .race, .region, .extension:
+        case .entity, .quest, .race, .skill, .region, .extension:
             fatalError("invalid attempt to compile top-level definition")
         }
     }

@@ -17,7 +17,7 @@ enum Token: Hashable {
     case less, lessEqual, greater, greaterEqual
     case and, or
 
-    case def, deflocation, defquest, defrace, defregion, extend
+    case def, deflocation, defquest, defrace, defskill, defregion, extend
     case allow, before, when, after, phase, `func`
     case `if`, `else`, `while`, `for`, `in`, `let`, `var`
     case await, `return`, `fallthrough`
@@ -237,6 +237,7 @@ class Scanner {
         "deflocation": .deflocation,
         "defquest": .defquest,
         "defrace": .defrace,
+        "defskill": .defskill,
         "defregion": .defregion,
         "extend": .extend,
         "allow": .allow,

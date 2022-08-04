@@ -284,6 +284,9 @@ extension World {
             case .race:
                 loadRace(def, into: module)
 
+            case .skill:
+                loadSkill(def, into: module)
+
             case .region:
                 loadRegion(def, into: module)
 
@@ -381,7 +384,6 @@ extension World {
 
         let race = Race(ref: .absolute(module.name, name))
 
-        // Initialize the members.
         for (name, initialValue) in members {
             do {
                 try race.set(name, to: try evalInitializer(initialValue, in: module))
@@ -391,6 +393,24 @@ extension World {
         }
 
         module.bindings[name] = .race(race)
+    }
+
+    private func loadSkill(_ node: ParseNode, into module: Module) {
+        guard case let .skill(name, members) = node else {
+            fatalError("invalid call to loadSkill")
+        }
+
+        let skill = Skill(ref: .absolute(module.name, name))
+
+        for (name, initialValue) in members {
+            do {
+                try skill.set(name, to: try evalInitializer(initialValue, in: module))
+            } catch {
+                logger.error("\(skill.ref) \(name): \(error)")
+            }
+        }
+
+        module.bindings[name] = .skill(skill)
     }
 
     private func loadRegion(_ node: ParseNode, into module: Module) {

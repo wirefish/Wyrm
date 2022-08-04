@@ -91,12 +91,16 @@ class Equipment: Item {
     // Inventory capacity gained by equipping this item.
     var capacity = 0
 
+    // Skill required in order to equip the item without penalty, if any.
+    var proficiency: ValueRef?
+
     override func copyProperties(from other: Entity) {
         let other = other as! Equipment
         slot = other.slot
         quality = other.quality
         trait = other.trait
         capacity = other.capacity
+        proficiency = other.proficiency
         super.copyProperties(from: other)
     }
 
@@ -105,6 +109,7 @@ class Equipment: Item {
         "quality": Accessor(\Equipment.quality),
         "trait": Accessor(\Equipment.trait),
         "capacity": Accessor(\Equipment.capacity),
+        "proficiency": Accessor(\Equipment.proficiency),
     ]
 
     override func get(_ member: String) -> Value? {

@@ -32,16 +32,56 @@ def ring: equipment {
     slot = 'eitherFinger
 }
 
-// weapons
+// weapon types, related proficiency skills, and starter weapons
+
+// daggers
+
+defskill daggerProficiency {
+    name = "dagger proficiency"
+    description = |
+        This skill confers proficiency when wielding a dagger.
+    karmaPrice = 5
+}
 
 def dagger: weapon {
     slot = 'eitherHand
     damageType = 'piercing
     speed = 1.5
     icon = 'dagger
+    proficiency = daggerProficiency
 }
 
-// natural weapons
+def copperDagger: dagger {
+    brief = "a copper dagger"
+    level = 1
+    price = 10 of silverCoin
+}
+
+def bronzeDagger: dagger {
+    brief = "a bronze dagger"
+    level = 5
+    price = 20 of silverCoin
+}
+
+// TODO: maces (one-handed crushing)
+
+// TODO: mauls (two-handed crushing)
+
+// TODO: swords (one-handed slashing/piercing)
+
+// TODO: greatswords (two-handed slashing)
+
+// TODO: axes (one-handed slashing)
+
+// TODO: battleaxes (two-handed slashing)
+
+// TODO: polearms (two-handled slashing/piercing/crushing quarterstaff)
+
+// TODO: wands (one-handed magical)
+
+// TODO: staves (two-handed magical)
+
+// Natural weapons are those attached to a creature's body.
 
 def naturalWeapon: weapon {
     speed = 3.0

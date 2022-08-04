@@ -50,6 +50,7 @@ indirect enum ParseNode {
                 handlers: [Handler], methods: [Method], isLocation: Bool)
     case quest(name: String, members: [Member], phases: [QuestPhase])
     case race(name: String, members: [Member])
+    case skill(name: String, members: [Member])
     case region(members: [Member])
     case `extension`(ref: ValueRef, handlers: [Handler], methods: [Method])
 
@@ -165,6 +166,8 @@ class Parser {
             return parseQuest()
         case .defrace:
             return parseRace()
+        case .defskill:
+            return parseSkill()
         case .defregion:
             return parseRegion()
         case .extend:
@@ -460,6 +463,21 @@ class Parser {
             return nil
         }
         return .race(name: name, members: parseMembers())
+    }
+
+    // MARK: - parsing skills
+
+    private func parseSkill() -> ParseNode? {
+        assert(match(.defskill))
+        guard case let .identifier(name) = consume() else {
+            error("expected identifier after defskill")
+            return nil
+        }
+        guard match(.lbrace) else {
+            error("expected { at start of skill body")
+            return nil
+        }
+        return .skill(name: name, members: parseMembers())
     }
 
     // MARK: - parsing regions
