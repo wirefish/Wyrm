@@ -75,12 +75,15 @@ extension Container {
         }
     }
 
+    // Removes count of item from the container. If count is nil or >= item's
+    // count, removes and returns item. Otherwise, reduces the count of item in
+    // the container and returns a clone reflecting the removed count.
     @discardableResult
     func remove(_ item: Item, count: Int? = nil) -> Item? {
         guard let index = contents.firstIndex(of: item) else {
             return nil
         }
-        let count = (count ?? item.count)
+        let count = count ?? item.count
         if count >= item.count {
             contents.remove(at: index)
             item.container = nil

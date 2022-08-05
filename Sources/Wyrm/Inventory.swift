@@ -13,6 +13,8 @@
 // - unequip: equipped -> inventory
 // - discard: inventory -> nowhere
 
+// MARK: - Inventory
+
 final class Inventory: Container, Codable {
     static let baseCapacity = 5
 
@@ -67,9 +69,9 @@ extension Avatar {
     func discard(_ item: Item, count: Int? = nil) {
         if let removed = inventory.remove(item, count: count) {
             if removed == item {
-                // TODO: remove item from inventory pane
+                removeFromInventory([item])
             } else {
-                // TODO: update inventory pane with item's new count
+                updateInventory([item])
             }
             show("You discard \(removed.describeBriefly([.indefinite])).")
         }
@@ -78,6 +80,7 @@ extension Avatar {
     func discardItems(where pred: (Item) -> Bool) {
         let first = inventory.partition(by: pred)
         if first != inventory.endIndex {
+            removeFromInventory(inventory[first...])
             show("You discard \(inventory[first...].describe()).")
             inventory.remove(from: first)
         }
@@ -91,7 +94,6 @@ extension Avatar {
                 triggerEvent("giveItem", in: location, participants: [self, item, target],
                              args: [self, item, target]) {}
             }
-            // FIXME:
             removeFromInventory(inventory[first...])
             inventory.remove(from: first)
         }
@@ -99,9 +101,7 @@ extension Avatar {
 
     func receiveItems(_ items: [Item], from source: PhysicalEntity) {
         let items = items.map { $0.clone() }
-        items.forEach { inventory.insert($0, force: true) }
-        // FIXME: if the items were merged this update is incorrect.
-        updateInventory(items)
+        updateInventory(items.compactMap { inventory.insert($0, force: true) })
         show("\(source.describeBriefly([.capitalized, .definite])) gives you \(items.describe()).")
     }
 
@@ -116,10 +116,8 @@ extension Avatar {
             triggerEvent("take", in: location, participants: [self, item, location],
                          args: [self, item, location]) {
                 location.remove(item)
-                inventory.insert(item)
                 removeNeighbor(item)
-                // FIXME: if the item was merged this update is incorrect.
-                updateInventory([item])
+                updateInventory([inventory.insert(item)!])
                 show("You take \(item.describeBriefly([.definite])).")
             }
         } else {
@@ -137,11 +135,12 @@ extension Avatar {
             triggerEvent("put", in: location, participants: [self, item, container],
                          args: [self, item, container]) {
                 inventory.remove(item)
+                removeFromInventory([item])
                 container.insert(item)
                 show("You put \(item.describeBriefly([.indefinite])) into \(container.describeBriefly([.definite])).")
             }
         } else {
-            show("\(container.describeBriefly([.capitalized, .definite])) cannot accept any more \(item.describeBriefly([.plural])).")
+            show("\(container.describeBriefly([.capitalized, .definite])) cannot hold any more \(item.describeBriefly([.plural])).")
         }
     }
 
