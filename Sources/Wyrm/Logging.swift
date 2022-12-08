@@ -1,8 +1,6 @@
 //
-//  Logging.swift
-//  Wyrm
-//
-//  Created by Craig Becker on 6/30/22.
+// Logging.swift
+// Wyrm
 //
 
 #if canImport(Darwin)

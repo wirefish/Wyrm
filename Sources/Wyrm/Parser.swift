@@ -107,7 +107,7 @@ class Parser {
     static let parseRules: [Token:InfixParseRule] = [
         .lparen: (method: parseCall, prec: .call),
         .lsquare: (method: parseSubscript, prec: .call),
-        .leads: (method: parseExit, prec: .factor),
+        .arrow: (method: parseExit, prec: .factor),
         .dot: (method: parseDot, prec: .call),
         .minus: (method: parseBinary, prec: .term),
         .minusEqual: (method: parseAssignment, prec: .assign),
@@ -157,7 +157,7 @@ class Parser {
 
         return defs
     }
-    
+
     private func parseDefinition() -> ParseNode? {
         switch currentToken {
         case .def, .deflocation:
@@ -378,7 +378,7 @@ class Parser {
     }
 
     // MARK: - parsing quests
-    
+
     private func parseQuest() -> ParseNode? {
         assert(match(.defquest))
 
@@ -908,7 +908,7 @@ class Parser {
     }
 
     private func parseExit(lhs: ParseNode) -> ParseNode? {
-        assert(match(.leads))
+        assert(match(.arrow))
 
         guard let direction = parseExpr() else {
             return nil

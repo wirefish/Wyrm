@@ -3,7 +3,7 @@
 //  Wyrm
 //
 
-let config = try! Config(contentsOfFile: "/Users/craig/Projects/Wyrm/config/config.toml")
+let config = try! Config(contentsOfFile: "config/config.toml")
 
 let logger = Logger(level: .debug)  // FIXME:
 
