@@ -2,18 +2,17 @@
 // introduction to the game and tutorial for vital mechanics.
 
 defregion {
-  name = "Isle of Dawn"
-  description = <<
-    The souls of ancient heroes are reborn atop a sacred hill in the middle of
-    this small island. The magical energies of the place allow a soul to regain
-    its physical form so it may join the battle against the great evil that
-    threatens Atalea.
-  >>
+    name = "Isle of Dawn"
+    description = |
+        The souls of ancient heroes are reborn atop a sacred hill in the middle
+        of this small island. The magical energies of the place allow a soul to
+        regain its physical form so it may join the battle against the great
+        evil that threatens Atalea.
 }
 
 def isleLocation: location {
-  domain = 'outdoor
-  surface = 'grass
+    domain = 'outdoor
+    surface = 'grass
 }
 
 def gravelPath: portal {
