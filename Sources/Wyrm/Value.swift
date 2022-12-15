@@ -59,10 +59,6 @@ enum Value: Equatable {
         }
         return false
     }
-
-    func to<T: ValueRepresentable>(_ t: T.Type) -> T? {
-        return T.fromValue(self)
-    }
 }
 
 // MARK: - ValueList
@@ -104,6 +100,7 @@ struct Accessor {
     let get: (ValueDictionary) -> Value
     let set: (ValueDictionary, Value) throws -> Void
 
+    // Creates an accessor that allows read/write access to a property.
     init<T: ValueDictionary, V: ValueRepresentable>
     (_ keyPath: ReferenceWritableKeyPath<T, V>) {
         get = { ($0 as! T)[keyPath: keyPath].toValue() }
@@ -115,6 +112,8 @@ struct Accessor {
         }
     }
 
+    // Creates an accessor that explicitly allows read-only access to a
+    // property, even if the provided key path is otherwise writable.
     init<T: ValueDictionary, V: ValueRepresentable>
     (readOnly keyPath: KeyPath<T, V>) {
         get = { ($0 as! T)[keyPath: keyPath].toValue() }
@@ -149,6 +148,16 @@ extension ValueDictionary {
 protocol ValueRepresentable {
     static func fromValue(_ value: Value) -> Self?
     func toValue() -> Value
+}
+
+extension ValueRepresentable {
+    static func fromValue(_ value: Value?) -> Self? {
+        if let value = value {
+            return fromValue(value)
+        } else {
+            return nil
+        }
+    }
 }
 
 extension Bool: ValueRepresentable {

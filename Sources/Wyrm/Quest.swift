@@ -224,12 +224,12 @@ extension Avatar {
         case .nil:
             advance = true
         case var .number(n):
-            let p = progress?.to(Double.self) ?? 1.0
+            let p = Double.fromValue(progress) ?? 1.0
             n = max(0.0, n - p)
             state.state = .number(n)
             advance = n == 0.0
         case let .labels(labels):
-            if let p = progress?.to(String.self) {
+            if let p = String.fromValue(progress) {
                 let labels = labels.filter { $0 != p }
                 state.state = .labels(labels)
                 advance = labels.isEmpty
