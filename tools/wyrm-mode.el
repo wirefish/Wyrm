@@ -53,7 +53,7 @@
       (let* (
              ;; define several category of keywords
              (x-keywords '("await" "continue" "else" "if" "import" "for"
-                           "return" "self" "var"))
+                           "return" "self" "to" "var"))
              (x-constants '("false" "true" "nil"))
 
              ;; generate regex string for each category of keywords
@@ -133,12 +133,14 @@ newline and the terminator for a multiline string."
 
 (defun wyrm-electric-brace (arg)
   (interactive "*P")
-  (self-insert-command (prefix-numeric-value arg))
-  (save-excursion
-    (newline)
-    (insert-char ?} (prefix-numeric-value arg))
-    (wyrm-indent-line))
-  (newline-and-indent))
+  (let ((prev (char-before)))
+    (self-insert-command (prefix-numeric-value arg))
+    (when (char-equal prev ?\s)
+      (save-excursion
+        (newline)
+        (insert-char ?} (prefix-numeric-value arg))
+        (wyrm-indent-line))
+      (newline-and-indent))))
 
 (defun wyrm-indent-line ()
   (interactive "*")
@@ -159,7 +161,6 @@ newline and the terminator for a multiline string."
       (message "foo")
       (save-excursion
         (goto-char (wyrm-start-of-string state))
-        (message (buffer-substring (point) (+ (point) 3)))
         (when (looking-at "\"\n")
           (forward-line 1)
           (let ((start (point)))
