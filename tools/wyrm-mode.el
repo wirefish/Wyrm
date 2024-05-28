@@ -47,8 +47,6 @@
 (defconst wyrm-end-block-re " *}"
   "Regexp matching a line that ends a block.")
 
-(defconst wyrm-marker-re "^#.*$")
-
 (defconst wyrm-basic-offset 2)
 
 (defface wyrm-marker-face
@@ -72,7 +70,6 @@
           (,x-constants-regexp . font-lock-constant-face)
           (,x-keywords-regexp . font-lock-keyword-face)
           (,wyrm-symbol-re . font-lock-constant-face)
-          (,wyrm-marker-re . 'wyrm-marker-face)
           (,wyrm-def-re (1 font-lock-keyword-face)
                         (,wyrm-name-re nil nil (0 font-lock-type-face)))
           (,wyrm-fdef-re (1 font-lock-keyword-face)
@@ -100,6 +97,9 @@
 
 (defun wyrm-inside-string? (state)
   (nth 3 state))
+
+(defun wyrm-inside-comment? (state)
+  (nth 4 state))
 
 (defun wyrm-start-of-string (state)
   (nth 8 state))
@@ -203,9 +203,23 @@ newline and the terminator for a multiline string."
           (forward-line -1))
         (wyrm-fill-text)))))
 
+(defun wyrm-font-lock-syntactic-face-function (state)
+  (cond
+   ((wyrm-inside-string? state)
+    font-lock-string-face)
+   ((wyrm-inside-comment? state)
+    (save-excursion
+      (goto-char (wyrm-start-of-string state))
+      (if (looking-at "//#") 'wyrm-marker-face font-lock-comment-face)))
+   (t
+    nil)))
+
 (define-derived-mode wyrm-mode prog-mode "Wyrm"
   "Major mode for editing wyrm script files."
-  (setq font-lock-defaults '((wyrm-font-lock-keywords)))
+  (setq font-lock-defaults
+        '((wyrm-font-lock-keywords)
+          nil nil nil nil
+          (font-lock-syntactic-face-function . wyrm-font-lock-syntactic-face-function)))
   (setq tab-width wyrm-basic-offset)
   (setq indent-line-function 'wyrm-indent-line)
   (add-to-list 'electric-indent-chars ?\}))
