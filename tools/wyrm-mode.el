@@ -40,9 +40,9 @@
   "^ *\\(entity\\|location\\|region\\|heritage\\|event\\|command\\|quest\\|skill\\|extend\\) +")
 
 (defconst wyrm-fdef-re
-  "^ *\\(after\\|allow\\|before\\|when\\|func\\) +")
+  "^ *\\(after\\|allow\\|before\\|when\\|func\\|phase\\) +")
 
-(defconst wyrm-fname-re (concat "\\(" wyrm-identifier-re "\\)("))
+(defconst wyrm-fname-re (concat "\\(" wyrm-identifier-re "\\)"))
 
 (defconst wyrm-end-block-re " *}"
   "Regexp matching a line that ends a block.")
@@ -73,6 +73,7 @@
     (define-key map "\"" 'wyrm-electric-quote)
     (define-key map "{" 'wyrm-electric-brace)
     (define-key map "\M-q" 'wyrm-fill-text)
+    (define-key map "\C-c\C-c" 'wyrm-convert-text)
     map)
   "Keymap used in `wyrm-mode' buffers.")
 
@@ -167,6 +168,23 @@ newline and the terminator for a multiline string."
             (when (search-forward "\"\"\"")
               (beginning-of-line)
               (fill-region start (point)))))))))
+
+(defun wyrm-convert-text ()
+  "Converts an old-style text block starting at the current line to the new style."
+  (interactive "*")
+  (save-excursion
+    (end-of-line)
+    (when (char-equal (char-before) ?\|)
+      (delete-char -1 nil)
+      (insert "\"\"\"")
+      (let ((ci (current-indentation)))
+        (forward-line)
+        (while (> (current-indentation) ci)
+          (forward-line))
+        (insert-char ?\s (+ ci wyrm-basic-offset))
+        (insert "\"\"\"\n")
+        (forward-line -2)
+        (wyrm-fill-text)))))
 
 (define-derived-mode wyrm-mode prog-mode "Wyrm"
   "Major mode for editing wyrm script files."
