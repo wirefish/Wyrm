@@ -47,7 +47,16 @@
 (defconst wyrm-end-block-re " *}"
   "Regexp matching a line that ends a block.")
 
+(defconst wyrm-marker-re "^#.*$")
+
 (defconst wyrm-basic-offset 2)
+
+(defface wyrm-marker-face
+  '((default :weight bold)
+    (((background light)) :foreground "DarkGoldenrod3")
+    (((background dark))  :foreground "DarkGoldenrod1"))
+  "Font Lock mode face used to highlight markers."
+  :group 'wyrm-faces)
 
 (setq wyrm-font-lock-keywords
       (let* (
@@ -63,6 +72,7 @@
           (,x-constants-regexp . font-lock-constant-face)
           (,x-keywords-regexp . font-lock-keyword-face)
           (,wyrm-symbol-re . font-lock-constant-face)
+          (,wyrm-marker-re . 'wyrm-marker-face)
           (,wyrm-def-re (1 font-lock-keyword-face)
                         (,wyrm-name-re nil nil (0 font-lock-type-face)))
           (,wyrm-fdef-re (1 font-lock-keyword-face)
@@ -177,11 +187,14 @@ newline and the terminator for a multiline string."
     (when (char-equal (char-before) ?\|)
       (delete-char -1 nil)
       (insert "\"\"\"")
-      (let ((ci (current-indentation)))
+      (let ((ci (current-indentation))
+            (blank nil))
         (forward-line)
-        (while (or (= (current-indentation) 0)
-                   (> (current-indentation) ci))
+        (while (or (looking-at "^ *$") (> (current-indentation) ci))
+          (setq blank (if (looking-at "^ *$") (or blank (point)) nil))
           (forward-line))
+        (when blank
+          (goto-char blank))
         (insert-char ?\s (+ ci wyrm-basic-offset))
         (insert "\"\"\"\n")
         (forward-line -2)
@@ -198,3 +211,6 @@ newline and the terminator for a multiline string."
   (add-to-list 'electric-indent-chars ?\}))
 
 (provide 'wyrm-mode)
+
+(let ((x nil))
+  (setq x 123))
