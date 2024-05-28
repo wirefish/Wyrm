@@ -179,11 +179,15 @@ newline and the terminator for a multiline string."
       (insert "\"\"\"")
       (let ((ci (current-indentation)))
         (forward-line)
-        (while (> (current-indentation) ci)
+        (while (or (= (current-indentation) 0)
+                   (> (current-indentation) ci))
           (forward-line))
         (insert-char ?\s (+ ci wyrm-basic-offset))
         (insert "\"\"\"\n")
         (forward-line -2)
+        (while (= (current-indentation) 0)
+          (delete-line)
+          (forward-line -1))
         (wyrm-fill-text)))))
 
 (define-derived-mode wyrm-mode prog-mode "Wyrm"
