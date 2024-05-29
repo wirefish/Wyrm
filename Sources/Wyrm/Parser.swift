@@ -3,62 +3,37 @@
 // Wyrm
 //
 
-indirect enum ParseNode {
-  typealias Member = (name: String, initialValue: ParseNode)
-  typealias Handler = (EventPhase, String, [Parameter], ParseNode)
-  typealias Method = (String, [Parameter], ParseNode)
-  typealias QuestPhase = (String, [Member])
+indirect enum Expression {
+  typealias Member = (name: String, initializer: Expression)
 
-  // Literal values.
   case `nil`
   case boolean(Bool)
   case number(Double)
   case string(Text)
   case symbol(String)
 
-  // Expressions.
   case identifier(String)
-  case unaryExpr(Token, ParseNode)
-  case binaryExpr(ParseNode, Token, ParseNode)
-  case conjuction(ParseNode, ParseNode)
-  case disjunction(ParseNode, ParseNode)
-  case list([ParseNode])
-  case clone(ParseNode, [Member])
-  case call(ParseNode, [ParseNode])
-  case dot(ParseNode, String)
-  case `subscript`(ParseNode, ParseNode)
-  case exit(ParseNode, ParseNode, ParseNode)
-  case comprehension(ParseNode, String, ParseNode, ParseNode?)
-  case stack(ParseNode, ParseNode)
+  case unaryExpr(Token, Expression)
+  case binaryExpr(Expression, Token, Expression)
+  case conjuction(Expression, Expression)
+  case disjunction(Expression, Expression)
+  case list([Expression])
+  case clone(Expression, [Member])
+  case call(Expression, [Expression])
+  case dot(Expression, String)
+  case `subscript`(Expression, Expression)
+  case exit(Expression, Expression, Expression)
+  case comprehension(Expression, String, Expression, Expression?)
+  case stack(Expression, Expression)
 
-  // Statements.
-  case `var`(String, ParseNode)
-  case `if`(ParseNode, ParseNode, ParseNode?)
-  case `while`(ParseNode, ParseNode)
-  case `for`(String, ParseNode, ParseNode)
-  case await(ParseNode)
-  case `return`(ParseNode?)
-  case `fallthrough`
-  case block([ParseNode])
-  case assignment(ParseNode, Token, ParseNode)
-  case ignoredValue(ParseNode)
-
-  // Top-level definitions.
-  case entity(name: String, prototype: ValueRef, members: [Member],
-              handlers: [Handler], methods: [Method], isLocation: Bool)
-  case quest(name: String, members: [Member], phases: [QuestPhase])
-  case race(name: String, members: [Member])
-  case skill(name: String, members: [Member])
-  case region(members: [Member])
-  case `extension`(ref: ValueRef, handlers: [Handler], methods: [Method])
-
-  // True if this node can syntactically be on the left side of an assignment.
+  // True if this expression can syntactically be on the left side of an
+  // assignment.
   var isAssignable: Bool {
     switch self {
-    case .identifier(_): return true
-    case .dot(_, _): return true
-    case .subscript(_, _): return true
-    default: return false
+    case .identifier, .dot, .subscript:
+      return true
+    default:
+      return false
     }
   }
 
@@ -77,9 +52,36 @@ indirect enum ParseNode {
   }
 }
 
+indirect enum Statement {
+  case `var`(String, Expression)
+  case `if`(Expression, Statement, Statement?)
+  case `while`(Expression, Statement)
+  case `for`(String, Expression, Statement)
+  case await(Expression)
+  case `return`(Expression?)
+  case `fallthrough`
+  case block([Statement])
+  case assignment(Expression, Token, Expression)
+  case ignoredValue(Expression)
+}
+
+enum Definition {
+  typealias Member = Expression.Member
+  typealias Handler = (EventPhase, String, [Parameter], Statement)
+  typealias Method = (String, [Parameter], Statement)
+  typealias QuestPhase = (String, [Member])
+
+  case entity(name: String, prototype: ValueRef, members: [Member],
+              handlers: [Handler], methods: [Method], isLocation: Bool)
+  case quest(name: String, members: [Member], phases: [QuestPhase])
+  case race(name: String, members: [Member])
+  case skill(name: String, members: [Member])
+  case region(members: [Member])
+  case `extension`(ref: ValueRef, handlers: [Handler], methods: [Method])
+}
+
 enum Precedence: Int, Comparable {
   case none = 0
-  case assign
   case or
   case and
   case equality
@@ -98,7 +100,7 @@ enum Precedence: Int, Comparable {
   }
 }
 
-typealias InfixParserMethod = (Parser) -> (_ lhs: ParseNode) -> ParseNode?
+typealias InfixParserMethod = (Parser) -> (_ lhs: Expression) -> Expression?
 typealias InfixParseRule = (method: InfixParserMethod, prec: Precedence)
 
 class Parser {
@@ -108,18 +110,12 @@ class Parser {
     .arrow: (method: parseExit, prec: .factor),
     .dot: (method: parseDot, prec: .call),
     .minus: (method: parseBinary, prec: .term),
-    .minusEqual: (method: parseAssignment, prec: .assign),
     .plus: (method: parseBinary, prec: .term),
-    .plusEqual: (method: parseAssignment, prec: .assign),
     .slash: (method: parseBinary, prec: .factor),
-    .slashEqual: (method: parseAssignment, prec: .assign),
     .star: (method: parseBinary, prec: .factor),
-    .starEqual: (method: parseAssignment, prec: .assign),
     .percent: (method: parseBinary, prec: .factor),
-    .percentEqual: (method: parseAssignment, prec: .assign),
     .not: (method: parseClone, prec: .call),
     .notEqual: (method: parseBinary, prec: .equality),
-    .equal: (method: parseAssignment, prec: .assign),
     .equalEqual: (method: parseBinary, prec: .equality),
     .less: (method: parseBinary, prec: .comparison),
     .lessEqual: (method: parseBinary, prec: .comparison),
@@ -138,20 +134,20 @@ class Parser {
     self.scanner = scanner
   }
 
-  func parse() -> [ParseNode]? {
+  func parse() -> [Definition]? {
     advance()
 
-    var nodes = [ParseNode]()
+    var defs = [Definition]()
     while currentToken != .endOfInput {
       let token = consume()
       switch token {
       case .def:
         if let def = parseDefinition() {
-          nodes.append(def)
+          defs.append(def)
         }
       case .extend:
         if let ext = parseExtension() {
-          nodes.append(ext)
+          defs.append(ext)
         }
       default:
         error("invalid token \(token) at top level")
@@ -163,10 +159,10 @@ class Parser {
       return nil
     }
 
-    return nodes
+    return defs
   }
 
-  private func parseDefinition() -> ParseNode? {
+  private func parseDefinition() -> Definition? {
     guard case let .identifier(type) = consume() else {
       error("expected identifier after def")
       return nil
@@ -193,7 +189,7 @@ class Parser {
 
   // MARK: - parsing entities
 
-  private func parseEntity(isLocation: Bool) -> ParseNode? {
+  private func parseEntity(isLocation: Bool) -> Definition? {
     guard case let .identifier(name) = consume() else {
       error("expected identifier after def")
       return nil
@@ -213,9 +209,9 @@ class Parser {
       return nil
     }
 
-    var members = [ParseNode.Member]()
-    var handlers = [ParseNode.Handler]()
-    var methods = [ParseNode.Method]()
+    var members = [Definition.Member]()
+    var handlers = [Definition.Handler]()
+    var methods = [Definition.Method]()
     while !match(.rbrace) {
       switch currentToken {
       case .identifier:
@@ -242,7 +238,7 @@ class Parser {
                    isLocation: isLocation)
   }
 
-  private func parseMember() -> ParseNode.Member? {
+  private func parseMember() -> Definition.Member? {
     guard case let .identifier(name) = consume() else {
       error("expected member name")
       return nil
@@ -260,7 +256,7 @@ class Parser {
     return (name, initializer)
   }
 
-  private func parseHandler() -> ParseNode.Handler? {
+  private func parseHandler() -> Definition.Handler? {
     var phase: EventPhase
     switch consume() {
     case .allow: phase = .allow
@@ -309,7 +305,7 @@ class Parser {
     return (phase, event, params, block)
   }
 
-  private func parseMethod() -> ParseNode.Method? {
+  private func parseMethod() -> Definition.Method? {
     assert(match(.func))
 
     guard case let .identifier(name) = consume() else {
@@ -388,7 +384,7 @@ class Parser {
 
   // MARK: - parsing quests
 
-  private func parseQuest() -> ParseNode? {
+  private func parseQuest() -> Definition? {
     guard case let .identifier(name) = consume() else {
       error("expected identifier after defquest")
       return nil
@@ -399,8 +395,8 @@ class Parser {
       return nil
     }
 
-    var members = [ParseNode.Member]()
-    var phases = [ParseNode.QuestPhase]()
+    var members = [Definition.Member]()
+    var phases = [Definition.QuestPhase]()
     while !(match(.rbrace)) {
       switch currentToken {
       case .identifier:
@@ -427,7 +423,7 @@ class Parser {
     return .quest(name: name, members: members, phases: phases)
   }
 
-  private func parseQuestPhase() -> ParseNode.QuestPhase? {
+  private func parseQuestPhase() -> Definition.QuestPhase? {
     assert(match(.phase))
 
     guard case let .identifier(label) = consume() else {
@@ -443,7 +439,7 @@ class Parser {
 
   // MARK: - parsing races
 
-  private func parseRace() -> ParseNode? {
+  private func parseRace() -> Definition? {
     guard case let .identifier(name) = consume() else {
       error("expected identifier after defrace")
       return nil
@@ -457,7 +453,7 @@ class Parser {
 
   // MARK: - parsing skills
 
-  private func parseSkill() -> ParseNode? {
+  private func parseSkill() -> Definition? {
     guard case let .identifier(name) = consume() else {
       error("expected identifier after defskill")
       return nil
@@ -471,7 +467,7 @@ class Parser {
 
   // MARK: - parsing regions
 
-  private func parseRegion() -> ParseNode? {
+  private func parseRegion() -> Definition? {
     guard match(.lbrace) else {
       error("expected { at start of region body")
       return nil
@@ -479,8 +475,8 @@ class Parser {
     return .region(members: parseMembers())
   }
 
-  private func parseMembers() -> [ParseNode.Member] {
-    var members = [ParseNode.Member]()
+  private func parseMembers() -> [Definition.Member] {
+    var members = [Definition.Member]()
     while !(match(.rbrace)) {
       if let member = parseMember() {
         members.append(member)
@@ -491,7 +487,7 @@ class Parser {
 
   // MARK: - parsing extensions
 
-  private func parseExtension() -> ParseNode? {
+  private func parseExtension() -> Definition? {
     guard let ref = parseValueRef() else {
       error("expected reference after extend")
       return nil
@@ -502,8 +498,8 @@ class Parser {
       return nil
     }
 
-    var handlers = [ParseNode.Handler]()
-    var methods = [ParseNode.Method]()
+    var handlers = [Definition.Handler]()
+    var methods = [Definition.Method]()
     while !match(.rbrace) {
       switch currentToken {
       case .allow, .before, .when, .after:
@@ -526,7 +522,7 @@ class Parser {
 
   // MARK: - parsing statements
 
-  private func parseStatement() -> ParseNode? {
+  private func parseStatement() -> Statement? {
     switch currentToken {
     case .var:
       return parseVar()
@@ -543,18 +539,23 @@ class Parser {
     case .fallthrough:
       return parseFallthrough()
     default:
-      guard let expr = parseExpr(.assign) else {
-        return nil
+      guard let expr = parseExpr() else {
+        return nil;
       }
-      if case .assignment = expr {
-        return expr
+      if currentToken.isAssignment {
+        let op = consume()
+        if let rhs = parseExpr() {
+          return .assignment(expr, op, rhs)
+        } else {
+          return nil
+        }
       } else {
         return .ignoredValue(expr)
       }
     }
   }
 
-  private func parseVar() -> ParseNode? {
+  private func parseVar() -> Statement? {
     assert(match(.var))
 
     guard case let .identifier(name) = consume() else {
@@ -574,12 +575,12 @@ class Parser {
     return .var(name, value)
   }
 
-  private func parseIf() -> ParseNode? {
+  private func parseIf() -> Statement? {
     assert(match(.if))
     guard let pred = parseExpr(), let whenTrue = parseBlock() else {
       return nil
     }
-    var whenFalse: ParseNode?
+    var whenFalse: Statement?
     if match(.else) {
       whenFalse = (currentToken == .if) ? parseIf() : parseBlock()
       if whenFalse == nil {
@@ -589,7 +590,7 @@ class Parser {
     return .if(pred, whenTrue, whenFalse)
   }
 
-  private func parseWhile() -> ParseNode? {
+  private func parseWhile() -> Statement? {
     assert(match(.while))
     guard let pred = parseExpr(), let body = parseBlock() else {
       return nil
@@ -597,7 +598,7 @@ class Parser {
     return .while(pred, body)
   }
 
-  private func parseFor() -> ParseNode? {
+  private func parseFor() -> Statement? {
     assert(match(.for))
     guard case let .identifier(variable) = consume() else {
       error("invalid loop variable")
@@ -613,12 +614,12 @@ class Parser {
     return .for(variable, sequence, body)
   }
 
-  private func parseBlock() -> ParseNode? {
+  private func parseBlock() -> Statement? {
     guard case .lbrace = consume() else {
       error("expected { at beginning of block")
       return nil
     }
-    var stmts = [ParseNode]()
+    var stmts = [Statement]()
     while !match(.rbrace) {
       if let stmt = parseStatement() {
         stmts.append(stmt)
@@ -629,7 +630,7 @@ class Parser {
     return .block(stmts)
   }
 
-  private func parseAwait() -> ParseNode? {
+  private func parseAwait() -> Statement? {
     assert(match(.await))
     guard let rhs = parseExpr() else {
       return nil
@@ -637,17 +638,17 @@ class Parser {
     return .await(rhs)
   }
 
-  private func parseReturn() -> ParseNode? {
+  private func parseReturn() -> Statement? {
     assert(match(.return))
     return .return(lookingAtExpr() ? parseExpr() : nil)
   }
 
-  private func parseFallthrough() -> ParseNode {
+  private func parseFallthrough() -> Statement {
     assert(match(.fallthrough))
     return .fallthrough
   }
 
-  private func parseAssignment(lhs: ParseNode) -> ParseNode? {
+  private func parseAssignment(lhs: Expression) -> Statement? {
     let op = consume()
     guard let rhs = parseExpr(Parser.parseRules[op]!.prec.nextHigher()) else {
       return nil
@@ -670,8 +671,8 @@ class Parser {
     }
   }
 
-  private func parseExpr(_ prec: Precedence = .or) -> ParseNode? {
-    var node: ParseNode?
+  private func parseExpr(_ prec: Precedence = .or) -> Expression? {
+    var node: Expression?
     switch currentToken {
     case .nil:
       node = .nil
@@ -713,16 +714,10 @@ class Parser {
       }
     }
 
-    if currentToken.isAssignment {
-      error("invalid assignment")
-      advance()
-      return nil
-    }
-
     return node
   }
 
-  private func parseUnary() -> ParseNode? {
+  private func parseUnary() -> Expression? {
     let op = consume()
     if let rhs = parseExpr(.unary) {
       return .unaryExpr(op, rhs)
@@ -731,7 +726,7 @@ class Parser {
     }
   }
 
-  private func parseGroup() -> ParseNode? {
+  private func parseGroup() -> Expression? {
     assert(match(.lparen))
     if let expr = parseExpr() {
       if match(.rparen) {
@@ -743,7 +738,7 @@ class Parser {
     return nil
   }
 
-  private func parseList() -> ParseNode? {
+  private func parseList() -> Expression? {
     assert(match(.lsquare))
     if match(.rsquare) {
       return .list([])
@@ -766,7 +761,7 @@ class Parser {
       guard let sequence = parseExpr() else {
         return nil
       }
-      var pred: ParseNode?
+      var pred: Expression?
       if match(.if) {
         pred = parseExpr()
         if pred == nil {
@@ -795,20 +790,20 @@ class Parser {
     }
   }
 
-  private func parseClone(lhs: ParseNode) -> ParseNode? {
+  private func parseClone(lhs: Expression) -> Expression? {
     assert(match(.not))
 
     // Parse optional member overrides.
     let members = if currentToken == .lbrace {
       parseSequence(from: .lbrace, until: .rbrace) { parseMember() }
     } else {
-      [ParseNode.Member]()
+      [Expression.Member]()
     }
 
     return .clone(lhs, members)
   }
 
-  private func parseBinary(lhs: ParseNode) -> ParseNode? {
+  private func parseBinary(lhs: Expression) -> Expression? {
     let op = consume()
     if let rhs = parseExpr(Parser.parseRules[op]!.prec.nextHigher()) {
       return .binaryExpr(lhs, op, rhs)
@@ -817,7 +812,7 @@ class Parser {
     }
   }
 
-  private func parseAnd(lhs: ParseNode) -> ParseNode? {
+  private func parseAnd(lhs: Expression) -> Expression? {
     assert(match(.and))
     if let rhs = parseExpr(.and.nextHigher()) {
       return .conjuction(lhs, rhs)
@@ -826,7 +821,7 @@ class Parser {
     }
   }
 
-  private func parseOr(lhs: ParseNode) -> ParseNode? {
+  private func parseOr(lhs: Expression) -> Expression? {
     assert(match(.or))
     if let rhs = parseExpr(.or.nextHigher()) {
       return .disjunction(lhs, rhs)
@@ -835,7 +830,7 @@ class Parser {
     }
   }
 
-  private func parseStack(lhs: ParseNode) -> ParseNode? {
+  private func parseStack(lhs: Expression) -> Expression? {
     assert(match(.of))
     if let rhs = parseExpr(.or.nextHigher()) {
       return .stack(lhs, rhs)
@@ -844,7 +839,7 @@ class Parser {
     }
   }
 
-  private func parseCall(lhs: ParseNode) -> ParseNode? {
+  private func parseCall(lhs: Expression) -> Expression? {
     var args = parseSequence(from: .lparen, until: .rparen) { parseExpr() }
 
     // Allow for a trailing string/text literal as the final argument.
@@ -859,7 +854,7 @@ class Parser {
     return .call(lhs, args)
   }
 
-  private func parseSubscript(lhs: ParseNode) -> ParseNode? {
+  private func parseSubscript(lhs: Expression) -> Expression? {
     assert(match(.lsquare))
 
     guard let expr = parseExpr() else {
@@ -874,7 +869,7 @@ class Parser {
     return .subscript(lhs, expr)
   }
 
-  private func parseDot(lhs: ParseNode) -> ParseNode? {
+  private func parseDot(lhs: Expression) -> Expression? {
     assert(match(.dot))
 
     guard case let .identifier(name) = consume() else {
@@ -885,7 +880,7 @@ class Parser {
     return .dot(lhs, name)
   }
 
-  private func parseExit(lhs: ParseNode) -> ParseNode? {
+  private func parseExit(lhs: Expression) -> Expression? {
     assert(match(.arrow))
 
     guard let direction = parseExpr() else {

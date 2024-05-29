@@ -292,14 +292,11 @@ extension World {
 
             case .extension:
                 loadExtension(def, into: module)
-
-            default:
-                fatalError("unexpected definition at top level")
             }
         }
     }
 
-    private func loadEntity(_ node: ParseNode, into module: Module) {
+    private func loadEntity(_ node: Definition, into module: Module) {
         guard case let .entity(name, prototypeRef, members, handlers, methods, isLocation) = node else {
             fatalError("invalid call to loadEntity")
         }
@@ -346,7 +343,7 @@ extension World {
         }
     }
 
-    private func loadQuest(_ node: ParseNode, into module: Module) {
+    private func loadQuest(_ node: Definition, into module: Module) {
         guard case let .quest(name, members, phases) = node else {
             fatalError("invalid call to loadQuest")
         }
@@ -377,7 +374,7 @@ extension World {
         module.bindings[name] = .quest(quest)
     }
 
-    private func loadRace(_ node: ParseNode, into module: Module) {
+    private func loadRace(_ node: Definition, into module: Module) {
         guard case let .race(name, members) = node else {
             fatalError("invalid call to loadRace")
         }
@@ -395,7 +392,7 @@ extension World {
         module.bindings[name] = .race(race)
     }
 
-    private func loadSkill(_ node: ParseNode, into module: Module) {
+    private func loadSkill(_ node: Definition, into module: Module) {
         guard case let .skill(name, members) = node else {
             fatalError("invalid call to loadSkill")
         }
@@ -413,7 +410,7 @@ extension World {
         module.bindings[name] = .skill(skill)
     }
 
-    private func loadRegion(_ node: ParseNode, into module: Module) {
+    private func loadRegion(_ node: Definition, into module: Module) {
         guard case let .region(members) = node else {
             fatalError("invalid call to loadRegion")
         }
@@ -436,7 +433,7 @@ extension World {
         }
     }
 
-    private func loadExtension(_ node: ParseNode, into module: Module) {
+    private func loadExtension(_ node: Definition, into module: Module) {
         guard case let .extension(ref, handlers, methods) = node else {
             fatalError("invalid call to loadExtension")
         }
@@ -530,7 +527,7 @@ enum EvalError: Error {
 
 extension World {
 
-    func evalInitializer(_ node: ParseNode, in module: Module) throws -> Value {
+    func evalInitializer(_ node: Expression, in module: Module) throws -> Value {
         switch node {
         case .nil:
             return .nil

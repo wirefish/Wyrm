@@ -19,7 +19,7 @@ struct Text {
     }
 
     struct Segment {
-        let expr: ParseNode
+        let expr: Expression
         let format: Format
         let suffix: String
     }

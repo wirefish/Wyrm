@@ -243,16 +243,16 @@ class Compiler {
     // the start of each nested scope.
     var scopeLocals = [Int]()
 
-    func compileFunction(parameters: [Parameter], body: ParseNode,
+    func compileFunction(parameters: [Parameter], body: Statement,
                          in module: Module) -> ScriptFunction? {
         locals = parameters.map(\.name)
         scopeLocals = [locals.count]
         var block = ScriptFunction(module: module, parameters: parameters)
-        compile(body, &block)
+        compileStmt(body, &block)
         return block
     }
 
-    func compile(_ node: ParseNode, _ block: inout ScriptFunction) {
+    func compileExpr(_ node: Expression, _ block: inout ScriptFunction) {
         switch node {
         case .nil:
             block.emit(.pushNil)
@@ -273,7 +273,7 @@ class Compiler {
             } else {
                 block.emit(.pushConstant, block.addConstant(.string(text.prefix)))
                 for segment in text.segments {
-                    compile(segment.expr, &block)
+                    compileExpr(segment.expr, &block)
                     block.emit(.stringify, segment.format.rawValue)
                     block.emit(.pushConstant, block.addConstant(.string(segment.suffix)))
                 }
@@ -291,7 +291,7 @@ class Compiler {
             }
 
         case let .unaryExpr(op, rhs):
-            compile(rhs, &block)
+            compileExpr(rhs, &block)
             switch op {
             case .not: block.emit(.not)
             case .minus: block.emit(.negate)
@@ -301,8 +301,8 @@ class Compiler {
             }
 
         case let .binaryExpr(lhs, op, rhs):
-            compile(lhs, &block)
-            compile(rhs, &block)
+            compileExpr(lhs, &block)
+            compileExpr(rhs, &block)
             switch op {
             case .plus: block.emit(.add)
             case .minus: block.emit(.subtract)
@@ -319,9 +319,9 @@ class Compiler {
             }
 
         case let .conjuction(lhs, rhs):
-            compile(lhs, &block)
+            compileExpr(lhs, &block)
             let leftJump = block.emitJump(.jumpIfFalse)
-            compile(rhs, &block)
+            compileExpr(rhs, &block)
             let rightJump = block.emitJump(.jumpIfFalse)
             block.emit(.pushTrue)
             let endJump = block.emitJump(.jump)
@@ -331,9 +331,9 @@ class Compiler {
             block.patchJump(at: endJump)
 
         case let .disjunction(lhs, rhs):
-            compile(lhs, &block)
+            compileExpr(lhs, &block)
             let leftJump = block.emitJump(.jumpIfTrue)
-            compile(rhs, &block)
+            compileExpr(rhs, &block)
             let rightJump = block.emitJump(.jumpIfTrue)
             block.emit(.pushFalse)
             let endJump = block.emitJump(.jump)
@@ -344,33 +344,33 @@ class Compiler {
 
         case let .list(elements):
             block.emit(.beginList)
-            elements.forEach { compile($0, &block) }
+            elements.forEach { compileExpr($0, &block) }
             block.emit(.endList)
 
-        case let .clone(lhs, _):  // FIXME:
-            compile(lhs, &block)
+        case let .clone(lhs, _):  // FIXME: handle members
+            compileExpr(lhs, &block)
             block.emit(.clone)
 
         case let .call(fn, args):
-            compile(fn, &block)
+            compileExpr(fn, &block)
             block.emit(.beginList)
-            args.forEach { compile($0, &block ) }
+            args.forEach { compileExpr($0, &block ) }
             block.emit(.endList)
             block.emit(.call)
 
         case let .dot(lhs, member):
-            compile(lhs, &block)
+            compileExpr(lhs, &block)
             block.emit(.loadMember, block.addConstant(.symbol(member)))
 
         case let .subscript(lhs, index):
-            compile(lhs, &block)
-            compile(index, &block)
+            compileExpr(lhs, &block)
+            compileExpr(index, &block)
             block.emit(.loadSubscript)
 
         case let .exit(portal, direction, destination):
-            compile(portal, &block)
-            compile(direction, &block)
-            compile(destination, &block)
+            compileExpr(portal, &block)
+            compileExpr(direction, &block)
+            compileExpr(destination, &block)
             block.emit(.makePortal)
 
         case let .comprehension(transform, name, sequence, pred):
@@ -379,17 +379,17 @@ class Compiler {
             block.emit(.createLocal)
             locals.append(name)
 
-            compile(sequence, &block)
+            compileExpr(sequence, &block)
             block.emit(.makeIterator)
 
             block.emit(.beginList)
             let advanceJump = block.emitJump(.advanceOrJump)
             block.emit(.storeLocal, loopVar)
             if pred != nil {
-                compile(pred!, &block)
+                compileExpr(pred!, &block)
                 block.emitJump(.jumpIfFalse, to: advanceJump - 1)
             }
-            compile(transform, &block)
+            compileExpr(transform, &block)
             block.emitJump(.jump, to: advanceJump - 1)
             block.patchJump(at: advanceJump)
             block.emit(.endList)
@@ -398,22 +398,26 @@ class Compiler {
             block.emit(.removeLocals, UInt8(1))
 
         case let .stack(lhs, rhs):
-            compile(lhs, &block)
-            compile(rhs, &block)
+            compileExpr(lhs, &block)
+            compileExpr(rhs, &block)
             block.emit(.clone)
             block.emit(.setCount)
+        }
+    }
 
-        case let .var(name, initialValue):
+    func compileStmt(_ node: Statement, _ block: inout ScriptFunction) {
+      switch node {
+        case let .var(name, initializer):
             if locals[scopeLocals.last!...].contains(name) {
                 logger.warning("ignoring duplicate declaration of local variable \(name)")
             } else {
-                compile(initialValue, &block)
+                compileExpr(initializer, &block)
                 block.emit(.createLocal)
                 locals.append(name)
             }
 
         case let .if(predicate, thenBlock, elseBlock):
-            compile(predicate, &block)
+            compileExpr(predicate, &block)
             let skipThen = block.emitJump(.jumpIfFalse)
             compileScope(thenBlock, &block)
             if let elseBlock = elseBlock {
@@ -427,7 +431,7 @@ class Compiler {
 
         case let .while(pred, body):
             let start = block.bytecode.count
-            compile(pred, &block)
+            compileExpr(pred, &block)
             let endJump = block.emitJump(.jumpIfFalse)
             compileScope(body, &block)
             block.emitJump(.jump, to: start)
@@ -437,12 +441,12 @@ class Compiler {
             fatalError("for loop not yet implemented")
 
         case let .await(rhs):
-            compile(rhs, &block)
+            compileExpr(rhs, &block)
             block.emit(.await)
 
         case let .return(rhs):
             if let rhs = rhs {
-                compile(rhs, &block)
+                compileExpr(rhs, &block)
             } else {
                 block.emit(.pushNil)
             }
@@ -452,7 +456,7 @@ class Compiler {
             block.emit(.fallthrough)
 
         case let .block(nodes):
-            nodes.forEach { compile($0, &block) }
+            nodes.forEach { compileStmt($0, &block) }
 
         case let .assignment(lhs, _, rhs):
             // TODO: += and friends
@@ -461,18 +465,18 @@ class Compiler {
                 guard let localIndex = locals.lastIndex(of: s) else {
                     fatalError("undefined local \(s)")
                 }
-                compile(rhs, &block)
+                compileExpr(rhs, &block)
                 block.emit(.storeLocal, UInt8(localIndex))
 
             case let .subscript(expr, index):
-                compile(expr, &block)
-                compile(index, &block)
-                compile(rhs, &block)
+                compileExpr(expr, &block)
+                compileExpr(index, &block)
+                compileExpr(rhs, &block)
                 block.emit(.storeSubscript)
 
             case let .dot(expr, member):
-                compile(expr, &block)
-                compile(rhs, &block)
+                compileExpr(expr, &block)
+                compileExpr(rhs, &block)
                 block.emit(.storeMember, block.addConstant(.symbol(member)))
 
             default:
@@ -480,17 +484,14 @@ class Compiler {
             }
 
         case let .ignoredValue(expr):
-            compile(expr, &block)
+            compileExpr(expr, &block)
             block.emit(.pop)
-
-        case .entity, .quest, .race, .skill, .region, .extension:
-            fatalError("invalid attempt to compile top-level definition")
         }
     }
 
-    func compileScope(_ scope: ParseNode, _ block: inout ScriptFunction) {
+    func compileScope(_ scope: Statement, _ block: inout ScriptFunction) {
         scopeLocals.append(locals.count)
-        compile(scope, &block)
+        compileStmt(scope, &block)
         let prevLocals = scopeLocals.removeLast()
         if locals.count > prevLocals {
             // The block defined some local variables. Pop them from the locals array.
@@ -502,9 +503,9 @@ class Compiler {
     func compile(_ ref: ValueRef, _ block: inout ScriptFunction) {
         switch ref {
         case let .relative(name):
-            compile(.identifier(name), &block)
+            compileExpr(.identifier(name), &block)
         case let .absolute(module, name):
-            compile(.dot(.identifier(module), name), &block)
+            compileExpr(.dot(.identifier(module), name), &block)
         }
     }
 }
