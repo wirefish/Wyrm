@@ -520,13 +520,10 @@ extension World {
 
 enum EvalError: Error {
   case typeMismatch(String)
-  case undefinedIdentifier(String)
   case invalidExpression(String)
-  case invalidResult
 }
 
 extension World {
-
   func evalInitializer(_ node: Expression, in module: Module) throws -> Value {
     switch node {
     case .nil:
@@ -555,16 +552,16 @@ extension World {
       switch op {
       case .minus:
         guard case let .number(n) = rhs else {
-          throw EvalError.typeMismatch("operand of '-' must be a number")
+          throw EvalError.typeMismatch("operand of unary - must be a number")
         }
         return .number(-n)
       case .not:
         guard case let .boolean(b) = rhs else {
-          throw EvalError.typeMismatch("operand of '!' must be a boolean")
+          throw EvalError.typeMismatch("operand of unary ! must be a boolean")
         }
         return .boolean(!b)
       default:
-        throw EvalError.invalidExpression("unary operator not allowed in member initializer")
+        throw EvalError.invalidExpression("unary \(op) not allowed in member initializer")
       }
 
     case let .binaryExpr(lhs, op, rhs):
@@ -573,7 +570,7 @@ extension World {
       switch lhs {
       case let .number(a):
         guard case let .number(b) = rhs else {
-          throw EvalError.typeMismatch("operands of '\(op)' must be of same type")
+          throw EvalError.typeMismatch("operands of \(op) must be of same type")
         }
         switch op {
         case .plus: return .number(a + b)
@@ -593,7 +590,7 @@ extension World {
 
       case let .boolean(a):
         guard case let .boolean(b) = rhs else {
-          throw EvalError.typeMismatch("operands of '\(op)' must be of same type")
+          throw EvalError.typeMismatch("operands of \(op) must be of same type")
         }
         switch op {
         case .notEqual: return .boolean(a != b)
