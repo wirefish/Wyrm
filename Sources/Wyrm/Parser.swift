@@ -542,16 +542,7 @@ class Parser {
       guard let expr = parseExpr() else {
         return nil;
       }
-      if currentToken.isAssignment {
-        let op = consume()
-        if let rhs = parseExpr() {
-          return .assignment(expr, op, rhs)
-        } else {
-          return nil
-        }
-      } else {
-        return .ignoredValue(expr)
-      }
+      return currentToken.isAssignment ? parseAssignment(lhs : expr) : .ignoredValue(expr)
     }
   }
 
@@ -650,7 +641,7 @@ class Parser {
 
   private func parseAssignment(lhs: Expression) -> Statement? {
     let op = consume()
-    guard let rhs = parseExpr(Parser.parseRules[op]!.prec.nextHigher()) else {
+    guard let rhs = parseExpr() else {
       return nil
     }
     if !lhs.isAssignable {
