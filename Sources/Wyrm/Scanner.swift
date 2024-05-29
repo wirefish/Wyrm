@@ -1,6 +1,6 @@
 //
-// Scanner.swift
-// Wyrm
+//  Scanner.swift
+//  Wyrm
 //
 
 enum Token: Hashable {
