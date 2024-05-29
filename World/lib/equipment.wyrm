@@ -1,124 +1,121 @@
 // clothing
 
-def clothing: equipment {
+def entity clothing: equipment {
 }
 
-def shirt: clothing {
-    brief = "a shirt"
-    slot = 'torso
+def entity shirt: clothing {
+  brief = "a shirt"
+  slot = 'torso
 }
 
-def pants: clothing {
-    brief = "a pair[s] of pants"
-    slot = 'legs
+def entity pants: clothing {
+  brief = "a pair[s] of pants"
+  slot = 'legs
 }
 
-def shoes: clothing {
-    brief = "a pair[s] of shoes"
-    slot = 'feet
+def entity shoes: clothing {
+  brief = "a pair[s] of shoes"
+  slot = 'feet
 }
 
-def backpack: equipment {
-    brief = "a backpack"
-    slot = 'backpack
-    capacity = 20
-    icon = 'backpack
+def entity backpack: equipment {
+  brief = "a backpack"
+  slot = 'backpack
+  capacity = 20
+  icon = 'backpack
 }
 
 // accessories
 
-def ring: equipment {
-    brief = "a ring"
-    slot = 'eitherFinger
+def entity ring: equipment {
+  brief = "a ring"
+  slot = 'eitherFinger
 }
 
 // weapon types, related proficiency skills, and starter weapons
 
 // daggers (one-handed piercing)
 
-defskill daggerProficiency {
-    name = "dagger proficiency"
-    description = |
-        This skill confers proficiency when wielding daggers.
-    karmaPrice = 5
+def skill daggerProficiency {
+  name = "dagger proficiency"
+  description = "This skill confers proficiency when wielding daggers."
+  karmaPrice = 5
 }
 
-def dagger: weapon {
-    slot = 'eitherHand
-    damageType = 'piercing
-    speed = 1.5
-    icon = 'dagger
-    proficiency = daggerProficiency
+def entity dagger: weapon {
+  slot = 'eitherHand
+  damageType = 'piercing
+  speed = 1.5
+  icon = 'dagger
+  proficiency = daggerProficiency
 }
 
-def copperDagger: dagger {
-    brief = "a copper dagger"
-    level = 1
-    price = 10 of silverCoin
+def entity copperDagger: dagger {
+  brief = "a copper dagger"
+  level = 1
+  price = 10 of silverCoin
 }
 
-def bronzeDagger: dagger {
-    brief = "a bronze dagger"
-    level = 5
-    price = 20 of silverCoin
+def entity bronzeDagger: dagger {
+  brief = "a bronze dagger"
+  level = 5
+  price = 20 of silverCoin
 }
 
 // maces (one-handed crushing)
 
-defskill maceProficiency {
-    name = "mace proficiency"
-    description = |
-        This skill confers proficiency when wielding maces.
-    karmaPrice = 5
+def skill maceProficiency {
+  name = "mace proficiency"
+  description = "This skill confers proficiency when wielding maces."
+  karmaPrice = 5
 }
 
-def mace: weapon {
-    slot = 'eitherHand
-    damageType = 'crushing
-    speed = 2.5
-    icon = 'mace
-    proficiency = maceProficiency
+def entity mace: weapon {
+  slot = 'eitherHand
+  damageType = 'crushing
+  speed = 2.5
+  icon = 'mace
+  proficiency = maceProficiency
 }
 
-def copperMace: mace {
-    brief = "a copper mace"
-    level = 1
-    price = 10 of silverCoin
+def entity copperMace: mace {
+  brief = "a copper mace"
+  level = 1
+  price = 10 of silverCoin
 }
 
-def bronzeMace: mace {
-    brief = "a bronze mace"
-    level = 5
-    price = 20 of silverCoin
+def entity bronzeMace: mace {
+  brief = "a bronze mace"
+  level = 5
+  price = 20 of silverCoin
 }
 
 // mauls (two-handed crushing)
 
-defskill maulProficiency {
-    name = "maul proficiency"
-    description = |
-        This skill confers proficiency when wielding mauls.
-    karmaPrice = 5
+def skill maulProficiency {
+  name = "maul proficiency"
+  description = "This skill confers proficiency when wielding mauls."
+  karmaPrice = 5
 }
 
-def maul: weapon {
-    slot = 'bothHands
-    damageType = 'crushing
-    speed = 3.0
-    icon = 'mace
-    proficiency = maulProficiency
+def entity maul: weapon {
+  slot = 'bothHands
+  damageType = 'crushing
+  speed = 3.0
+  icon = 'mace
+  proficiency = maulProficiency
 }
 
-def copperMaul: maul {
-    brief = "a copper maul"
-    level = 1
-    price = 10 of silverCoin
+def entity copperMaul: maul {
+  brief = "a copper maul"
+  level = 1
+  price = 10 of silverCoin
 }
 
-def bronzeMaul: maul {
-    brief = "a bronze maul"
-    level = 5
-    price = 20 of silverCoin
+def entity bronzeMaul: maul {
+  brief = "a bronze maul"
+  level = 5
+  price = 20 of silverCoin
 }
 
 // TODO: swords (one-handed slashing/piercing)
@@ -137,24 +134,24 @@ def bronzeMaul: maul {
 
 // Natural weapons are those attached to a creature's body.
 
-def naturalWeapon: weapon {
-    speed = 3.0
+def entity naturalWeapon: weapon {
+  speed = 3.0
 }
 
-def fist: naturalWeapon {
-    damageType = 'crushing
-    attackVerb = "bashes"
-    criticalVerb = "crushes"
+def entity fist: naturalWeapon {
+  damageType = 'crushing
+  attackVerb = "bashes"
+  criticalVerb = "crushes"
 }
 
-def claw: naturalWeapon {
-    damageType = 'slashing
-    attackVerb = "swipes"
-    criticalVerb = "slashes"
+def entity claw: naturalWeapon {
+  damageType = 'slashing
+  attackVerb = "swipes"
+  criticalVerb = "slashes"
 }
 
-def bite: naturalWeapon {
-    damageType = 'piercing
-    attackVerb = "bites"
-    criticalVerb = "tears"
+def entity bite: naturalWeapon {
+  damageType = 'piercing
+  attackVerb = "bites"
+  criticalVerb = "tears"
 }

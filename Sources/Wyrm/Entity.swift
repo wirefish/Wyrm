@@ -5,6 +5,225 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
+// MARK: - Whatevs
+
+@dynamicMemberLookup
+class Proto {
+    let ref: ValueRef
+    let proto: Proto?
+
+    var brief: NounPhrase?
+    private var members = [String:Value]()
+
+    init(ref: ValueRef, proto: Proto?) {
+        self.ref = ref
+        self.proto = proto
+    }
+
+    subscript(dynamicMember name: String) -> Value? {
+        get { print("getting Value \(name)"); return members[name] ?? proto?[dynamicMember: name] }
+        set { print("setting Value \(name)"); members[name] = newValue }
+    }
+
+    subscript<T: ValueRepresentable>(dynamicMember name: String) -> T? {
+        get { print("getting \(T.self) \(name)"); return T.fromValue(members[name]) }
+        set { print("setting \(T.self) \(name)"); members[name] = newValue?.toValue() }
+    }
+
+    // Methods used when evaluating scripts.
+
+    func get(_ member: String) -> Value? {
+        members[member] ?? proto?.get(member)
+    }
+
+    func set(_ member: String, to value: Value) throws {
+        switch member {
+        case "brief":
+            guard case let .string(s) = value else {
+                throw ValueError.expected("String")
+            }
+            brief = NounPhrase(s)
+        default:
+            members[member] = value
+        }
+    }
+
+}
+
+// MARK: - Prototype
+
+@propertyWrapper
+struct Member<T: ValueRepresentable> {
+    var member: T?
+    var wrappedValue: Value {
+        get { return member.toValue() }
+        set { member = T.self.fromValue(newValue) }
+    }
+}
+
+class Prototype: ValueDictionary {
+    let ref: ValueRef
+    let parent: Prototype?
+    var handlers = [EventHandler]()
+    var extraProperties = [String:Value]()
+
+    required init(ref: ValueRef, parent: Prototype? = nil) {
+        self.ref = ref
+        self.parent = parent
+    }
+
+    func get(_ property: String) -> Value? {
+        return extraProperties[property]
+    }
+
+    func set(_ property: String, to value: Value) throws {
+        extraProperties[property] = value
+    }
+
+    func specialize(ref: ValueRef) -> Self {
+        return Self(ref: ref, parent: self)
+    }
+
+    func instantiate() -> Instance {
+        fatalError("instantiate() not implemented for \(type(of: self))")
+    }
+}
+
+extension Prototype: CustomStringConvertible {
+    var description: String {
+        "<\(type(of: self)) \(ref)>"
+    }
+}
+
+// MARK: Instance
+
+class Instance: ValueDictionary, CustomStringConvertible {
+    static var idIterator = (1...).makeIterator()
+
+    let id = idIterator.next()!
+    var extraProperties = [String:Value]()
+
+    func get(_ property: String) -> Value? {
+        return extraProperties[property]
+    }
+
+    func set(_ property: String, to value: Value) throws {
+        extraProperties[property] = value
+    }
+
+    var description: String {
+        "<\(type(of: self)) #\(id)>"
+    }
+}
+
+class InstanceOf<T: Prototype>: Instance {
+    let prototype: T
+
+    init(prototype: T) {
+        self.prototype = prototype
+    }
+
+    override var description: String {
+        "<\(type(of: self)) #\(id) \(prototype.ref)>"
+    }
+}
+
+// MARK: - test for items
+
+class ItemPrototype: Prototype {
+    var level = 0
+    var stackLimit = 0
+
+    private static let accessors = [
+        "level": Accessor(\ItemPrototype.level),
+        "stackLimit": Accessor(\ItemPrototype.stackLimit),
+    ]
+
+    override func get(_ property: String) -> Value? {
+        getMember(property, Self.accessors) ?? super.get(property)
+    }
+
+    override func set(_ property: String, to value: Value) throws {
+        try setMember(property, to: value, Self.accessors) { try super.set(property, to: value) }
+    }
+
+    override func instantiate() -> Instance {
+        ItemInstance(prototype: self)
+    }
+}
+
+class ItemInstance: InstanceOf<ItemPrototype> {
+    var count = 1
+
+    private static let accessors = [
+        "count": Accessor(\Item.count),
+    ]
+
+    override func get(_ property: String) -> Value? {
+        getMember(property, Self.accessors) ?? super.get(property) ?? prototype.get(property)
+    }
+
+    override func set(_ property: String, to value: Value) throws {
+        // FIXME:
+    }
+
+    func split(count: Int) -> ItemInstance {
+        self.count -= count
+        let result = ItemInstance(prototype: self.prototype)
+        result.count = count
+        return result
+    }
+}
+
+// MARK: - event handling
+
+extension InstanceOf {
+    @discardableResult
+    final func handleEvent(_ phase: EventPhase, _ event: String, args: [Value]) -> Value {
+        // FIXME: let args = [.instance(self)] + args
+        var prototype: Prototype! = self.prototype
+        while prototype != nil {
+            for handler in prototype.handlers {
+                guard handler.appliesTo(phase: phase, event: event, args: args) else {
+                    continue
+                }
+                do {
+                    switch try handler.fn.call(args, context: [self]) {
+                    case let .value(value):
+                        return value
+                    case .await:
+                        return .nil
+                    case .fallthrough:
+                        break
+                    }
+                } catch {
+                    logger.error("error in event handler for \(self) \(phase) \(event): \(error)")
+                    return .nil
+                }
+            }
+            prototype = prototype.parent
+        }
+        return .nil
+    }
+
+    final func allowEvent(_ event: String, args: [Value]) -> Bool {
+        return handleEvent(.allow, event, args: args) != .boolean(false)
+    }
+
+    final func canRespondTo(phase: EventPhase, event: String) -> Bool {
+        var prototype: Prototype! = self.prototype
+        while prototype != nil {
+            if prototype.handlers.contains(where: { $0.phase == phase && $0.event == event }) {
+                return true
+            }
+            prototype = prototype.parent
+        }
+        return false
+    }
+}
+
+// MARK: - gmm
+
 @dynamicMemberLookup
 class Entity: ValueDictionary {
     static var idIterator = (1...).makeIterator()

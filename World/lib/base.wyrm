@@ -1,116 +1,117 @@
 // Races and prototype for avatars.
 
-defrace rebornHero {
-    brief = "a reborn hero"
-    description = |
-        You see a shimmering humanoid form that seems only partially corporeal,
-        with one foot in this world and the other still in the Dreamlands.
+def race rebornHero {
+  brief = "a reborn hero"
+  description = """
+    You see a shimmering humanoid form that seems only partially corporeal, with
+    one foot in this world and the other still in the Dreamlands.
+    """
 }
 
-defrace human {
-    brief = "a human"
+def race human {
+  brief = "a human"
 }
 
-defrace elf {
-    brief = "an el[f|ves]"
+def race elf {
+  brief = "an el[f|ves]"
 }
 
-defrace sidhe {
-    brief = "a sidhe[]"
+def race sidhe {
+  brief = "a sidhe[]"
 }
 
-defrace dwarf {
-    brief = "a dwar[f|ves]"
+def race dwarf {
+  brief = "a dwar[f|ves]"
 }
 
-defrace goblin {
-    brief = "a goblin"
+def race goblin {
+  brief = "a goblin"
 }
 
-defrace ogre {
-    brief = "an ogre"
+def race ogre {
+  brief = "an ogre"
 }
 
-def avatar: avatar {
-    size = 'medium
-    race = rebornHero
+def entity avatar: avatar {
+  size = 'medium
+  race = rebornHero
 }
 
 // Non-player characters.
 
-def npc: creature {
-    when talk(actor, self, topic) {
-        show(actor) "{self:D} has nothing to say to you."
-    }
+def entity npc: creature {
+  when talk(actor, self, topic) {
+    show(actor) "{self:D} has nothing to say to you."
+  }
 }
 
-def trainer: npc {
-    teaches = []  // FIXME:
+def entity trainer: npc {
+  teaches = []  // FIXME:
 }
 
-def miningTrainer: trainer {
+def entity miningTrainer: trainer {
 }
 
 // Portals
 
-def doorway: portal {
-    brief = "a doorway"
+def entity doorway: portal {
+  brief = "a doorway"
 }
 
-def entryDoorway: portal {
-    brief = "a doorway"
+def entity entryDoorway: portal {
+  brief = "a doorway"
 }
 
-def exitDoorway: portal {
-    brief = "a doorway"
+def entity exitDoorway: portal {
+  brief = "a doorway"
 }
 
-def stairway: portal {
-    brief = "a stairway"
+def entity stairway: portal {
+  brief = "a stairway"
 }
 
-def continuingPortal: portal {
-    pose = "continues to the $."
+def entity continuingPortal: portal {
+  pose = "continues to the $."
 }
 
 // Spiritstone
 
-def spiritstone: fixture {
-    brief = "a spiritstone"
+def entity spiritstone: fixture {
+  brief = "a spiritstone"
 }
 
 // Tools
 
-def pickaxe: equipment {
-    size = 'medium
-    slot = 'tool
+def entity pickaxe: equipment {
+  size = 'medium
+  slot = 'tool
 }
 
-def copperPickaxe: pickaxe {
-    brief = "a copper pickaxe"
+def entity copperPickaxe: pickaxe {
+  brief = "a copper pickaxe"
 }
 
-def bronzePickaxe: pickaxe {
-    brief = "a bronze pickaxe"
+def entity bronzePickaxe: pickaxe {
+  brief = "a bronze pickaxe"
 }
 
 // Currency
 
-def silverCoin: item {
-    brief = "a silver coin"
-    description = "Silver coins are the common currency of the realm."
-    icon = 'silver_coin
-    stackLimit = 10000
+def entity silverCoin: item {
+  brief = "a silver coin"
+  description = "Silver coins are the common currency of the realm."
+  icon = 'silver_coin
+  stackLimit = 10000
 }
 
 // Consumables
 
-def food: item {
-    stackLimit = 100
+def entity food: item {
+  stackLimit = 100
 }
 
 // Resources
 
-def resource: item {
-    stackLimit = 1000
+def entity resource: item {
+  stackLimit = 1000
 }

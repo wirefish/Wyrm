@@ -1,35 +1,35 @@
-def routeFollower: location {
-    // A list of portals that will serve as exits leading from this location to
-    // the destinations along its route.
-    route = []
+def entity routeFollower: location {
+  // A list of portals that will serve as exits leading from this location to
+  // the destinations along its route.
+  route = []
 
-    when startWorld() {
-        var pos = 0
-        var entries = [exit -> oppositeDirection(exit.direction) to self for exit in route]
-        while true {
-            // Arrive at the destination.
-            var dest = *route[pos].destination
-            addExit(entries[pos], dest)
-            addExit(route[pos], self)
-            announce(dest, 3, "{self.name} arrives at {dest.name}.")
-            updateMap(dest)
-            await sleep(20)
+  when startWorld() {
+    var pos = 0
+    var entries = [exit -> oppositeDirection(exit.direction) to self for exit in route]
+    while true {
+      // Arrive at the destination.
+      var dest = *route[pos].destination
+      addExit(entries[pos], dest)
+      addExit(route[pos], self)
+      announce(dest, 3, "{self.name} arrives at {dest.name}.")
+      updateMap(dest)
+      await sleep(20)
 
-            // Announce departure to the next destination.
-            var nextPos = (pos + 1) % len(route)
-            var nextDest = *route[nextPos].destination
-            announce(dest, 3, "{self.name} will depart soon for {nextDest.name}. All aboard!")
-            await sleep(7)
+      // Announce departure to the next destination.
+      var nextPos = (pos + 1) % len(route)
+      var nextDest = *route[nextPos].destination
+      announce(dest, 3, "{self.name} will depart soon for {nextDest.name}. All aboard!")
+      await sleep(7)
 
-            // Depart.
-            announce(dest, 3, "{self.name} departs for {nextDest.name}.")
-            removeExit(entries[pos].direction, dest)
-            removeExit(route[pos].direction, self)
-            updateMap(dest)
-            updateMap(self)
-            await sleep(3)
+      // Depart.
+      announce(dest, 3, "{self.name} departs for {nextDest.name}.")
+      removeExit(entries[pos].direction, dest)
+      removeExit(route[pos].direction, self)
+      updateMap(dest)
+      updateMap(self)
+      await sleep(3)
 
-            pos = nextPos
-        }
+      pos = nextPos
     }
+  }
 }

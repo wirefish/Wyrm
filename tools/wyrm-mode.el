@@ -37,7 +37,10 @@
 (defconst wyrm-name-re wyrm-identifier-re)
 
 (defconst wyrm-def-re
-  "^ *\\(entity\\|location\\|region\\|heritage\\|event\\|command\\|quest\\|skill\\|extend\\) +")
+  (concat "^ *\\(def\\) +\\(" wyrm-identifier-re "\\) +"))
+
+(defconst wyrm-extend-re
+  (concat "^ *\\(extend\\) +\\(" wyrm-identifier-re "\\) +"))
 
 (defconst wyrm-fdef-re
   "^ *\\(after\\|allow\\|before\\|when\\|func\\|phase\\) +")
@@ -56,11 +59,17 @@
   "Font Lock mode face used to highlight markers."
   :group 'wyrm-faces)
 
+(defface wyrm-type-face
+  '((((background light)) :foreground "LightSalmon3")
+    (((background dark))  :foreground "LightSalmon1"))
+  "Font Lock mode face used to highlight the type in a definition."
+  :group 'wyrm-faces)
+
 (setq wyrm-font-lock-keywords
       (let* (
              ;; define several category of keywords
-             (x-keywords '("await" "continue" "else" "if" "import" "for"
-                           "return" "self" "to" "var"))
+             (x-keywords '("await" "break" "continue" "else" "if" "in" "fallthrough"
+                           "for" "oneway" "return" "self" "to" "var" "while"))
              (x-constants '("false" "true" "nil"))
 
              ;; generate regex string for each category of keywords
@@ -71,7 +80,10 @@
           (,x-keywords-regexp . font-lock-keyword-face)
           (,wyrm-symbol-re . font-lock-constant-face)
           (,wyrm-def-re (1 font-lock-keyword-face)
+                        (2 'wyrm-type-face)
                         (,wyrm-name-re nil nil (0 font-lock-type-face)))
+          (,wyrm-extend-re (1 font-lock-keyword-face)
+                           (2 font-lock-type-face))
           (,wyrm-fdef-re (1 font-lock-keyword-face)
                          (,wyrm-fname-re nil nil (1 font-lock-function-name-face))))))
 
