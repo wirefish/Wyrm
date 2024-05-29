@@ -219,7 +219,7 @@ extension World {
     func load() throws {
         logger.info("loading world from \(rootPath)")
         let startTime = CFAbsoluteTimeGetCurrent()
-        
+
         for relativePath in try readModulesFile() {
             let moduleName = moduleName(for: relativePath)
             let module = requireModule(named: moduleName)
@@ -671,7 +671,7 @@ extension World {
             stack.count = count
             return .entity(stack)
 
-        case let .clone(lhs):
+        case let .clone(lhs, _):  // FIXME:
             let lhs = try evalInitializer(lhs, in: module)
             guard case let .ref(ref) = lhs,
                   case let .entity(proto) = lookup(ref, context: module) else {

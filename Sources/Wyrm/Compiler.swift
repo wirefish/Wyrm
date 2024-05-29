@@ -347,7 +347,7 @@ class Compiler {
             elements.forEach { compile($0, &block) }
             block.emit(.endList)
 
-        case let .clone(lhs):
+        case let .clone(lhs, _):  // FIXME:
             compile(lhs, &block)
             block.emit(.clone)
 

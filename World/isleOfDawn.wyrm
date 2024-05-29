@@ -780,7 +780,7 @@ def entity tulipField: isleLocation {
     Tulips in myriad colors have been planted here.
     """
   surface = 'flowers
-  contents = [whiteTulip{}]
+  contents = [whiteTulip!]
 }
 
 def location tulipFieldSw: tulipField {
@@ -1264,7 +1264,7 @@ def entity overgrownField: isleLocation {
   name = "Overgrown Field"
   description = "Tangled vines and weeds make it difficult to move through this area."
   surface = 'weeds
-  contents = [lashling{}]
+  contents = [lashling!]
 }
 
 def entity overgrownFieldPortal: lib.continuingPortal {
@@ -1370,7 +1370,7 @@ def location beachCenter: beachLocation {
 
 def location beachWest: beachLocation {
   exits = [beachPortal -> 'east to beachCenter]
-  contents = [shinySeashell{}]
+  contents = [shinySeashell!]
 }
 
 //# dockmasterShack

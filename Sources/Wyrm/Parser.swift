@@ -1,8 +1,6 @@
 //
-//  Parser.swift
-//  Wyrm
-//
-//  Created by Craig Becker on 6/23/22.
+// Parser.swift
+// Wyrm
 //
 
 indirect enum ParseNode {
@@ -25,7 +23,7 @@ indirect enum ParseNode {
   case conjuction(ParseNode, ParseNode)
   case disjunction(ParseNode, ParseNode)
   case list([ParseNode])
-  case clone(ParseNode)
+  case clone(ParseNode, [Member])
   case call(ParseNode, [ParseNode])
   case dot(ParseNode, String)
   case `subscript`(ParseNode, ParseNode)
@@ -119,7 +117,7 @@ class Parser {
     .starEqual: (method: parseAssignment, prec: .assign),
     .percent: (method: parseBinary, prec: .factor),
     .percentEqual: (method: parseAssignment, prec: .assign),
-    .not: (method: parseClone, prec: .unary),
+    .not: (method: parseClone, prec: .call),
     .notEqual: (method: parseBinary, prec: .equality),
     .equal: (method: parseAssignment, prec: .assign),
     .equalEqual: (method: parseBinary, prec: .equality),
@@ -246,7 +244,8 @@ class Parser {
 
   private func parseMember() -> ParseNode.Member? {
     guard case let .identifier(name) = consume() else {
-      fatalError("invalid call to parseMember")
+      error("expected member name")
+      return nil
     }
 
     guard case .equal = consume() else {
@@ -277,7 +276,8 @@ class Parser {
     }
 
     var anonymousCount = 0
-    guard let params = parseSequence(from: .lparen, to: .rparen, using: { () -> Parameter? in
+    let params = parseSequence(from: .lparen, until: .rparen) {
+      () -> Parameter? in
       guard case var .identifier(name) = consume() else {
         error("parameter name must be an identifier")
         return nil
@@ -300,8 +300,6 @@ class Parser {
       }
 
       return Parameter(name: name, constraint: constraint)
-    }) else {
-      return nil
     }
 
     guard let block = parseBlock() else {
@@ -319,7 +317,8 @@ class Parser {
       return nil
     }
 
-    guard let params = parseSequence(from: .lparen, to: .rparen, using: { () -> Parameter? in
+    let params = parseSequence(from: .lparen, until: .rparen) {
+      () -> Parameter? in
       guard case let .identifier(name) = consume() else {
         error("parameter name must be an identifier")
         return nil
@@ -329,8 +328,6 @@ class Parser {
         return nil
       }
       return Parameter(name: name, constraint: .none)
-    }) else {
-      return nil
     }
 
     guard let block = parseBlock() else {
@@ -363,8 +360,8 @@ class Parser {
   }
 
   private func parseQuestConstraint() -> Constraint? {
-    guard let params = parseSequence(from: .lparen, to: .rparen, using: { parseExpr() }),
-          params.count == 2,
+    let params = parseSequence(from: .lparen, until: .rparen) { parseExpr() }
+    guard params.count == 2,
           let questRef = params[0].asValueRef,
           case let .identifier(phase) = params[1] else {
       error("invalid quest constraint")
@@ -437,27 +434,11 @@ class Parser {
       error("expected identifier as name of quest phase")
       return nil
     }
-
     guard match(.lbrace) else {
       error("expected { at start of quest phase body")
       return nil
     }
-
-    var members = [ParseNode.Member]()
-    while !(match(.rbrace)) {
-      switch currentToken {
-      case .identifier:
-        if let member = parseMember() {
-          members.append(member)
-        }
-      default:
-        error("unexpected token \(currentToken) in quest phase body")
-        advance()
-        break
-      }
-    }
-
-    return (label, members)
+    return (label, parseMembers())
   }
 
   // MARK: - parsing races
@@ -501,15 +482,8 @@ class Parser {
   private func parseMembers() -> [ParseNode.Member] {
     var members = [ParseNode.Member]()
     while !(match(.rbrace)) {
-      switch currentToken {
-      case .identifier:
-        if let member = parseMember() {
-          members.append(member)
-        }
-      default:
-        error("unexpected token \(currentToken)")
-        advance()
-        break
+      if let member = parseMember() {
+        members.append(member)
       }
     }
     return members
@@ -806,7 +780,7 @@ class Parser {
       return .comprehension(first, name, sequence, pred)
     } else {
       // This is a list literal.
-      var list = [first]
+      var items = [first]
       while !match(.rsquare) {
         if !match(.comma) {
           error(", expected between list values")
@@ -815,15 +789,24 @@ class Parser {
         guard let next = parseExpr() else {
           return nil
         }
-        list.append(next)
+        items.append(next)
       }
-      return .list(list)
+      return .list(items)
     }
   }
 
   private func parseClone(lhs: ParseNode) -> ParseNode? {
     assert(match(.not))
-    return .clone(lhs)
+
+    // Parse optional member overrides.
+    var members: [ParseNode.Member]
+    if currentToken == .lbrace {
+      members = parseSequence(from: .lbrace, until: .rbrace) { parseMember() }
+    } else {
+      members = []
+    }
+
+    return .clone(lhs, members)
   }
 
   private func parseBinary(lhs: ParseNode) -> ParseNode? {
@@ -863,16 +846,7 @@ class Parser {
   }
 
   private func parseCall(lhs: ParseNode) -> ParseNode? {
-    assert(match(.lparen))
-    var args = [ParseNode]()
-    while !match(.rparen) {
-      if let arg = parseExpr() {
-        args.append(arg)
-      }
-      if currentToken != .rparen && !match(.comma) {
-        error("expected , between function arguments")
-      }
-    }
+    var args = parseSequence(from: .lparen, until: .rparen) { parseExpr() }
 
     // Allow for a trailing string/text literal as the final argument.
     if case let .string(s) = currentToken {
@@ -933,30 +907,6 @@ class Parser {
     return .exit(lhs, direction, destination)
   }
 
-  private func parseSequence<T>(from start: Token, to end: Token,
-                                using fn: () -> T?) -> [T]? {
-    if !match(start) {
-      error("expected \(start) at \(currentToken)")
-      return nil
-    }
-
-    var list = [T]()
-    while !match(end) {
-      if !list.isEmpty {
-        guard match(.comma) else {
-          error("expected , at \(currentToken)")
-          return nil
-        }
-      }
-      guard let element = fn() else {
-        return nil
-      }
-      list.append(element)
-    }
-
-    return list
-  }
-
   private func parseText(_ s: String) -> Text? {
     let parts = s.split(separator: "{", maxSplits: Int.max, omittingEmptySubsequences: false)
 
@@ -998,6 +948,27 @@ class Parser {
     }
 
     return Text(prefix: String(parts[0]), segments: segments)
+  }
+
+  // Parses a comma-separated list of items enclosed within the specified start
+  // and end tokens. The provided function is used to parse each item.
+  private func parseSequence<T>(from start: Token?, until end: Token, _ fn: () -> T?) -> [T] {
+    if start != nil && !match(start!) {
+      error("expected \(start!) at \(currentToken)")
+      return []
+    }
+
+    var items = [T]()
+    while !match(end) {
+      if let item = fn() {
+        items.append(item)
+      }
+      if currentToken != end && !match(.comma) {
+        error("expected , at \(currentToken)");
+      }
+    }
+
+    return items
   }
 
   // MARK: - consuming tokens
