@@ -799,11 +799,10 @@ class Parser {
     assert(match(.not))
 
     // Parse optional member overrides.
-    var members: [ParseNode.Member]
-    if currentToken == .lbrace {
-      members = parseSequence(from: .lbrace, until: .rbrace) { parseMember() }
+    let members = if currentToken == .lbrace {
+      parseSequence(from: .lbrace, until: .rbrace) { parseMember() }
     } else {
-      members = []
+      [ParseNode.Member]()
     }
 
     return .clone(lhs, members)
