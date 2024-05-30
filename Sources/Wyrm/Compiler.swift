@@ -271,13 +271,16 @@ class Compiler {
       if let s = text.asLiteral {
         block.emit(.pushConstant, block.addConstant(.string(s)))
       } else {
-        block.emit(.pushConstant, block.addConstant(.string(text.prefix)))
         for segment in text.segments {
-          compileExpr(segment.expr, &block)
-          block.emit(.stringify, segment.format.rawValue)
-          block.emit(.pushConstant, block.addConstant(.string(segment.suffix)))
+          switch segment {
+          case let .string(s):
+            block.emit(.pushConstant, block.addConstant(.string(s)))
+          case let .expr(expr, format):
+            compileExpr(expr, &block)
+            block.emit(.stringify, format.rawValue)
+          }
         }
-        block.emit(.joinStrings, UInt8(1 + 2 * text.segments.count))
+        block.emit(.joinStrings, UInt8(text.segments.count))
       }
 
     case let .symbol(s):

@@ -892,14 +892,26 @@ class Parser {
     return .exit(lhs, direction, destination)
   }
 
+  // Parses a string that may contain interpolation expressions.
   private func parseText(_ s: String) -> Text? {
-    let parts = s.split(separator: "{", maxSplits: Int.max, omittingEmptySubsequences: false)
+    let parts = s.split(separator: "{", omittingEmptySubsequences: false)
 
+    // The first (possibly empty) part is always a string literal.
     var segments = [Text.Segment]()
+    if !parts.first!.isEmpty {
+      segments.append(.string(String(parts.first!)))
+    }
+
+    // Each subseqent part contains a } which separates a leading expression from
+    // a trailing (possibily empty) string literal.
     for part in parts.dropFirst() {
-      let subparts = part.split(separator: "}", maxSplits: Int.max, omittingEmptySubsequences: false)
+      let subparts = part.split(separator: "}", omittingEmptySubsequences: false)
       guard subparts.count == 2 else {
-        error("malformed text: \"\(s)\"")
+        if subparts.count == 1 {
+          error("string contains { without matching }")
+        } else {
+          error("string contains } without matching {")
+        }
         return nil
       }
 
@@ -929,10 +941,13 @@ class Parser {
         }
       }
 
-      segments.append(Text.Segment(expr: expr, format: format, suffix: String(subparts[1])))
+      segments.append(.expr(expr, format))
+      if !subparts[1].isEmpty {
+        segments.append(.string(String(subparts[1])))
+      }
     }
 
-    return Text(prefix: String(parts[0]), segments: segments)
+    return Text(segments: segments)
   }
 
   // Parses a comma-separated list of items enclosed within the specified start

@@ -18,16 +18,20 @@ struct Text {
     }
   }
 
-  struct Segment {
-    let expr: Expression
-    let format: Format
-    let suffix: String
+  enum Segment {
+    case string(String)
+    case expr(Expression, Format)
   }
 
-  let prefix: String
   let segments: [Segment]
 
-  var asLiteral: String? { segments.isEmpty ? prefix : nil }
+  var asLiteral: String? {
+    if segments.count == 1, case let .string(s) = segments.first {
+      return s
+    } else {
+      return nil
+    }
+  }
 }
 
 extension Array where Element: StringProtocol {
