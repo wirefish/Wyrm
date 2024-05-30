@@ -22,7 +22,7 @@ class Item: PhysicalEntity, Codable {
     
     var level = 0
     var useVerbs = [String]()
-    var quest: ValueRef?
+    var quest: Ref?
     var price: Item?
 
     override func copyProperties(from other: Entity) {
@@ -99,7 +99,7 @@ class Item: PhysicalEntity, Codable {
     required convenience init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
 
-        let protoRef = try c.decode(ValueRef.self, forKey: .prototype)
+        let protoRef = try c.decode(Ref.self, forKey: .prototype)
         guard let proto = World.instance.lookup(protoRef)?.asEntity(Item.self) else {
             throw CodingError.badPrototype
         }

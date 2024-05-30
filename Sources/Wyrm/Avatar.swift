@@ -10,11 +10,11 @@ import Foundation
 // MARK: - Race
 
 final class Race: ValueDictionary, CustomDebugStringConvertible {
-    let ref: ValueRef
+    let ref: Ref
     var brief: NounPhrase?
     var description: String?
 
-    init(ref: ValueRef) {
+    init(ref: Ref) {
         self.ref = ref
     }
 
@@ -42,16 +42,16 @@ final class Race: ValueDictionary, CustomDebugStringConvertible {
 // MARK: - Skill
 
 final class Skill: ValueDictionary, Matchable, CustomDebugStringConvertible {
-    let ref: ValueRef
+    let ref: Ref
     var name: String?
     var description: String?
     var maxRank = 200
     var karmaPrice: Int?
     var currencyPrice: Item?
-    var requiredSkills: [ValueRef]?
-    var exclusiveSkills: [ValueRef]?
+    var requiredSkills: [Ref]?
+    var exclusiveSkills: [Ref]?
 
-    init(ref: ValueRef) {
+    init(ref: Ref) {
         self.ref = ref
     }
 
@@ -108,16 +108,16 @@ final class Avatar: PhysicalEntity {
     var equipped = [EquipmentSlot:Equipment]()
 
     // A mapping from identifiers of active quests to their current state.
-    var activeQuests = [ValueRef:QuestState]()
+    var activeQuests = [Ref:QuestState]()
 
     // A mapping from identifiers of completed quests to the time of completion.
-    var completedQuests = [ValueRef:Int]()
+    var completedQuests = [Ref:Int]()
 
     // Karma available to learn skills.
     var karma = 0
 
     // Current rank in all known skills.
-    var skills = [ValueRef:Int]()
+    var skills = [Ref:Int]()
 
     // Tutorials.
     var tutorialsOn = true
@@ -202,7 +202,7 @@ extension Avatar: Codable {
 
         let c = try decoder.container(keyedBy: CodingKeys.self)
 
-        let locationRef = try c.decode(ValueRef.self, forKey: .location)
+        let locationRef = try c.decode(Ref.self, forKey: .location)
         if let loc = World.instance.lookup(locationRef, context: nil)?.asEntity(Location.self) {
             self.container = loc
         } else {
@@ -213,7 +213,7 @@ extension Avatar: Codable {
         level = try c.decode(Int.self, forKey: .level)
         xp = try c.decode(Int.self, forKey: .xp)
 
-        if let raceRef = try c.decodeIfPresent(ValueRef.self, forKey: .race) {
+        if let raceRef = try c.decodeIfPresent(Ref.self, forKey: .race) {
             if case let .race(race) = World.instance.lookup(raceRef, context: nil) {
                 self.race = race
             } else {
@@ -227,12 +227,12 @@ extension Avatar: Codable {
         name = try c.decode(String?.self, forKey: .name)
         inventory = try c.decode(Inventory.self, forKey: .inventory)
         equipped = try c.decode([EquipmentSlot:Equipment].self, forKey: .equipped)
-        activeQuests = try c.decode([ValueRef:QuestState].self, forKey: .activeQuests)
-        completedQuests = try c.decode([ValueRef:Int].self, forKey: .completedQuests)
+        activeQuests = try c.decode([Ref:QuestState].self, forKey: .activeQuests)
+        completedQuests = try c.decode([Ref:Int].self, forKey: .completedQuests)
         if let karma = try? c.decodeIfPresent(Int.self, forKey: .karma) {
             self.karma = karma
         }
-        skills = try c.decode([ValueRef:Int].self, forKey: .skills)
+        skills = try c.decode([Ref:Int].self, forKey: .skills)
 
         tutorialsOn = try c.decode(Bool.self, forKey: .tutorialsOn)
         tutorialsSeen = try c.decode(Set<String>.self, forKey: .tutorialsSeen)

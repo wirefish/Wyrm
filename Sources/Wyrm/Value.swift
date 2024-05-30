@@ -13,7 +13,7 @@ enum Value: Equatable {
   case number(Double)
   case string(String)
   case symbol(String)
-  case ref(ValueRef)
+  case ref(Ref)
   case entity(Entity)
   case quest(Quest)
   case race(Race)

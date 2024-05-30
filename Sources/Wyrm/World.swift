@@ -28,7 +28,7 @@ class Module: ValueDictionary {
   }
 }
 
-enum ValueRef: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
+enum Ref: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
   case absolute(String, String)
   case relative(String)
 
@@ -56,7 +56,7 @@ enum ValueRef: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
     }
   }
 
-  static func fromValue(_ value: Value) -> ValueRef? {
+  static func fromValue(_ value: Value) -> Ref? {
     guard case let .ref(ref) = value else {
       return nil
     }
@@ -71,7 +71,7 @@ enum ValueRef: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
     World.instance.lookup(self, context: nil)
   }
 
-  func toAbsolute(in module: Module) -> ValueRef {
+  func toAbsolute(in module: Module) -> Ref {
     switch self {
     case .absolute:
       return self
@@ -82,7 +82,7 @@ enum ValueRef: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
 }
 
 struct Extension {
-  let ref: ValueRef
+  let ref: Ref
   var handlers = [EventHandler]()
   var methods = [String:Value]()
 }
@@ -160,7 +160,7 @@ class World {
     }
   }
 
-  func lookup(_ ref: ValueRef, context: [ValueDictionary]) -> Value? {
+  func lookup(_ ref: Ref, context: [ValueDictionary]) -> Value? {
     switch ref {
     case let .absolute(module, name):
       return modules[module]?.get(name)
@@ -175,7 +175,7 @@ class World {
     }
   }
 
-  func lookup(_ ref: ValueRef, context: ValueDictionary? = nil) -> Value? {
+  func lookup(_ ref: Ref, context: ValueDictionary? = nil) -> Value? {
     switch ref {
     case let .absolute(module, name):
       return modules[module]?.get(name)
@@ -184,7 +184,7 @@ class World {
     }
   }
 
-  func lookup(_ ref: ValueRef, context: ValueRef) -> Value? {
+  func lookup(_ ref: Ref, context: Ref) -> Value? {
     switch ref {
     case let .absolute(module, name):
       return modules[module]?.bindings[name]
@@ -638,14 +638,14 @@ extension World {
       return .list(ValueList(values))
 
     case let .exit(portal, direction, destination):
-      guard let portalRef = portal.asValueRef,
+      guard let portalRef = portal.asRef,
             let proto = lookup(portalRef, context: module)?.asEntity(Portal.self) else {
         throw EvalError.typeMismatch("invalid portal prototype")
       }
       guard let direction = Direction.fromValue(try evalInitializer(direction, in: module)) else {
         throw EvalError.typeMismatch("invalid portal direction")
       }
-      guard let destinationRef = destination.asValueRef else {
+      guard let destinationRef = destination.asRef else {
         throw EvalError.typeMismatch("invalid portal destination")
       }
       let portal = proto.clone()
@@ -657,7 +657,7 @@ extension World {
       guard case let .number(n) = lhs, let count = Int(exactly: n) else {
         throw EvalError.typeMismatch("stack count must be an integer literal")
       }
-      guard let protoRef = rhs.asValueRef,
+      guard let protoRef = rhs.asRef,
             let proto = lookup(protoRef, context: module)?.asEntity(Item.self) else {
         throw EvalError.typeMismatch("invalid stack prototype")
       }
@@ -674,7 +674,7 @@ extension World {
       return .entity(proto.clone())
 
     case .dot:
-      guard let ref = node.asValueRef else {
+      guard let ref = node.asRef else {
         throw EvalError.invalidExpression("invalid reference")
       }
       return .ref(ref)

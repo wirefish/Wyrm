@@ -1,11 +1,30 @@
-- remove `of` operator and use more general !(...) instead
+# Initialization
 
-- expression if
+Instead of evaluating member initializers as they are encountered, which causes
+problems with referencing other entities in a consistent way...
+
+For each object with members, compile an object initializer that includes all
+the member initializers. But don't execute it right away. Store the
+(uninitialized) objects in the world as usual.
+
+Once everything has been loaded and compiled, go back and run the object
+initializers in order. This allows forward and backward references to objects to
+resolve, e.g. in exits or quantities. Maybe check for access to members of
+as-yet-uninitialized objects.
+
+This removes the duplication of code in evalInitializer.
+
+# Misc
+
+- remove `of` operator and use more general !(...) instead
 
 - add `def command` for commands that have no interaction with the engine, e.g.
   meditate.
 
 - add `def event` for similar reasons to above
+
+- Split string literals into a separate case from Text, which is always an
+  InterpolatedString. Move the conjunction extension somewhere.
 
 # Older...
 

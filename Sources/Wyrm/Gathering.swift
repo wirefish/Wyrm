@@ -7,7 +7,7 @@
 
 class ResourceNode: PhysicalEntity {
     // The skill required to see and use the node.
-    var requiredSkill: ValueRef?
+    var requiredSkill: Ref?
 
     // The minimum skill rank required to see and use the node. This rank
     // corresponds to a 50% chance of successfully gathering from the node.
@@ -18,7 +18,7 @@ class ResourceNode: PhysicalEntity {
     var maxRank = 100
 
     // The type of tool that must be equipped to use the node.
-    var requiredTool: ValueRef?
+    var requiredTool: Ref?
 
     // The amount of time it takes to gather at the node.
     var duration = 3.0

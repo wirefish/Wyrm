@@ -70,15 +70,15 @@ final class QuestPhase: ValueDictionary {
 }
 
 final class Quest: ValueDictionary, CustomDebugStringConvertible, Matchable {
-    let ref: ValueRef
+    let ref: Ref
     var name = ""
     var summary = ""
     var level = 1
-    var requiredQuests = [ValueRef]()
+    var requiredQuests = [Ref]()
 
     var phases = [QuestPhase]()
 
-    init(ref: ValueRef) {
+    init(ref: Ref) {
         self.ref = ref
     }
 
@@ -284,7 +284,7 @@ extension Avatar {
         return completedQuests[quest.ref] != nil
     }
 
-    func didCompleteQuests(_ refs: [ValueRef]) -> Bool {
+    func didCompleteQuests(_ refs: [Ref]) -> Bool {
         refs.allSatisfy { completedQuests[$0] != nil }
     }
 }

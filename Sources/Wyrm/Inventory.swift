@@ -47,7 +47,7 @@ final class Inventory: Container, Codable {
         var contentsArray = contentsArrayForProto
         while !contentsArrayForProto.isAtEnd {
             let itemContainer = try contentsArrayForProto.nestedContainer(keyedBy: Self.PrototypeKey)
-            let protoRef = try itemContainer.decode(ValueRef.self, forKey: .prototype)
+            let protoRef = try itemContainer.decode(Ref.self, forKey: .prototype)
             guard let proto = World.instance.lookup(protoRef)?.asEntity(Item.self) else {
                 logger.error("cannot load item with prototype \(protoRef)")
                 continue
@@ -184,7 +184,7 @@ extension Avatar {
         }
     }
 
-    func hasEquipped(_ ref: ValueRef) -> Bool {
+    func hasEquipped(_ ref: Ref) -> Bool {
         return equipped.values.contains { $0.isa(ref) }
     }
 }

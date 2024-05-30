@@ -37,7 +37,7 @@ indirect enum Expression {
     }
   }
 
-  var asValueRef: ValueRef? {
+  var asRef: Ref? {
     switch self {
     case let .dot(lhs, name):
       guard case let .identifier(module) = lhs else {
@@ -71,13 +71,13 @@ enum Definition {
   typealias Method = (String, [Parameter], Statement)
   typealias QuestPhase = (String, [Member])
 
-  case entity(name: String, prototype: ValueRef, members: [Member],
+  case entity(name: String, prototype: Ref, members: [Member],
               handlers: [Handler], methods: [Method], isLocation: Bool)
   case quest(name: String, members: [Member], phases: [QuestPhase])
   case race(name: String, members: [Member])
   case skill(name: String, members: [Member])
   case region(members: [Member])
-  case `extension`(ref: ValueRef, handlers: [Handler], methods: [Method])
+  case `extension`(ref: Ref, handlers: [Handler], methods: [Method])
 }
 
 enum Precedence: Int, Comparable {
@@ -200,7 +200,7 @@ class Parser {
       return nil
     }
 
-    guard let prototype = parseValueRef() else {
+    guard let prototype = parseRef() else {
       return nil
     }
 
@@ -348,7 +348,7 @@ class Parser {
         error("invalid constraint type \(constraintType)")
         return nil
       }
-    } else if let ref = parseValueRef() {
+    } else if let ref = parseRef() {
       return ref == .relative("self") ? .self : .prototype(ref)
     } else {
       return nil
@@ -358,7 +358,7 @@ class Parser {
   private func parseQuestConstraint() -> Constraint? {
     let params = parseSequence(from: .lparen, until: .rparen) { parseExpr() }
     guard params.count == 2,
-          let questRef = params[0].asValueRef,
+          let questRef = params[0].asRef,
           case let .identifier(phase) = params[1] else {
       error("invalid quest constraint")
       return nil
@@ -366,7 +366,7 @@ class Parser {
     return .quest(questRef, phase)
   }
 
-  private func parseValueRef() -> ValueRef? {
+  private func parseRef() -> Ref? {
     guard case let .identifier(prefix) = consume() else {
       error("identifier expected")
       return nil
@@ -488,7 +488,7 @@ class Parser {
   // MARK: - parsing extensions
 
   private func parseExtension() -> Definition? {
-    guard let ref = parseValueRef() else {
+    guard let ref = parseRef() else {
       error("expected reference after extend")
       return nil
     }

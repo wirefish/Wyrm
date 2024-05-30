@@ -17,7 +17,7 @@ enum PortalState: ValueRepresentableEnum {
 
 class Portal: PhysicalEntity {
     var direction: Direction = .in
-    var destination: ValueRef?
+    var destination: Ref?
     var isCloseable = false
     var key: Item?
     var state = PortalState.open

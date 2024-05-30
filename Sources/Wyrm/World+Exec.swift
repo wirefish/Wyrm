@@ -6,7 +6,7 @@
 enum ExecError: Error {
   case typeMismatch
   case undefinedSymbol(String)
-  case undefinedReference(ValueRef)
+  case undefinedReference(Ref)
   case indexOutOfBounds
   case referenceRequired
   case expectedCallable

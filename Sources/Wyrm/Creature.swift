@@ -121,8 +121,8 @@ class Creature: PhysicalEntity, Combatant, Questgiver {
     // Questgiver
     var offersQuests = [Quest]()
 
-    var sells: [ValueRef]?
-    var teaches: [ValueRef]?
+    var sells: [Ref]?
+    var teaches: [Ref]?
 
     override func copyProperties(from other: Entity) {
         let other = other as! Creature

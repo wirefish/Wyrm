@@ -7,13 +7,13 @@
 
 @dynamicMemberLookup
 class Proto {
-  let ref: ValueRef
+  let ref: Ref
   let proto: Proto?
 
   var brief: NounPhrase?
   private var members = [String:Value]()
 
-  init(ref: ValueRef, proto: Proto?) {
+  init(ref: Ref, proto: Proto?) {
     self.ref = ref
     self.proto = proto
   }
@@ -60,12 +60,12 @@ struct Member<T: ValueRepresentable> {
 }
 
 class Prototype: ValueDictionary {
-  let ref: ValueRef
+  let ref: Ref
   let parent: Prototype?
   var handlers = [EventHandler]()
   var extraProperties = [String:Value]()
 
-  required init(ref: ValueRef, parent: Prototype? = nil) {
+  required init(ref: Ref, parent: Prototype? = nil) {
     self.ref = ref
     self.parent = parent
   }
@@ -78,7 +78,7 @@ class Prototype: ValueDictionary {
     extraProperties[property] = value
   }
 
-  func specialize(ref: ValueRef) -> Self {
+  func specialize(ref: Ref) -> Self {
     return Self(ref: ref, parent: self)
   }
 
@@ -227,7 +227,7 @@ class Entity: ValueDictionary {
   static var idIterator = (1...).makeIterator()
 
   let id = idIterator.next()!
-  var ref: ValueRef?
+  var ref: Ref?
   let prototype: Entity?
   var handlers = [EventHandler]()
   var extraMembers = [String:Value]()
@@ -255,7 +255,7 @@ class Entity: ValueDictionary {
     extraMembers[name]
   }
 
-  final func isa(_ ref: ValueRef) -> Bool {
+  final func isa(_ ref: Ref) -> Bool {
     return ref == self.ref || (prototype?.isa(ref) ?? false)
   }
 

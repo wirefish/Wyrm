@@ -503,7 +503,7 @@ class Compiler {
     }
   }
 
-  func compile(_ ref: ValueRef, _ block: inout ScriptFunction) {
+  func compile(_ ref: Ref, _ block: inout ScriptFunction) {
     switch ref {
     case let .relative(name):
       compileExpr(.identifier(name), &block)
