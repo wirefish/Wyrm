@@ -28,10 +28,7 @@ class Module: ValueDictionary {
   }
 }
 
-enum Ref: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
-  case absolute(String, String)
-  case relative(String)
-
+extension Ref: Codable, CustomStringConvertible {
   init(from decoder: Decoder) throws {
     let c = try decoder.singleValueContainer()
     let s = try c.decode(String.self)
@@ -54,17 +51,6 @@ enum Ref: Hashable, Codable, CustomStringConvertible, ValueRepresentable {
     case let .relative(name):
       return name
     }
-  }
-
-  static func fromValue(_ value: Value) -> Ref? {
-    guard case let .ref(ref) = value else {
-      return nil
-    }
-    return ref
-  }
-
-  func toValue() -> Value {
-    return .ref(self)
   }
 
   func deref() -> Value? {
@@ -635,7 +621,7 @@ extension World {
 
     case let .list(nodes):
       let values = try nodes.map { try evalInitializer($0, in: module) }
-      return .list(ValueList(values))
+      return .list(values)
 
     case let .exit(portal, direction, destination):
       guard let portalRef = portal.asRef,

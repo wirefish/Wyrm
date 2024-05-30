@@ -55,8 +55,8 @@ struct ScriptLibrary {
         }
     }
 
-    static func len(list: ValueList) -> Int {
-        return list.values.count
+    static func len(list: [Value]) -> Int {
+        return list.count
     }
 
     static func logDebug(_ args: [Value]) throws -> Value {
@@ -87,8 +87,8 @@ struct ScriptLibrary {
         Double.random(in: minValue...maxValue)
     }
 
-    static func randomElement(list: ValueList) -> Value {
-        return list.values.randomElement() ?? .nil
+    static func randomElement(list: [Value]) -> Value {
+        return list.randomElement() ?? .nil
     }
 
     // Functions that show output to players.

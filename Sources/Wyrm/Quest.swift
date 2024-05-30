@@ -20,7 +20,7 @@ struct QuestState: Codable {
             case let .number(n):
                 return .number(n)
             case let .list(list):
-                return .labels(list.values.compactMap { String.fromValue($0) })
+                return .labels(list.compactMap { String.fromValue($0) })
             default:
                 return nil
             }
@@ -30,7 +30,7 @@ struct QuestState: Codable {
             switch self {
             case .nil: return .nil
             case let .number(n): return .number(n)
-            case let .labels(labels): return .list(ValueList(labels))
+            case let .labels(labels): return labels.toValue()
             }
         }
     }

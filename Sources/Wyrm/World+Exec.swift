@@ -204,20 +204,20 @@ extension World {
       guard case let .list(list) = stack.removeLast() else {
         throw ExecError.typeMismatch
       }
-      guard index >= 0 && index < list.values.count else {
+      guard index >= 0 && index < list.count else {
         throw ExecError.indexOutOfBounds
       }
-      stack.append(list.values[index])
+      stack.append(list[index])
 
     case .storeSubscript:
       let rhs = stack.removeLast()
       guard let index = Int.fromValue(stack.removeLast()) else {
         throw ExecError.typeMismatch
       }
-      guard case let .list(list) = stack.removeLast() else {
+      guard case var .list(list) = stack.removeLast() else {
         throw ExecError.typeMismatch
       }
-      list.values[index] = rhs
+      list[index] = rhs
 
     case .beginList:
       lists.append(stack.count)
@@ -226,7 +226,7 @@ extension World {
       let start = lists.removeLast()
       let values = Array<Value>(stack[start...])
       stack.removeSubrange(start...)
-      stack.append(.list(ValueList(values)))
+      stack.append(.list(values))
 
     case .makeIterator:
       guard iter == nil else {
@@ -235,7 +235,7 @@ extension World {
       guard case let .list(list) = stack.removeLast() else {
         throw ExecError.typeMismatch
       }
-      iter = list.values.makeIterator()
+      iter = list.makeIterator()
 
     case .advanceOrJump:
       if let value = iter?.next() {
@@ -289,7 +289,7 @@ extension World {
       guard case let .function(fn) = stack.removeLast() else {
         throw ExecError.expectedCallable
       }
-      guard case let .value(value) = try fn.call(args.values, context: []) else {
+      guard case let .value(value) = try fn.call(args, context: []) else {
         // await and fallthrough are not supported results from nested calls.
         throw ExecError.invalidResult
       }

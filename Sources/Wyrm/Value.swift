@@ -7,6 +7,11 @@
 
 // MARK: - Value
 
+enum Ref: Hashable {
+  case absolute(String, String)
+  case relative(String)
+}
+
 enum Value: Equatable {
   case `nil`
   case boolean(Bool)
@@ -14,11 +19,11 @@ enum Value: Equatable {
   case string(String)
   case symbol(String)
   case ref(Ref)
+  case list([Value])
   case entity(Entity)
   case quest(Quest)
   case race(Race)
   case skill(Skill)
-  case list(ValueList)
   case function(Callable)
   case module(Module)
   case future((@escaping () -> Void) -> Void)
@@ -59,26 +64,6 @@ enum Value: Equatable {
     }
     return false
   }
-}
-
-// MARK: - ValueList
-
-final class ValueList: CustomDebugStringConvertible {
-  var values: [Value]
-
-  init<S>(_ elements: S) where S: Sequence, S.Element: ValueRepresentable {
-    values = elements.map { $0.toValue() }
-  }
-
-  init<S>(_ elements: S) where S: Sequence, S.Element == Value {
-    values = [Value].init(elements)
-  }
-
-  static func == (lhs: ValueList, rhs: ValueList) -> Bool {
-    return lhs === rhs
-  }
-
-  var debugDescription: String { "<ValueList \(values)>" }
 }
 
 // MARK: - ValueDictionary
@@ -213,6 +198,17 @@ extension String: ValueRepresentable {
   }
 }
 
+extension Ref: ValueRepresentable {
+  static func fromValue(_ value: Value) -> Ref? {
+    guard case let .ref(ref) = value else {
+      return nil
+    }
+    return ref
+  }
+
+  func toValue() -> Value { .ref(self) }
+}
+
 extension NounPhrase: ValueRepresentable {
   static func fromValue(_ value: Value) -> NounPhrase? {
     guard case let .string(s) = value else {
@@ -224,19 +220,6 @@ extension NounPhrase: ValueRepresentable {
   func toValue() -> Value {
     // FIXME: This isn't right but it really doesn't matter.
     return .string(singular)
-  }
-}
-
-extension ValueList: ValueRepresentable {
-  static func fromValue(_ value: Value) -> ValueList? {
-    guard case let .list(list) = value else {
-      return nil
-    }
-    return list
-  }
-
-  func toValue() -> Value {
-    return .list(self)
   }
 }
 
@@ -255,12 +238,10 @@ extension Array: ValueRepresentable where Element: ValueRepresentable {
     guard case let .list(list) = value else {
       return nil
     }
-    return list.values.compactMap { Element.fromValue($0) }
+    return list.compactMap { Element.fromValue($0) }
   }
 
-  func toValue() -> Value {
-    return .list(ValueList(self.map { $0.toValue() }))
-  }
+  func toValue() -> Value { .list(self.map{ $0.toValue() }) }
 }
 
 extension Optional: ValueRepresentable where Wrapped: ValueRepresentable {

@@ -17,11 +17,11 @@ struct LootEntry {
 extension LootEntry: ValueRepresentable {
     static func fromValue(_ value: Value) -> LootEntry? {
         guard case let .list(list) = value,
-              list.values.count == 4,
-              let probability = Double.fromValue(list.values[0]),
-              let minCount = Int.fromValue(list.values[1]),
-              let maxCount = Int.fromValue(list.values[2]),
-              let prototype = Item.fromValue(list.values[3]) else {
+              list.count == 4,
+              let probability = Double.fromValue(list[0]),
+              let minCount = Int.fromValue(list[1]),
+              let maxCount = Int.fromValue(list[2]),
+              let prototype = Item.fromValue(list[3]) else {
             return nil
         }
         return LootEntry(probability: probability, minCount: minCount, maxCount: maxCount,
@@ -31,7 +31,7 @@ extension LootEntry: ValueRepresentable {
     func toValue() -> Value {
         let values: [Value] = [.number(probability), .number(Double(minCount)),
                                .number(Double(maxCount)), .entity(prototype)]
-        return .list(ValueList(values))
+        return .list(values)
     }
 }
 
