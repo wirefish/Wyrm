@@ -287,6 +287,10 @@ extension World {
       fatalError("invalid call to loadEntity")
     }
 
+    // TEST: initializer
+    let compiler = Compiler()
+    let _ = compiler.compileInitializer(members: members, in: module)
+
     // Find the prototype and construct the new entity.
     guard case let .entity(prototype) = lookup(prototypeRef, context: module) else {
       print("cannot find prototype \(prototypeRef)")
@@ -305,7 +309,6 @@ extension World {
     }
 
     // Compile the event handlers.
-    let compiler = Compiler()
     for (phase, event, parameters, body) in handlers {
       let parameters = [Parameter(name: "self", constraint: .none)] + parameters
       if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {

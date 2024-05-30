@@ -252,6 +252,16 @@ class Compiler {
     return block
   }
 
+  func compileInitializer(members: [Definition.Member], in module: Module) -> ScriptFunction {
+    var block = ScriptFunction(module: module, parameters: [Parameter(name: "self", constraint: .none)])
+    for (name, expr) in members {
+      block.emit(.loadLocal, UInt8(0))
+      compileExpr(expr, &block);
+      block.emit(.storeMember, block.addConstant(.symbol(name)))
+    }
+    return block
+  }
+
   func compileExpr(_ node: Expression, _ block: inout ScriptFunction) {
     switch node {
     case .nil:
@@ -491,7 +501,7 @@ class Compiler {
       block.emit(.pop)
     }
   }
-  
+
   func compileScope(_ scope: Statement, _ block: inout ScriptFunction) {
     scopeLocals.append(locals.count)
     compileStmt(scope, &block)

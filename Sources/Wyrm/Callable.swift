@@ -10,7 +10,7 @@ enum CallableResult {
 }
 
 protocol Callable {
-    func call(_ args: [Value], context: [Scope]) throws -> CallableResult
+  func call(_ args: [Value], context: [Scope]) throws -> CallableResult
 }
 
 // A constraint on the argument value that can match a parameter when calling a
