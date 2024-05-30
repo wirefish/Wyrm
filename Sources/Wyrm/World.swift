@@ -317,7 +317,7 @@ extension World {
     for (name, parameters, body) in methods {
       let parameters = [Parameter(name: "self", constraint: .none)] + parameters
       if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-        entity.extraMembers[name] = .function(fn)
+        entity.members[name] = .function(fn)
       }
     }
 
@@ -461,7 +461,7 @@ extension World {
         continue
       }
       entity.handlers = ext.handlers + entity.handlers
-      entity.extraMembers.merge(ext.methods) { (old, new) -> Value in
+      entity.members.merge(ext.methods) { (old, new) -> Value in
         logger.warning("extension cannot replace existing method")
         return old
       }

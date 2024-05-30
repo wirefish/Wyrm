@@ -6,19 +6,29 @@
 @dynamicMemberLookup
 class Entity: Scope {
   static var idIterator = (1...).makeIterator()
+  static let initializerMember = "__INIT__"
 
   let id = idIterator.next()!
   var ref: Ref?
   let prototype: Entity?
+
+  var members = [String:Value]()
   var handlers = [EventHandler]()
-  var extraMembers = [String:Value]()
 
   required init(withPrototype prototype: Entity? = nil) {
     self.prototype = prototype
   }
 
+  init(ref: Ref, prototype: Entity?, initializer: Callable?) {
+    self.ref = ref
+    self.prototype = prototype
+    if let initializer = initializer {
+      members[Self.initializerMember] = .function(initializer)
+    }
+  }
+
   func copyProperties(from other: Entity) {
-    extraMembers = other.extraMembers
+    members = other.members
   }
 
   // Creates a new entity of the same type with a copy of this entity's properties.
@@ -33,7 +43,7 @@ class Entity: Scope {
   }
 
   subscript(dynamicMember name: String) -> Value? {
-    extraMembers[name]
+    get { get (name) }
   }
 
   final func isa(_ ref: Ref) -> Bool {
@@ -41,11 +51,11 @@ class Entity: Scope {
   }
 
   func get(_ member: String) -> Value? {
-    return extraMembers[member]
+    return members[member]
   }
 
   func set(_ member: String, to value: Value) throws {
-    extraMembers[member] = value
+    members[member] = value
   }
 }
 
