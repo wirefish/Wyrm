@@ -39,7 +39,7 @@ struct QuestState: Codable {
     var state: State
 }
 
-final class QuestPhase: ValueDictionary {
+final class QuestPhase: Scope {
     // The label that identifies the phase when defining the quest and when
     // calling advance_quest().
     let label: String
@@ -69,7 +69,7 @@ final class QuestPhase: ValueDictionary {
     }
 }
 
-final class Quest: ValueDictionary, CustomDebugStringConvertible, Matchable {
+final class Quest: Scope, CustomDebugStringConvertible, Matchable {
     let ref: Ref
     var name = ""
     var summary = ""

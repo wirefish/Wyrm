@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - Race
 
-final class Race: ValueDictionary, CustomDebugStringConvertible {
+final class Race: Scope, CustomDebugStringConvertible {
     let ref: Ref
     var brief: NounPhrase?
     var description: String?
@@ -41,7 +41,7 @@ final class Race: ValueDictionary, CustomDebugStringConvertible {
 
 // MARK: - Skill
 
-final class Skill: ValueDictionary, Matchable, CustomDebugStringConvertible {
+final class Skill: Scope, Matchable, CustomDebugStringConvertible {
     let ref: Ref
     var name: String?
     var description: String?

@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/25/22.
 //
 
-final class Region: ValueDictionary {
+final class Region: Scope {
     var name: String?
     var description: String?
     var domain: String?

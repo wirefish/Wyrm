@@ -6,7 +6,7 @@
 struct NativeFunction: Callable {
     let fn: ([Value]) throws -> Value
 
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {
+    func call(_ args: [Value], context: [Scope]) throws -> CallableResult {
         return .value(try fn(args))
     }
 }

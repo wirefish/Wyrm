@@ -16,7 +16,7 @@ enum ExecError: Error {
 }
 
 extension World {
-  func exec(_ code: ScriptFunction, args: [Value], context: [ValueDictionary]) throws -> CallableResult {
+  func exec(_ code: ScriptFunction, args: [Value], context: [Scope]) throws -> CallableResult {
     // The arguments are always the first locals, and self is always the first argument.
     // Subsequent locals start with no value.
     var locals = args
@@ -24,7 +24,7 @@ extension World {
     return try resume(code, context, &locals, &stack, 0)
   }
 
-  func resume(_ code: ScriptFunction, _ context: [ValueDictionary], _ locals: inout [Value],
+  func resume(_ code: ScriptFunction, _ context: [Scope], _ locals: inout [Value],
               _ stack: inout [Value], _ ip: Int) throws -> CallableResult {
     var lists = [Int]()
     var ip = ip
@@ -170,7 +170,7 @@ extension World {
       let index = code.getUInt16(at: ip); ip += 2
       let lhs = stack.removeLast()
       guard case let .symbol(name) = code.constants[Int(index)],
-            let dict = lhs.asValueDictionary else {
+            let dict = lhs.asScope else {
         throw ExecError.typeMismatch
       }
       guard let value = dict.get(name) else {
@@ -191,7 +191,7 @@ extension World {
         throw ExecError.typeMismatch
       }
       let value = stack.removeLast()
-      guard let dict = stack.removeLast().asValueDictionary else {
+      guard let dict = stack.removeLast().asScope else {
         throw ExecError.typeMismatch
       }
       try dict.set(name, to: value)

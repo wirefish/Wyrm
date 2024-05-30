@@ -10,7 +10,7 @@ import Dispatch
 import Network
 import XCTest
 
-class Module: ValueDictionary {
+class Module: Scope {
   let name: String
   var bindings = [String:Value]()
   var region: Region?
@@ -146,7 +146,7 @@ class World {
     }
   }
 
-  func lookup(_ ref: Ref, context: [ValueDictionary]) -> Value? {
+  func lookup(_ ref: Ref, context: [Scope]) -> Value? {
     switch ref {
     case let .absolute(module, name):
       return modules[module]?.get(name)
@@ -161,7 +161,7 @@ class World {
     }
   }
 
-  func lookup(_ ref: Ref, context: ValueDictionary? = nil) -> Value? {
+  func lookup(_ ref: Ref, context: Scope? = nil) -> Value? {
     switch ref {
     case let .absolute(module, name):
       return modules[module]?.get(name)

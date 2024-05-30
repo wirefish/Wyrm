@@ -10,7 +10,7 @@ enum CallableResult {
 }
 
 protocol Callable {
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult
+    func call(_ args: [Value], context: [Scope]) throws -> CallableResult
 }
 
 // A constraint on the argument value that can match a parameter when calling a
@@ -58,7 +58,7 @@ class ScriptFunction: Callable {
         self.parameters = parameters
     }
 
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {
+    func call(_ args: [Value], context: [Scope]) throws -> CallableResult {
         do {
             return try World.instance.exec(self, args: args, context: context + [module])
         } catch {
@@ -77,7 +77,7 @@ class BoundMethod: Callable {
         self.method = method
     }
 
-    func call(_ args: [Value], context: [ValueDictionary]) throws -> CallableResult {
+    func call(_ args: [Value], context: [Scope]) throws -> CallableResult {
         return try method.call([.entity(entity)] + args, context: context)
     }
 }

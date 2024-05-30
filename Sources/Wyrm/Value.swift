@@ -36,7 +36,7 @@ enum Value: Equatable {
     }
   }
 
-  var asValueDictionary: ValueDictionary? {
+  var asScope: Scope? {
     switch self {
     case let .entity(e): return e
     case let .quest(q): return q
@@ -66,68 +66,6 @@ enum Value: Equatable {
   }
 }
 
-// MARK: - ValueDictionary
-
-protocol ValueDictionary: AnyObject {
-  func get(_ member: String) -> Value?
-  func set(_ member: String, to value: Value) throws
-}
-
-enum AccessError: Error {
-  case expected(String)
-  case unknownMember(String)
-  case readOnlyMember
-}
-
-// A pair of functions used to get and set the value of a particular property
-// of an object that behaves as a value dictionary.
-struct Accessor {
-  let get: (ValueDictionary) -> Value
-  let set: (ValueDictionary, Value) throws -> Void
-
-  // Creates an accessor that allows read/write access to a property.
-  init<T: ValueDictionary, V: ValueRepresentable>
-  (_ keyPath: ReferenceWritableKeyPath<T, V>) {
-    get = { ($0 as! T)[keyPath: keyPath].toValue() }
-    set = {
-      guard let value = V.fromValue($1) else {
-        throw AccessError.expected(String(describing: V.self))
-      }
-      ($0 as! T)[keyPath: keyPath] = value
-    }
-  }
-
-  // Creates an accessor that explicitly allows read-only access to a
-  // property, even if the provided key path is otherwise writable.
-  init<T: ValueDictionary, V: ValueRepresentable>
-  (readOnly keyPath: KeyPath<T, V>) {
-    get = { ($0 as! T)[keyPath: keyPath].toValue() }
-    set = { (_, _) in throw AccessError.readOnlyMember }
-  }
-}
-
-extension ValueDictionary {
-  func getMember(_ member: String, _ accessors: [String:Accessor]) -> Value? {
-    return accessors[member]?.get(self)
-  }
-
-  func setMember(_ member: String, to value: Value, _ accessors: [String:Accessor]) throws {
-    if let acc = accessors[member] {
-      try acc.set(self, value)
-    } else {
-      throw AccessError.unknownMember(member)
-    }
-  }
-
-  func setMember(_ member: String, to value: Value, _ accessors: [String:Accessor], _ elseFn: () throws -> Void) throws {
-    if let acc = accessors[member] {
-      try acc.set(self, value)
-    } else {
-      try elseFn()
-    }
-  }
-}
-
 // MARK: - representing value types
 
 protocol ValueRepresentable {
@@ -145,17 +83,16 @@ extension ValueRepresentable {
   }
 }
 
+extension Value: ValueRepresentable {
+  static func fromValue(_ value: Value) -> Value? { value }
+  func toValue() -> Value { self }
+}
+
 extension Bool: ValueRepresentable {
   static func fromValue(_ value: Value) -> Bool? {
-    guard case let .boolean(b) = value else {
-      return nil
-    }
-    return b
+    if case let .boolean(b) = value { b } else { nil }
   }
-
-  func toValue() -> Value {
-    return .boolean(self)
-  }
+  func toValue() -> Value { .boolean(self) }
 }
 
 extension Int: ValueRepresentable {
@@ -220,16 +157,6 @@ extension NounPhrase: ValueRepresentable {
   func toValue() -> Value {
     // FIXME: This isn't right but it really doesn't matter.
     return .string(singular)
-  }
-}
-
-extension Value: ValueRepresentable {
-  static func fromValue(_ value: Value) -> Value? {
-    return value
-  }
-
-  func toValue() -> Value {
-    return self
   }
 }
 

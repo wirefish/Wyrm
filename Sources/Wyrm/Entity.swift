@@ -4,7 +4,7 @@
 //
 
 @dynamicMemberLookup
-class Entity: ValueDictionary {
+class Entity: Scope {
   static var idIterator = (1...).makeIterator()
 
   let id = idIterator.next()!
