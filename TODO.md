@@ -1,3 +1,9 @@
+I want to
+
+- allow access to selected native members from scripts
+
+- allow scripts to define new members
+
 # Initialization
 
 Instead of evaluating member initializers as they are encountered, which causes
