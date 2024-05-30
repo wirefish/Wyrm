@@ -73,7 +73,7 @@ protocol ValueDictionary: AnyObject {
   func set(_ member: String, to value: Value) throws
 }
 
-enum ValueError: Error {
+enum AccessError: Error {
   case expected(String)
   case unknownMember(String)
   case readOnlyMember
@@ -91,7 +91,7 @@ struct Accessor {
     get = { ($0 as! T)[keyPath: keyPath].toValue() }
     set = {
       guard let value = V.fromValue($1) else {
-        throw ValueError.expected(String(describing: V.self))
+        throw AccessError.expected(String(describing: V.self))
       }
       ($0 as! T)[keyPath: keyPath] = value
     }
@@ -102,7 +102,7 @@ struct Accessor {
   init<T: ValueDictionary, V: ValueRepresentable>
   (readOnly keyPath: KeyPath<T, V>) {
     get = { ($0 as! T)[keyPath: keyPath].toValue() }
-    set = { (_, _) in throw ValueError.readOnlyMember }
+    set = { (_, _) in throw AccessError.readOnlyMember }
   }
 }
 
@@ -115,7 +115,7 @@ extension ValueDictionary {
     if let acc = accessors[member] {
       try acc.set(self, value)
     } else {
-      throw ValueError.unknownMember(member)
+      throw AccessError.unknownMember(member)
     }
   }
 

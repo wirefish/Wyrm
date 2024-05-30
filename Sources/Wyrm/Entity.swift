@@ -38,7 +38,7 @@ class Proto {
     switch member {
     case "brief":
       guard case let .string(s) = value else {
-        throw ValueError.expected("String")
+        throw AccessError.expected("String")
       }
       brief = NounPhrase(s)
     default:
