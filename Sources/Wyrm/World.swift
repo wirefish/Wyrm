@@ -300,17 +300,32 @@ extension World {
     }
   }
 
-  private func compileEventHandlers(_ handlers: [Definition.Handler], in module: Module)-> [EventHandler] {
+  private func addSelf(_ params: [Parameter]) -> [Parameter] {
+    [Parameter(name: "self", constraint: .none)] + params
+  }
+
+  private func compileEventHandlers(_ handlers: [Definition.Handler],
+                                    in module: Module) -> [EventHandler] {
     handlers.compactMap {
-      let (phase, event, parameters, body) = $0
+      let (phase, event, params, body) = $0
       let compiler = Compiler()
-      if let fn = compiler.compileFunction(parameters: [Parameter(name: "self", constraint: .none)] + parameters,
-                                           body: body, in: module) {
+      if let fn = compiler.compileFunction(parameters: addSelf(params), body: body, in: module) {
         return EventHandler(phase: phase, event: event, fn: fn)
       } else {
         return nil
       }
     }
+  }
+
+  private func compileMethods(_ methods: [Definition.Method], in module: Module) -> [String:Value] {
+    var members = [String:Value]()
+    for (name, params, body) in methods {
+      let compiler = Compiler()
+      if let fn = compiler.compileFunction(parameters: addSelf(params), body: body, in: module) {
+        members[name] = .function(fn)
+      }
+    }
+    return members
   }
 
   private func loadEntity(_ node: Definition, into module: Module) {
@@ -327,17 +342,8 @@ extension World {
     entity.ref = .absolute(module.name, name)
 
     createInitializer(object: entity, members: members, in: module)
-
     entity.handlers = compileEventHandlers(handlers, in: module)
-
-    // Compile the methods.
-    for (name, parameters, body) in methods {
-      let compiler = Compiler()
-      let parameters = [Parameter(name: "self", constraint: .none)] + parameters
-      if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-        entity.members[name] = .function(fn)
-      }
-    }
+    entity.members = compileMethods(methods, in: module)
 
     module.bindings[name] = .entity(entity)
     if isLocation {
@@ -401,20 +407,9 @@ extension World {
     guard case let .extension(ref, handlers, methods) = node else {
       fatalError("invalid call to loadExtension")
     }
-
     var ext = Extension(ref: ref.toAbsolute(in: module))
-
     ext.handlers = compileEventHandlers(handlers, in: module)
-
-    // Compile the methods.
-    for (name, parameters, body) in methods {
-      let compiler = Compiler()
-      let parameters = [Parameter(name: "self", constraint: .none)] + parameters
-      if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-        ext.methods[name] = .function(fn)
-      }
-    }
-
+    ext.methods = compileMethods(methods, in: module)
     extensions.append(ext)
   }
 
