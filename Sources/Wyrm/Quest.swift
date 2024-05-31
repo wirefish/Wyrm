@@ -260,7 +260,7 @@ extension Avatar {
       return
     }
 
-    discardItems { $0.quest == quest.ref }
+    discardItems { $0.quest === quest }
 
     // FIXME:
     showMap()
@@ -272,7 +272,7 @@ extension Avatar {
     showNotice("You have completed the quest \"\(quest.name)\"!")
 
     // Clean up forgotten quest items.
-    discardItems { $0.quest == quest.ref }
+    discardItems { $0.quest === quest }
 
     gainXP(quest.xpValue)
 

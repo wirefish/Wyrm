@@ -268,3 +268,14 @@ extension Race: ValueRepresentable {
     return .race(self)
   }
 }
+
+extension Skill: ValueRepresentable {
+  static func fromValue(_ value: Value) -> Skill? {
+    if case let .skill(skill) = value {
+      skill
+    } else {
+      nil
+    }
+  }
+  func toValue() -> Value { .skill(self) }
+}

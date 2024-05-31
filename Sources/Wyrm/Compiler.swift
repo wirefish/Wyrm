@@ -243,8 +243,7 @@ class Compiler {
   // the start of each nested scope.
   var scopeLocals = [Int]()
 
-  func compileFunction(parameters: [Parameter], body: Statement,
-                       in module: Module) -> ScriptFunction? {
+  func compileFunction(parameters: [Parameter], body: Statement, in module: Module) -> ScriptFunction? {
     locals = parameters.map(\.name)
     scopeLocals = [locals.count]
     var block = ScriptFunction(module: module, parameters: parameters)

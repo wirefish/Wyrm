@@ -91,6 +91,7 @@ class World {
   let db = Database()
   var avatarPrototype: Avatar!
   var startLocation: Location!
+  var initializers = [BoundMethod]()
 
   init(config: Config) throws {
     assert(World.instance == nil)
@@ -201,7 +202,6 @@ extension World {
 // MARK: - loading files
 
 extension World {
-
   func load() throws {
     logger.info("loading world from \(rootPath)")
     let startTime = CFAbsoluteTimeGetCurrent()
@@ -210,6 +210,15 @@ extension World {
       let moduleName = moduleName(for: relativePath)
       let module = requireModule(named: moduleName)
       load(contentsOfFile: relativePath, into: module)
+    }
+
+    logger.info("initializing \(initializers.count) objects")
+    for initializer in initializers {
+      do {
+        let _ = try initializer.call([], context: [])
+      } catch {
+        logger.warning("error in initializer for \(initializer.entity.ref!): \(error)")
+      }
     }
 
     applyExtensions()
@@ -287,10 +296,6 @@ extension World {
       fatalError("invalid call to loadEntity")
     }
 
-    // TEST: initializer
-    let compiler = Compiler()
-    let _ = compiler.compileInitializer(members: members, in: module)
-
     // Find the prototype and construct the new entity.
     guard case let .entity(prototype) = lookup(prototypeRef, context: module) else {
       print("cannot find prototype \(prototypeRef)")
@@ -299,6 +304,13 @@ extension World {
     let entity = prototype.clone()
     entity.ref = .absolute(module.name, name)
 
+    let compiler = Compiler()
+
+    // Compile the initializer and save it for eventual use.
+    let fn = compiler.compileInitializer(members: members, in: module)
+    initializers.append(BoundMethod(entity: entity, method: fn))
+
+#if false
     // Initialize the members.
     for (name, initialValue) in members {
       do {
@@ -307,6 +319,7 @@ extension World {
         logger.error("\(entity.ref!) \(name) \(error)")
       }
     }
+#endif
 
     // Compile the event handlers.
     for (phase, event, parameters, body) in handlers {

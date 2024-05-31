@@ -92,7 +92,7 @@ class Equipment: Item {
     var capacity = 0
 
     // Skill required in order to equip the item without penalty, if any.
-    var proficiency: Ref?
+    var proficiency: Skill?
 
     override func copyProperties(from other: Entity) {
         let other = other as! Equipment
