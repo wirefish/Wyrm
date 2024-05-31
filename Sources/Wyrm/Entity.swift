@@ -3,7 +3,6 @@
 //  Wyrm
 //
 
-@dynamicMemberLookup
 class Entity: Scope {
   static var idIterator = (1...).makeIterator()
 
@@ -36,10 +35,6 @@ class Entity: Scope {
     let entity = Self.init(withPrototype: prototype)
     entity.copyProperties(from: self)
     return entity
-  }
-
-  subscript(dynamicMember name: String) -> Value? {
-    get { get (name) }
   }
 
   final func isa(_ ref: Ref) -> Bool {

@@ -52,7 +52,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     // MARK: - Viewable
 
     func isVisible(to observer: Avatar) -> Bool {
-        if case let .function(fn) = self.visible,
+        if case let .function(fn) = self.get("visible"),
            case let .value(value) = try? fn.call([.entity(self), .entity(observer)], context: [self]),
            case let .boolean(visible) = value {
             return visible
