@@ -52,7 +52,7 @@ class Entity: Scope {
 
 extension Entity: Hashable {
   static func == (_ lhs: Entity, _ rhs: Entity) -> Bool {
-    return lhs.id == rhs.id
+    return lhs === rhs
   }
 
   func hash(into hasher: inout Hasher) {
