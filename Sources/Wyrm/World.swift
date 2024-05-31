@@ -300,6 +300,19 @@ extension World {
     }
   }
 
+  private func compileEventHandlers(_ handlers: [Definition.Handler], in module: Module)-> [EventHandler] {
+    handlers.compactMap {
+      let (phase, event, parameters, body) = $0
+      let compiler = Compiler()
+      if let fn = compiler.compileFunction(parameters: [Parameter(name: "self", constraint: .none)] + parameters,
+                                           body: body, in: module) {
+        return EventHandler(phase: phase, event: event, fn: fn)
+      } else {
+        return nil
+      }
+    }
+  }
+
   private func loadEntity(_ node: Definition, into module: Module) {
     guard case let .entity(name, prototypeRef, members, handlers, methods, isLocation) = node else {
       fatalError("invalid call to loadEntity")
@@ -315,14 +328,7 @@ extension World {
 
     createInitializer(object: entity, members: members, in: module)
 
-    // Compile the event handlers.
-    for (phase, event, parameters, body) in handlers {
-      let compiler = Compiler()
-      let parameters = [Parameter(name: "self", constraint: .none)] + parameters
-      if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-        entity.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
-      }
-    }
+    entity.handlers = compileEventHandlers(handlers, in: module)
 
     // Compile the methods.
     for (name, parameters, body) in methods {
@@ -398,14 +404,7 @@ extension World {
 
     var ext = Extension(ref: ref.toAbsolute(in: module))
 
-    // Compile the event handlers.
-    for (phase, event, parameters, body) in handlers {
-      let compiler = Compiler()
-      let parameters = [Parameter(name: "self", constraint: .none)] + parameters
-      if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
-        ext.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
-      }
-    }
+    ext.handlers = compileEventHandlers(handlers, in: module)
 
     // Compile the methods.
     for (name, parameters, body) in methods {
