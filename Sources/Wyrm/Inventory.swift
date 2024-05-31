@@ -18,53 +18,70 @@
 
 extension Avatar {
   func discard(_ item: Item, count: Int? = nil) {
-    let (removed, remaining) = inventory.remove(item, count: count)
-    if let removed = removed {
-      if remaining == nil {
-        removeFromInventory([removed])
-      } else {
-        updateInventory([remaining!])
+    var removed: ItemStack?
+    if let count = count {
+      if let remaining = inventory.remove(item, count: count) {
+        if remaining > 0 {
+          // FIXME: updateInventory(...)
+        } else {
+          // FIXME: removeFromInventory(...)
+        }
+        removed = ItemStack(count: count, item: item)
       }
-      show("You discard \(removed.describeBriefly([.indefinite])).")
+    } else {
+      if let count = inventory.removeAll(item) {
+        // FIXME: removeFromInventory(...)
+        removed = ItemStack(count: count, item: item)
+      }
+    }
+    if removed != nil {
+      show("You discard \(removed!.describeBriefly([.indefinite])).")
+    } else {
+      show("You don't have that many \(item.describeBriefly([.plural])).")
     }
   }
 
   func discardItems(where pred: (Item) -> Bool) {
-    let first = inventory.partition { pred($0.item) }
-    if first != inventory.endIndex {
-      removeFromInventory(inventory[first...])
-      show("You discard \(inventory[first...].describe()).")
-      inventory.remove(from: first)
+    let stacks = inventory.select(where: pred)
+    if !stacks.isEmpty {
+      // FIXME: removeFromInventory(stacks)
+      show("You discard \(stacks.describe()).")
+      inventory.remove(stacks)
     }
   }
 
   func giveItems(to target: PhysicalEntity, where pred: (Item) -> Bool) {
-    let first = inventory.partition { pred($0.item) }
-    if first != inventory.endIndex {
-      show("You give \(inventory[first...].describe()) to \(target.describeBriefly([.definite])).")
-      for stack in inventory[first...] {
+    let stacks = inventory.select(where: pred)
+    if !stacks.isEmpty {
+      // FIXME: removeFromInventory(stacks)
+      show("You give \(stacks.describe()) to \(target.describeBriefly([.definite])).")
+      inventory.remove(stacks)
+      for stack in stacks {
         triggerEvent("giveItem", in: location, participants: [self, stack.item, target],
                      args: [self, stack, target]) {}
       }
-      removeFromInventory(inventory[first...])
-      inventory.remove(from: first)
     }
   }
 
-  func receiveItems(_ items: [ItemStack], from source: PhysicalEntity) {
-    let stacks = items.compactMap {
-      inventory.insert($0.item.stackable ? $0.item : $0.item.clone(), count: $0.count)
+  func receiveItems(_ stacks: [ItemStack], from source: PhysicalEntity) {
+    for stack in stacks {
+      // FIXME: check if cannot insert
+      let _ = inventory.insert(stack.item, count: stack.count)
     }
-    updateInventory(stacks)
-    show("\(source.describeBriefly([.capitalized, .definite])) gives you \(items.describe()).")
+    // FIXME: checkEncumbrance()
+    // FIXME: updateInventory(stacks)
+    show("\(source.describeBriefly([.capitalized, .definite])) gives you \(stacks.describe()).")
   }
 
-  func takeItem(_ item: Item, from source: Entity? = nil) {
+  func takeItem(_ stack: ItemStack, from source: Entity? = nil) {
+#if false
+    // FIXME: The source is either the location's item pile or some container at the location.
+
     // TODO: handle case with source other than location.
     // TODO: handle quantity.
-    if inventory.canInsert(item) {
-      triggerEvent("take", in: location, participants: [self, item, location],
-                   args: [self, item, location]) {
+    if inventory.canInsert(stack.item, count: stack.count) {
+      triggerEvent("take", in: location, participants: [self, stack.item, location],
+                   args: [self, stack, location]) {
         location.remove(item)
         removeNeighbor(item)
         updateInventory([inventory.insert(item)!])
@@ -73,9 +90,13 @@ extension Avatar {
     } else {
       show("You cannot carry any more \(item.describeBriefly([.plural])).")
     }
+#endif
   }
 
   func putItem(_ item: ItemStack, into container: Container) {
+#if false
+    // FIXME: container is either the location's item pile or some container.
+
     if container.contents.canInsert(item) {
       triggerEvent("put", in: location, participants: [self, item.item, container],
                    args: [self, item, container]) {
@@ -89,6 +110,7 @@ extension Avatar {
     } else {
       show("\(container.describeBriefly([.capitalized, .definite])) cannot hold any more \(item.describeBriefly([.plural])).")
     }
+#endif
   }
 
   func equip(_ item: Equipment) {
@@ -156,14 +178,14 @@ let inventoryCommand = Command("inventory item", help: inventoryHelp) {
   actor, verb, clauses in
   if case let .tokens(item) = clauses[0] {
     var matched = false
-    if let matches = match(item, against: actor.equipped) {
+    if let matches = match(item, againstValues: actor.equipped) {
       for slot in matches {
         let item = actor.equipped[slot]!
         actor.show("\(item.describeBriefly([.capitalized, .indefinite])) (equipped): \(item.describeFully())")
       }
       matched = true
     }
-    if let matches = match(item, against: actor.inventory.stacks) {
+    if let matches = match(item, against: actor.inventory.items.keys.map { $0 }) {
       for item in matches {
         actor.show("\(item.describeBriefly([.capitalized, .indefinite])) (in inventory): \(item.describeFully())")
       }
@@ -259,7 +281,7 @@ let equipCommand = Command("equip item in|on:slot") {
 let unequipCommand = Command("unequip item from:slot") {
   actor, verb, clauses in
   if case let .tokens(item) = clauses[0] {
-    guard let matches = match(item, against: actor.equipped) else {
+    guard let matches = match(item, againstValues: actor.equipped) else {
       actor.show("You don't have anything like that equipped.")
       return
     }

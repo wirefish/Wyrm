@@ -104,12 +104,12 @@ func match<T: Matchable>(_ tokens: [String], against subjectLists: [T]...) -> Ma
                                              matches: matches)
 }
 
-func match<T: Matchable>(_ tokens: [String], against subjectLists: [T]...,
+func match<T: Matchable>(_ tokens: [String], against subjectLists: any Sequence<T>...,
                          where pred: (T) -> Bool) -> MatchResult<T>? {
   return match(tokens, against: subjectLists.flatMap({ $0.filter(pred) }))
 }
 
-func match<K, V: Matchable>(_ tokens: [String], against subjectDict: [K:V]) -> MatchResult<K>? {
+func match<K, V: Matchable>(_ tokens: [String], againstValues subjectDict: [K:V]) -> MatchResult<K>? {
   var tokens = tokens[...]
 
   let matchQuantity = consumeQuantity(&tokens)

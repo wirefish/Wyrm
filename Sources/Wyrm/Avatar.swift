@@ -292,7 +292,7 @@ extension Avatar: WebSocketDelegate {
       savePeriodically()
     }
 
-    updateInventory(inventory.stacks)
+    // FIXME: updateInventory(inventory.stacks)
     updateEquipment(equipped.keys)
 
     var update = AvatarProperties()
