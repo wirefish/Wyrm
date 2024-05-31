@@ -21,6 +21,7 @@ enum Value: Equatable {
   case ref(Ref)
   case list([Value])
   case entity(Entity)
+  case region(Region)
   case quest(Quest)
   case race(Race)
   case skill(Skill)
@@ -278,4 +279,15 @@ extension Skill: ValueRepresentable {
     }
   }
   func toValue() -> Value { .skill(self) }
+}
+
+extension Region: ValueRepresentable {
+  static func fromValue(_ value: Value) -> Region? {
+    if case let .region(region) = value {
+      region
+    } else {
+      nil
+    }
+  }
+  func toValue() -> Value { .region(self) }
 }

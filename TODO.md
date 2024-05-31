@@ -1,9 +1,3 @@
-I want to
-
-- allow access to selected native members from scripts
-
-- allow scripts to define new members
-
 # Initialization
 
 Instead of evaluating member initializers as they are encountered, which causes
@@ -20,9 +14,11 @@ as-yet-uninitialized objects.
 
 This removes the duplication of code in evalInitializer.
 
+- When cloning with !{...}, add code that sets any overridden members.
+
 # Misc
 
-- remove `of` operator and use more general !(...) instead
+- remove `of` operator and use more general !{...} instead
 
 - add `def command` for commands that have no interaction with the engine, e.g.
   meditate.
@@ -30,7 +26,7 @@ This removes the duplication of code in evalInitializer.
 - add `def event` for similar reasons to above
 
 - Split string literals into a separate case from Text, which is always an
-  InterpolatedString. Move the conjunction extension somewhere.
+  InterpolatedString. Move the conjunction extension somewhere, like String+Foo.
 
 # Older...
 

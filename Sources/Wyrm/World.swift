@@ -217,7 +217,7 @@ extension World {
       do {
         let _ = try initializer.call([], context: [])
       } catch {
-        logger.warning("error in initializer for \(initializer.entity.ref!): \(error)")
+        logger.warning("error in initializer for \(initializer.object): \(error)")
       }
     }
 
@@ -291,6 +291,15 @@ extension World {
     }
   }
 
+  private func createInitializer<T: ValueRepresentable & Scope>
+  (object: T, members: [Definition.Member], in module: Module) {
+    if !members.isEmpty {
+      let compiler = Compiler()
+      let fn = compiler.compileInitializer(members: members, in: module)
+      initializers.append(BoundMethod(object: object, method: fn))
+    }
+  }
+
   private func loadEntity(_ node: Definition, into module: Module) {
     guard case let .entity(name, prototypeRef, members, handlers, methods, isLocation) = node else {
       fatalError("invalid call to loadEntity")
@@ -304,25 +313,11 @@ extension World {
     let entity = prototype.clone()
     entity.ref = .absolute(module.name, name)
 
-    let compiler = Compiler()
-
-    // Compile the initializer and save it for eventual use.
-    let fn = compiler.compileInitializer(members: members, in: module)
-    initializers.append(BoundMethod(entity: entity, method: fn))
-
-#if false
-    // Initialize the members.
-    for (name, initialValue) in members {
-      do {
-        try entity.set(name, to: try evalInitializer(initialValue, in: module))
-      } catch {
-        logger.error("\(entity.ref!) \(name) \(error)")
-      }
-    }
-#endif
+    createInitializer(object: entity, members: members, in: module)
 
     // Compile the event handlers.
     for (phase, event, parameters, body) in handlers {
+      let compiler = Compiler()
       let parameters = [Parameter(name: "self", constraint: .none)] + parameters
       if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
         entity.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
@@ -331,6 +326,7 @@ extension World {
 
     // Compile the methods.
     for (name, parameters, body) in methods {
+      let compiler = Compiler()
       let parameters = [Parameter(name: "self", constraint: .none)] + parameters
       if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
         entity.members[name] = .function(fn)
@@ -352,15 +348,9 @@ extension World {
 
     let quest = Quest(ref: .absolute(module.name, name))
 
-    // Initialize the members.
-    for (name, initialValue) in members {
-      do {
-        try quest.set(name, to: try evalInitializer(initialValue, in: module))
-      } catch {
-        logger.error("\(quest.ref) \(name): \(error)")
-      }
-    }
+    createInitializer(object: quest, members: members, in: module)
 
+    // FIXME:
     for (phaseName, members) in phases {
       let phase = QuestPhase(phaseName)
       for (name, initialValue) in members {
@@ -380,17 +370,8 @@ extension World {
     guard case let .race(name, members) = node else {
       fatalError("invalid call to loadRace")
     }
-
     let race = Race(ref: .absolute(module.name, name))
-
-    for (name, initialValue) in members {
-      do {
-        try race.set(name, to: try evalInitializer(initialValue, in: module))
-      } catch {
-        logger.error("\(race.ref) \(name): \(error)")
-      }
-    }
-
+    createInitializer(object: race, members: members, in: module)
     module.bindings[name] = .race(race)
   }
 
@@ -398,17 +379,8 @@ extension World {
     guard case let .skill(name, members) = node else {
       fatalError("invalid call to loadSkill")
     }
-
     let skill = Skill(ref: .absolute(module.name, name))
-
-    for (name, initialValue) in members {
-      do {
-        try skill.set(name, to: try evalInitializer(initialValue, in: module))
-      } catch {
-        logger.error("\(skill.ref) \(name): \(error)")
-      }
-    }
-
+    createInitializer(object: skill, members: members, in: module)
     module.bindings[name] = .skill(skill)
   }
 
@@ -416,17 +388,8 @@ extension World {
     guard case let .region(members) = node else {
       fatalError("invalid call to loadRegion")
     }
-
     let region = Region()
-
-    // Initialize the members.
-    for (name, initialValue) in members {
-      do {
-        try region.set(name, to: try evalInitializer(initialValue, in: module))
-      } catch {
-        logger.error("defregion \(module.name): \(error)")
-      }
-    }
+    createInitializer(object: region, members: members, in: module)
 
     if module.region == nil {
       module.region = region
@@ -443,8 +406,8 @@ extension World {
     var ext = Extension(ref: ref.toAbsolute(in: module))
 
     // Compile the event handlers.
-    let compiler = Compiler()
     for (phase, event, parameters, body) in handlers {
+      let compiler = Compiler()
       let parameters = [Parameter(name: "self", constraint: .none)] + parameters
       if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
         ext.handlers.append(EventHandler(phase: phase, event: event, fn: fn))
@@ -453,6 +416,7 @@ extension World {
 
     // Compile the methods.
     for (name, parameters, body) in methods {
+      let compiler = Compiler()
       let parameters = [Parameter(name: "self", constraint: .none)] + parameters
       if let fn = compiler.compileFunction(parameters: parameters, body: body, in: module) {
         ext.methods[name] = .function(fn)

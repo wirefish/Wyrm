@@ -6,7 +6,6 @@
 @dynamicMemberLookup
 class Entity: Scope {
   static var idIterator = (1...).makeIterator()
-  static let initializerMember = "__INIT__"
 
   let id = idIterator.next()!
   var ref: Ref?
@@ -19,12 +18,9 @@ class Entity: Scope {
     self.prototype = prototype
   }
 
-  init(ref: Ref, prototype: Entity?, initializer: Callable?) {
+  init(ref: Ref, prototype: Entity?) {
     self.ref = ref
     self.prototype = prototype
-    if let initializer = initializer {
-      members[Self.initializerMember] = .function(initializer)
-    }
   }
 
   func copyProperties(from other: Entity) {

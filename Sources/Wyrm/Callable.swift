@@ -69,15 +69,15 @@ class ScriptFunction: Callable {
 }
 
 class BoundMethod: Callable {
-  let entity: Entity
+  let object: Value
   let method: Callable
 
-  init(entity: Entity, method: Callable) {
-    self.entity = entity
+  init<T: ValueRepresentable>(object: T, method: Callable) {
+    self.object = object.toValue()
     self.method = method
   }
 
   func call(_ args: [Value], context: [Scope]) throws -> CallableResult {
-    return try method.call([.entity(entity)] + args, context: context)
+    return try method.call([object] + args, context: context)
   }
 }

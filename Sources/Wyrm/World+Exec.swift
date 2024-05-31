@@ -180,7 +180,7 @@ extension World {
         guard case let .entity(entity) = lhs else {
           throw ExecError.typeMismatch
         }
-        stack.append(.function(BoundMethod(entity: entity, method: fn)))
+        stack.append(.function(BoundMethod(object: entity, method: fn)))
       } else {
         stack.append(value)
       }
