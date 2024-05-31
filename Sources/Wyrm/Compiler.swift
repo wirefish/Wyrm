@@ -25,6 +25,9 @@ enum Opcode: UInt8 {
   // Pop and discard the value on the top of the stack.
   case pop
 
+  // Duplicate the value on top of the stack.
+  case dup
+
   // Pop the top of the stack and create a new local variable.
   case createLocal
 
@@ -359,9 +362,14 @@ class Compiler {
       elements.forEach { compileExpr($0, &block) }
       block.emit(.endList)
 
-    case let .clone(lhs, _):  // FIXME: handle members
+    case let .clone(lhs, members):
       compileExpr(lhs, &block)
       block.emit(.clone)
+      for (name, initializer) in members {
+        block.emit(.dup)
+        compileExpr(initializer, &block)
+        block.emit(.storeMember, block.addConstant(.symbol(name)))
+      }
 
     case let .call(fn, args):
       compileExpr(fn, &block)

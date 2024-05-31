@@ -54,6 +54,9 @@ extension World {
     case .pop:
       let _ = stack.removeLast()
 
+    case .dup:
+      stack.append(stack.last!)
+
     case .createLocal:
       locals.append(stack.removeLast())
 
