@@ -25,7 +25,7 @@ final class Region: Scope {
     }
 }
 
-class Location: Entity {
+final class Location: Entity {
     var name = ""
     var description = ""
     var contents = [PhysicalEntity]()
