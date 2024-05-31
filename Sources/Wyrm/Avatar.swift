@@ -197,7 +197,7 @@ extension Avatar: Codable {
     }
 
     convenience init(from decoder: Decoder) throws {
-        self.init(withPrototype: World.instance.avatarPrototype)
+        self.init(prototype: World.instance.avatarPrototype)
         copyProperties(from: World.instance.avatarPrototype)
 
         let c = try decoder.container(keyedBy: CodingKeys.self)

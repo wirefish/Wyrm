@@ -103,7 +103,7 @@ class Item: PhysicalEntity, Codable {
     guard let proto = World.instance.lookup(protoRef)?.asEntity(Item.self) else {
       throw CodingError.badPrototype
     }
-    self.init(withPrototype: proto)
+    self.init(prototype: proto)
     copyProperties(from: proto)
 
     self.count = try c.decode(Int.self, forKey: .count)

@@ -18,8 +18,8 @@
 final class Inventory: Container, Codable {
     static let baseCapacity = 5
 
-    required init(withPrototype prototype: Entity? = nil) {
-        super.init(withPrototype: prototype)
+    required init(prototype: Entity? = nil) {
+        super.init(prototype: prototype)
         self.capacity = Self.baseCapacity
     }
 

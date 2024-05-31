@@ -13,7 +13,7 @@ class Entity: Scope {
   var members = [String:Value]()
   var handlers = [EventHandler]()
 
-  required init(withPrototype prototype: Entity? = nil) {
+  required init(prototype: Entity? = nil) {
     self.prototype = prototype
   }
 
@@ -22,17 +22,16 @@ class Entity: Scope {
     self.prototype = prototype
   }
 
-  func copyProperties(from other: Entity) {
-    members = other.members
-  }
+  // Overridden by subclasses to copy any desired properties to a new clone.
+  func copyProperties(from other: Entity) {}
 
-  // Creates a new entity of the same type with a copy of this entity's properties.
-  // If this is a "named" entity (i.e. one defined at the top level of a script file
-  // and therefore with a non-nil ref), then the new entity uses this entity as its
-  // prototype. Otherwise, the new entity shares a prototype with this entity.
+  // Creates a new instance of an Entity subclass. If self has a non-nil ref
+  // (because it was defined at the top level of a script file) then the new
+  // entity will have this entity as its prototype. Otherwise, the new entity
+  // shares a prototype with this entity.
   final func clone() -> Self {
-    let prototype = self.ref == nil ? self.prototype : self
-    let entity = Self.init(withPrototype: prototype)
+    let prototype = (self.ref == nil) ? self.prototype : self
+    let entity = Self.init(prototype: prototype)
     entity.copyProperties(from: self)
     return entity
   }
@@ -42,7 +41,7 @@ class Entity: Scope {
   }
 
   func get(_ member: String) -> Value? {
-    return members[member]
+    return members[member] ?? prototype?.get(member)
   }
 
   func set(_ member: String, to value: Value) throws {
