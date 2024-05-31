@@ -2,12 +2,99 @@
 //  Item.swift
 //  Wyrm
 //
-//  Created by Craig Becker on 6/29/22.
-//
 
 // FIXME:
 enum CodingError: Error {
   case badPrototype
+}
+
+struct ItemStack: Codable {
+  var count = 1
+  var item: Item
+
+  var isEmpty: Bool { return count == 0 }
+
+  mutating func add(_ num: Int) -> Bool {
+    if count + num <= item.stackLimit {
+      count += num
+      return true
+    } else {
+      return false
+    }
+  }
+
+  func canAdd(_ num: Int) -> Bool { count + num <= item.stackLimit }
+
+  @discardableResult
+  mutating func remove(_ num: Int) -> ItemStack? {
+    if (num <= count) {
+      count -= num
+      return ItemStack(count: num, item: item)
+    } else {
+      return nil
+    }
+  }
+}
+
+extension ItemStack: ValueRepresentable {
+  static func fromValue(_ value: Value) -> ItemStack? {
+    switch value {
+    case let .stack(stack): return stack
+    case let .entity(e):
+      if let item = e as? Item {
+        return ItemStack(item: item)
+      } else {
+        return nil
+      }
+    default: return nil
+    }
+  }
+
+  func toValue() -> Value { .stack(self) }
+}
+
+extension ItemStack {
+  func describeBriefly() -> String {
+    return (item.brief ?? Item.defaultBrief).format([], count: count)
+  }
+}
+
+struct ItemCollection: Codable {
+  var capacity: Int?
+  var stacks = [ItemStack]()
+
+  private func findStack(_ item: Item) -> Int? {
+    return stacks.firstIndex(where: { item.isStackable(with: $0.item) })
+  }
+
+  func canInsert(_ item: Item, count: Int = 1) -> Bool {
+    if let s = findStack(item) {
+      return stacks[s].canAdd(count)
+    } else if let cap = capacity {
+      return stacks.count < cap
+    } else {
+      return true
+    }
+  }
+
+  func canInsert(_ stack: ItemStack) -> Bool {
+    return canInsert(stack.item, count: stack.count)
+  }
+
+  mutating func insert(_ item: Item, count: Int = 1) -> ItemStack? {
+    if item.stackable, let s = findStack(item) {
+      return stacks[s].add(count) ? stacks[s] : nil
+    } else if capacity == nil || stacks.count < capacity! {
+      stacks.append(ItemStack(count: count, item: item))
+      return stacks.last!
+    } else {
+      return nil
+    }
+  }
+
+  mutating func remove(_ item: Item, count: Int = 1) -> ItemStack? {
+    return nil
+  }
 }
 
 class Item: PhysicalEntity, Codable {
@@ -17,13 +104,15 @@ class Item: PhysicalEntity, Codable {
   // a container can contain at most one such stack.
   var stackLimit = 0
 
+  var stackable: Bool { stackLimit >= 1 }
+
   // The number of items stacked together.
   var count = 1
 
   var level = 0
   var useVerbs = [String]()
   var quest: Quest?
-  var price: Item?
+  var price: ItemStack?
 
   override func copyProperties(from other: Entity) {
     let other = other as! Item

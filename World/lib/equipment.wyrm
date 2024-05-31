@@ -53,13 +53,13 @@ def entity dagger: weapon {
 def entity copperDagger: dagger {
   brief = "a copper dagger"
   level = 1
-  price = 10 of silverCoin
+  price = 10 @ silverCoin
 }
 
 def entity bronzeDagger: dagger {
   brief = "a bronze dagger"
   level = 5
-  price = 20 of silverCoin
+  price = 20 @ silverCoin
 }
 
 // maces (one-handed crushing)
@@ -81,13 +81,13 @@ def entity mace: weapon {
 def entity copperMace: mace {
   brief = "a copper mace"
   level = 1
-  price = 10 of silverCoin
+  price = 10 @ silverCoin
 }
 
 def entity bronzeMace: mace {
   brief = "a bronze mace"
   level = 5
-  price = 20 of silverCoin
+  price = 20 @ silverCoin
 }
 
 // mauls (two-handed crushing)
@@ -109,13 +109,13 @@ def entity maul: weapon {
 def entity copperMaul: maul {
   brief = "a copper maul"
   level = 1
-  price = 10 of silverCoin
+  price = 10 @ silverCoin
 }
 
 def entity bronzeMaul: maul {
   brief = "a bronze maul"
   level = 5
-  price = 20 of silverCoin
+  price = 20 @ silverCoin
 }
 
 // TODO: swords (one-handed slashing/piercing)

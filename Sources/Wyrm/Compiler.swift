@@ -109,8 +109,8 @@ enum Opcode: UInt8 {
   case clone
 
   // The top of the stack is an item and the next value on the stack is an
-  // integer. Pop both, set the count of the item, and push the modified item.
-  case setCount
+  // integer. Pop both and push an item stack.
+  case makeStack
 
   // Call a function. The top of the stack is a list of the arguments; the
   // next value on the stack is the function to call.
@@ -420,8 +420,7 @@ class Compiler {
     case let .stack(lhs, rhs):
       compileExpr(lhs, &block)
       compileExpr(rhs, &block)
-      block.emit(.clone)
-      block.emit(.setCount)
+      block.emit(.makeStack)
     }
   }
 

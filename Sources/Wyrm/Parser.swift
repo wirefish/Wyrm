@@ -109,6 +109,7 @@ class Parser {
     .lsquare: (method: parseSubscript, prec: .call),
     .arrow: (method: parseExit, prec: .factor),
     .dot: (method: parseDot, prec: .call),
+    .at: (method: parseStack, prec: .factor),
     .minus: (method: parseBinary, prec: .term),
     .plus: (method: parseBinary, prec: .term),
     .slash: (method: parseBinary, prec: .factor),
@@ -123,7 +124,6 @@ class Parser {
     .greaterEqual: (method: parseBinary, prec: .comparison),
     .and: (method: parseAnd, prec: .and),
     .or: (method: parseOr, prec: .or),
-    .of: (method: parseStack, prec: .or),
   ]
 
   var scanner: Scanner
@@ -822,8 +822,8 @@ class Parser {
   }
 
   private func parseStack(lhs: Expression) -> Expression? {
-    assert(match(.of))
-    if let rhs = parseExpr(.or.nextHigher()) {
+    assert(match(.at))
+    if let rhs = parseExpr(.factor.nextHigher()) {
       return .stack(lhs, rhs)
     } else {
       return nil

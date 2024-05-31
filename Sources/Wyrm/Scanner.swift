@@ -5,7 +5,7 @@
 
 enum Token: Hashable {
   case lparen, rparen, lsquare, rsquare, lbrace, rbrace
-  case colon, comma, dot
+  case colon, comma, dot, at
 
   case minus, minusEqual, plus, plusEqual
   case slash, slashEqual, star, starEqual
@@ -19,7 +19,7 @@ enum Token: Hashable {
   case allow, before, when, after, phase, `func`
   case `if`, `else`, `while`, `for`, `in`, `let`, `var`
   case await, `return`, `fallthrough`
-  case arrow, oneway, to, of
+  case arrow, oneway, to
 
   case `nil`
   case boolean(Bool)
@@ -82,6 +82,7 @@ class Scanner {
       case ":": return .colon
       case ",": return .comma
       case ".": return .dot
+      case "@": return .at
       case "'": return scanSymbol()
       case "-": return match("=") ? .minusEqual : match(">") ? .arrow : .minus
       case "+": return match("=") ? .plusEqual : .plus
@@ -275,7 +276,6 @@ class Scanner {
     "fallthrough": .fallthrough,
     "oneway": .oneway,
     "to": .to,
-    "of": .of,
   ]
 
   private func consumeIdentifier() -> String? {

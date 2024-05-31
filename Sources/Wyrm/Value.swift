@@ -21,6 +21,7 @@ enum Value: Equatable {
   case ref(Ref)
   case list([Value])
   case entity(Entity)
+  case stack(ItemStack)
   case region(Region)
   case quest(Quest)
   case phase(QuestPhase)

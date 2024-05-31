@@ -275,15 +275,14 @@ extension World {
       }
       stack.append(.entity(e.clone()))
 
-    case .setCount:
+    case .makeStack:
       guard let item = Item.fromValue(stack.removeLast()) else {
         throw ExecError.typeMismatch
       }
       guard let count = Int.fromValue(stack.removeLast()) else {
         throw ExecError.typeMismatch
       }
-      item.count = count
-      stack.append(.entity(item))
+      stack.append(ItemStack(count: count, item: item).toValue())
 
     case .call:
       guard case let .list(args) = stack.removeLast() else {
