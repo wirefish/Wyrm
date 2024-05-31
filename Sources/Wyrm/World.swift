@@ -2,13 +2,9 @@
 //  World.swift
 //  Wyrm
 //
-//  Created by Craig Becker on 6/25/22.
-//
 
 import CoreFoundation
 import Dispatch
-import Network
-import XCTest
 
 class Module: Scope {
   let name: String
