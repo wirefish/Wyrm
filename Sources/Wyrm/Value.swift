@@ -23,6 +23,7 @@ enum Value: Equatable {
   case entity(Entity)
   case region(Region)
   case quest(Quest)
+  case phase(QuestPhase)
   case race(Race)
   case skill(Skill)
   case function(Callable)
@@ -40,7 +41,9 @@ enum Value: Equatable {
   var asScope: Scope? {
     switch self {
     case let .entity(e): return e
+    case let .region(r): return r
     case let .quest(q): return q
+    case let .phase(p): return p
     case let .race(r): return r
     case let .skill(s): return s
     case let .module(m): return m
@@ -247,6 +250,17 @@ extension Quest: ValueRepresentable {
   func toValue() -> Value {
     return .quest(self)
   }
+}
+
+extension QuestPhase: ValueRepresentable {
+  static func fromValue(_ value: Value) -> QuestPhase? {
+    if case let .phase(phase) = value {
+      phase
+    } else {
+      nil
+    }
+  }
+  func toValue() -> Value { .phase(self) }
 }
 
 extension Race: ValueRepresentable {

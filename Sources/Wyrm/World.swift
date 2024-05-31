@@ -212,7 +212,7 @@ extension World {
       load(contentsOfFile: relativePath, into: module)
     }
 
-    logger.info("initializing \(initializers.count) objects")
+    logger.info("running \(initializers.count) initializers")
     for initializer in initializers {
       do {
         let _ = try initializer.call([], context: [])
@@ -350,16 +350,9 @@ extension World {
 
     createInitializer(object: quest, members: members, in: module)
 
-    // FIXME:
     for (phaseName, members) in phases {
       let phase = QuestPhase(phaseName)
-      for (name, initialValue) in members {
-        do {
-          try phase.set(name, to: try evalInitializer(initialValue, in: module))
-        } catch {
-          logger.error("\(quest.ref) \(phaseName) \(name): \(error)")
-        }
-      }
+      createInitializer(object: phase, members: members, in: module)
       quest.phases.append(phase)
     }
 
@@ -478,175 +471,6 @@ extension World {
         portal.twin = twin
         twin.twin = portal
       }
-    }
-  }
-}
-
-// MARK: - evaluating member initializers
-
-enum EvalError: Error {
-  case typeMismatch(String)
-  case invalidExpression(String)
-}
-
-extension World {
-  func evalInitializer(_ node: Expression, in module: Module) throws -> Value {
-    switch node {
-    case .nil:
-      return .nil
-
-    case let .boolean(b):
-      return .boolean(b)
-
-    case let .number(n):
-      return .number(n)
-
-    case let .string(text):
-      guard let s = text.asLiteral else {
-        throw EvalError.invalidExpression("interpolated string not allowed in member initializer")
-      }
-      return .string(s)
-
-    case let .symbol(s):
-      return .symbol(s)
-
-    case let .identifier(id):
-      return .ref(.absolute(module.name, id))
-
-    case let .unaryExpr(op, rhs):
-      let rhs = try evalInitializer(rhs, in: module)
-      switch op {
-      case .minus:
-        guard case let .number(n) = rhs else {
-          throw EvalError.typeMismatch("operand of unary - must be a number")
-        }
-        return .number(-n)
-      case .not:
-        guard case let .boolean(b) = rhs else {
-          throw EvalError.typeMismatch("operand of unary ! must be a boolean")
-        }
-        return .boolean(!b)
-      default:
-        throw EvalError.invalidExpression("unary \(op) not allowed in member initializer")
-      }
-
-    case let .binaryExpr(lhs, op, rhs):
-      let lhs = try evalInitializer(lhs, in: module)
-      let rhs = try evalInitializer(rhs, in: module)
-      switch lhs {
-      case let .number(a):
-        guard case let .number(b) = rhs else {
-          throw EvalError.typeMismatch("operands of \(op) must be of same type")
-        }
-        switch op {
-        case .plus: return .number(a + b)
-        case .minus: return .number(a - b)
-        case .star: return .number(a * b)
-        case .slash: return .number(a / b)
-        case .percent: return .number(a.truncatingRemainder(dividingBy: b))
-        case .notEqual: return .boolean(a != b)
-        case .equalEqual: return .boolean(a == b)
-        case .less: return .boolean(a < b)
-        case .lessEqual: return .boolean(a <= b)
-        case .greater: return .boolean(a > b)
-        case .greaterEqual: return .boolean(a >= b)
-        default:
-          throw EvalError.typeMismatch("operator \(op) cannot be applied to numbers")
-        }
-
-      case let .boolean(a):
-        guard case let .boolean(b) = rhs else {
-          throw EvalError.typeMismatch("operands of \(op) must be of same type")
-        }
-        switch op {
-        case .notEqual: return .boolean(a != b)
-        case .equalEqual: return .boolean(a == b)
-        default:
-          throw EvalError.typeMismatch("operator \(op) cannot be applied to booleans")
-        }
-
-      default:
-        throw EvalError.typeMismatch("invalid operands of \(op)")
-      }
-
-    case let .conjuction(lhs, rhs):
-      let lhs = try evalInitializer(lhs, in: module)
-      guard case let .boolean(a) = lhs else {
-        throw EvalError.typeMismatch("expression before && must be a boolean")
-      }
-      if !a {
-        return .boolean(false)
-      } else {
-        let rhs = try evalInitializer(rhs, in: module)
-        guard case let .boolean(b) = rhs else {
-          throw EvalError.typeMismatch("expression after && must be a boolean")
-        }
-        return .boolean(b)
-      }
-
-    case let .disjunction(lhs, rhs):
-      let lhs = try evalInitializer(lhs, in: module)
-      guard case let .boolean(a) = lhs else {
-        throw EvalError.typeMismatch("expression before || must be a boolean")
-      }
-      if a {
-        return .boolean(true)
-      } else {
-        let rhs = try evalInitializer(rhs, in: module)
-        guard case let .boolean(b) = rhs else {
-          throw EvalError.typeMismatch("expression after || must be a boolean")
-        }
-        return .boolean(b)
-      }
-
-    case let .list(nodes):
-      let values = try nodes.map { try evalInitializer($0, in: module) }
-      return .list(values)
-
-    case let .exit(portal, direction, destination):
-      guard let portalRef = portal.asRef,
-            let proto = lookup(portalRef, context: module)?.asEntity(Portal.self) else {
-        throw EvalError.typeMismatch("invalid portal prototype")
-      }
-      guard let direction = Direction.fromValue(try evalInitializer(direction, in: module)) else {
-        throw EvalError.typeMismatch("invalid portal direction")
-      }
-      guard let destinationRef = destination.asRef else {
-        throw EvalError.typeMismatch("invalid portal destination")
-      }
-      let portal = proto.clone()
-      portal.direction = direction
-      portal.destination = destinationRef.toAbsolute(in: module)
-      return .entity(portal)
-
-    case let .stack(lhs, rhs):
-      guard case let .number(n) = lhs, let count = Int(exactly: n) else {
-        throw EvalError.typeMismatch("stack count must be an integer literal")
-      }
-      guard let protoRef = rhs.asRef,
-            let proto = lookup(protoRef, context: module)?.asEntity(Item.self) else {
-        throw EvalError.typeMismatch("invalid stack prototype")
-      }
-      let stack = proto.clone()
-      stack.count = count
-      return .entity(stack)
-
-    case let .clone(lhs, _):  // FIXME:
-      let lhs = try evalInitializer(lhs, in: module)
-      guard case let .ref(ref) = lhs,
-            case let .entity(proto) = lookup(ref, context: module) else {
-        throw EvalError.typeMismatch("invalid entity prototype")
-      }
-      return .entity(proto.clone())
-
-    case .dot:
-      guard let ref = node.asRef else {
-        throw EvalError.invalidExpression("invalid reference")
-      }
-      return .ref(ref)
-
-    default:
-      throw EvalError.invalidExpression("expression not allowed in member initializer")
     }
   }
 }
