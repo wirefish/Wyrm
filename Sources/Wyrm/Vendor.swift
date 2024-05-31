@@ -34,7 +34,7 @@ let buyCommand = Command("buy item from:vendor", help: buyHelp) { actor, verb, c
 
   guard case let .tokens(itemTokens) = clauses[0] else {
     let info = items.map {
-      "\($0.describeBriefly([.plural])) for \($0.price!.describeBriefly())"
+      "\($0.describeBriefly([.plural])) for \($0.price!.describeBriefly([]))"
     }.conjunction(using: "and")
     actor.show("\(vendor.describeBriefly([.capitalized, .definite])) sells the following items: \(info).")
     return

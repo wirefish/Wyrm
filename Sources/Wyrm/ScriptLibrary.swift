@@ -205,7 +205,7 @@ struct ScriptLibrary {
         avatar.giveItems(to: target) { $0.prototype == proto }
     }
 
-    static func receiveItems(avatar: Avatar, items: [Item], source: PhysicalEntity) {
+    static func receiveItems(avatar: Avatar, items: [ItemStack], source: PhysicalEntity) {
         avatar.receiveItems(items, from: source)
     }
 }
