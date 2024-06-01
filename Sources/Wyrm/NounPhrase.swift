@@ -87,7 +87,7 @@ struct NounPhrase: Codable {
     }
   }
 
-  func format(_ format: Text.Format, count: Int = 1) -> String {
+  func format(_ format: Format, count: Int = 1) -> String {
     if article == nil {
       return singular
     } else if format.contains(.plural) || count > 1 {

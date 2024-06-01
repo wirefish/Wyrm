@@ -59,7 +59,7 @@ class Item: Thing, Codable {
     return super.isVisible(to: observer)
   }
 
-  override func describeBriefly(_ format: Text.Format) -> String {
+  override func describeBriefly(_ format: Format) -> String {
     return (brief ?? Self.defaultBrief).format(format)
   }
 
@@ -150,7 +150,7 @@ extension ItemStack: ValueRepresentable {
 }
 
 extension ItemStack: Viewable {
-  func describeBriefly(_ format: Text.Format) -> String {
+  func describeBriefly(_ format: Format) -> String {
     return (item.brief ?? Item.defaultBrief).format(format, count: count)
   }
 }

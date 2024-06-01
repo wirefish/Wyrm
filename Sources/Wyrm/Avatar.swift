@@ -29,7 +29,7 @@ final class Race: Scope, CustomDebugStringConvertible {
     try setMember(member, to: value, Self.accessors)
   }
 
-  func describeBriefly(_ format: Text.Format) -> String {
+  func describeBriefly(_ format: Format) -> String {
     // FIXME:
     return brief!.format(format)
   }
@@ -154,7 +154,7 @@ final class Avatar: Thing {
     try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
   }
 
-  override func describeBriefly(_ format: Text.Format) -> String {
+  override func describeBriefly(_ format: Format) -> String {
     name ?? race?.describeBriefly(format) ?? super.describeBriefly(format)
   }
 

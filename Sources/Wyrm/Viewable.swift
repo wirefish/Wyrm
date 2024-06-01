@@ -3,6 +3,20 @@
 //  Wyrm
 //
 
+struct Format: OptionSet {
+  let rawValue: UInt8
+
+  static let capitalized = Format(rawValue: 1 << 0)
+  static let indefinite = Format(rawValue: 1 << 1)
+  static let definite = Format(rawValue: 1 << 2)
+  static let plural = Format(rawValue: 1 << 3)
+  static let noQuantity = Format(rawValue: 1 << 4)
+
+  var article: Article {
+    contains(.definite) ? .definite : (contains(.indefinite) ? .indefinite : .none)
+  }
+}
+
 // A protocol adopted by objects that can be seen, inspected, etc. by an observer.
 protocol Viewable {
   // Returns true if the object is visible to the observer.
@@ -13,7 +27,7 @@ protocol Viewable {
   var implicit: Bool { get }
 
   // Returns a brief description of the object, e.g. "a ball of string".
-  func describeBriefly(_ format: Text.Format) -> String
+  func describeBriefly(_ format: Format) -> String
 
   // Returns the pose of the object as seen by an observer at the same location,
   // e.g. "is leaning against the wall."

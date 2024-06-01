@@ -298,7 +298,7 @@ extension World {
       stack.append(value)
 
     case .stringify:
-      let format = Text.Format(rawValue: code.bytecode[ip])
+      let format = Format(rawValue: code.bytecode[ip])
       let s = stringify(value: stack.removeLast(), format: format)
       stack.append(.string(s))
       ip += 1
@@ -341,7 +341,7 @@ extension World {
     return .value(stack.last ?? .nil)
   }
 
-  private func stringify(value: Value, format: Text.Format) -> String {
+  private func stringify(value: Value, format: Format) -> String {
     switch value {
     case .nil:
       return "nil"

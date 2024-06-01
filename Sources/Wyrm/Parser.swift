@@ -922,7 +922,7 @@ class Parser {
         return nil
       }
 
-      var format = Text.Format()
+      var format = Format()
       if match(.colon) {
         guard case let .identifier(id) = consume(), id.count == 1, let spec = id.first else {
           error("malformed format specification")

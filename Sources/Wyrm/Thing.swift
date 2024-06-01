@@ -63,7 +63,7 @@ class Thing: Entity, Viewable, Matchable {
 
   static let defaultBrief = NounPhrase("an entity")
 
-  func describeBriefly(_ format: Text.Format) -> String {
+  func describeBriefly(_ format: Format) -> String {
     return (brief ?? Self.defaultBrief).format(format)
   }
 
