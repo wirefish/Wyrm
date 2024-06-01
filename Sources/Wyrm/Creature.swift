@@ -41,8 +41,8 @@ extension LootTable {
   func generateItems() -> [ItemStack] {
     compactMap { entry in
       if Double.random(in: 0..<1) < entry.probability {
-        return ItemStack(count: Int.random(in: entry.minCount...entry.maxCount),
-                         item: entry.prototype.stackable ? entry.prototype : entry.prototype.clone())
+        return ItemStack(item: entry.prototype.stackable ? entry.prototype : entry.prototype.clone(),
+                         count: Int.random(in: entry.minCount...entry.maxCount))
       } else {
         return nil
       }

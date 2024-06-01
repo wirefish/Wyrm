@@ -26,12 +26,12 @@ extension Avatar {
         } else {
           // FIXME: removeFromInventory(...)
         }
-        removed = ItemStack(count: count, item: item)
+        removed = ItemStack(item: item, count: count)
       }
     } else {
       if let count = inventory.removeAll(item) {
         // FIXME: removeFromInventory(...)
-        removed = ItemStack(count: count, item: item)
+        removed = ItemStack(item: item, count: count)
       }
     }
     if removed != nil {
@@ -139,7 +139,7 @@ extension Avatar {
     }
     let _ = inventory.remove(item)
     equipped[slot] = item
-    removeFromInventory([ItemStack(count: 1, item: item)])
+    removeFromInventory([ItemStack(item: item, count: 1)])
     updateEquipment([slot])
     show("You equip \(item.describeBriefly([.definite])).")
   }
@@ -148,7 +148,7 @@ extension Avatar {
     if let item = equipped.removeValue(forKey: slot) {
       show("You return \(item.describeBriefly([.definite])) to your inventory.")
       let _ = inventory.insert(item)
-      updateInventory([ItemStack(count: 1, item: item)])
+      updateInventory([ItemStack(item: item, count: 1)])
       updateEquipment([slot])
     }
   }
@@ -247,7 +247,7 @@ let takeCommand = Command("take item from:container", help: takeHelp) {
 
     for entity in matches {
       if let item = entity as? Item {
-        actor.takeItem(ItemStack(count: 1, item: item))  // FIXME: quantity
+        actor.takeItem(ItemStack(item: item, count: 1))  // FIXME: quantity
       } else {
         actor.show("You cannot take \(entity.describeBriefly([.definite])).")
       }

@@ -282,7 +282,7 @@ extension World {
       guard let count = Int.fromValue(stack.removeLast()) else {
         throw ExecError.typeMismatch
       }
-      stack.append(ItemStack(count: count, item: item).toValue())
+      stack.append(ItemStack(item: item, count: count).toValue())
 
     case .call:
       guard case let .list(args) = stack.removeLast() else {

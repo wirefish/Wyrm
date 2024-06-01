@@ -109,32 +109,27 @@ class Item: PhysicalEntity, Codable {
 
 // MARK: ItemStack
 
-struct ItemStack: Codable {  // FIXME: remove Codable. make immutable.
-  var count = 1
-  var item: Item
+// An item stack represents a quantity of a specific item. If `item.stackable` is true,
+// then `item.ref` must not be nil and `count` can be any positive integer up to
+// `item.stackLimit`. If `item.stackable` is false, then `item.ref` must be nil and
+// `count` must be 1.
+struct ItemStack {
+  let item: Item
+  let count: Int
 
-  var isEmpty: Bool { return count == 0 }
-
-  mutating func add(_ num: Int) -> Bool {
-    if count + num <= item.stackLimit {
-      count += num
-      return true
+  #if DEBUG
+  init(item: Item, count: Int) {
+    if item.stackable {
+      assert(item.ref != nil)
+      assert(count > 0 && count <= item.stackLimit)
     } else {
-      return false
+      assert(item.ref == nil)
+      assert(count == 1)
     }
+    self.item = item
+    self.count = count
   }
-
-  func canAdd(_ num: Int) -> Bool { count + num <= item.stackLimit }
-
-  @discardableResult
-  mutating func remove(_ num: Int) -> ItemStack? {
-    if (num <= count) {
-      count -= num
-      return ItemStack(count: num, item: item)
-    } else {
-      return nil
-    }
-  }
+  #endif
 }
 
 extension ItemStack: ValueRepresentable {
@@ -143,7 +138,7 @@ extension ItemStack: ValueRepresentable {
     case let .stack(stack): return stack
     case let .entity(e):
       if let item = e as? Item {
-        return ItemStack(item: item)
+        return ItemStack(item: item, count: 1)
       } else {
         return nil
       }
@@ -161,7 +156,6 @@ extension ItemStack: Viewable {
 }
 
 extension ItemStack: Matchable {
-  // FIXME: deal with quantity
   func match(_ tokens: ArraySlice<String>) -> MatchQuality {
     return item.match(tokens)
   }
@@ -196,7 +190,7 @@ struct ItemCollection: Codable {
   var isEmpty: Bool { items.isEmpty }
 
   private func containsItemWithPrototype(_ prototype: Entity) -> Bool {
-    return items.contains { $0.key.prototype === prototype }
+    return items.keys.contains { $0.prototype === prototype }
   }
 
   func canInsert(_ item: Item, count: Int = 1) -> Bool {
@@ -284,7 +278,7 @@ struct ItemCollection: Codable {
   }
 
   func select(where pred: (Item) -> Bool) -> [ItemStack] {
-    items.compactMap { pred($0.key) ? ItemStack(count: $0.value, item: $0.key) : nil }
+    items.compactMap { pred($0.key) ? ItemStack(item: $0.key, count: $0.value) : nil }
   }
 
   mutating func remove(_ stacks: [ItemStack]) {
@@ -294,6 +288,6 @@ struct ItemCollection: Codable {
   }
 
   func describe() -> String {
-    items.map({ ItemStack(count: $0.value, item: $0.key) }).describe()
+    items.map({ ItemStack(item: $0.key, count: $0.value) }).describe()
   }
 }

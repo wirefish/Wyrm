@@ -10,6 +10,7 @@ enum MatchQuality: Comparable {
 enum MatchQuantity {
   case all
   case number(Int)
+  case unspecified
 }
 
 protocol Matchable {
@@ -55,16 +56,14 @@ private func consumeQuantity(_ tokens: inout ArraySlice<String>) -> MatchQuantit
   if tokens.first == "all" || tokens.first == "every" {
     tokens.removeFirst()
     return .all
-  } else if tokens.first == "a" || tokens.first == "an" || tokens.first == "the" {
-    // FIXME: for "the" it should really depend on if the better match is against
-    // the singular or plural form...
+  } else if tokens.first == "a" || tokens.first == "an" {
     tokens.removeFirst()
     return .number(1)
   } else if let n = Int(tokens.first!) {
     tokens.removeFirst()
     return .number(n)
   } else {
-    return .all
+    return .unspecified
   }
 }
 
