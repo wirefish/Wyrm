@@ -10,7 +10,7 @@ enum CodingError: Error {
 
 // MARK: Item
 
-class Item: PhysicalEntity, Codable {
+class Item: Thing, Codable {
   // If zero, this item cannot stack with other items inside a container and
   // the container can contain more than one item with the same prototype. If
   // positive, the item can stack with other items with the same prototype and

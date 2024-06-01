@@ -50,7 +50,7 @@ extension Avatar {
     }
   }
 
-  func giveItems(to target: PhysicalEntity, where pred: (Item) -> Bool) {
+  func giveItems(to target: Thing, where pred: (Item) -> Bool) {
     let stacks = inventory.select(where: pred)
     if !stacks.isEmpty {
       // FIXME: removeFromInventory(stacks)
@@ -63,7 +63,7 @@ extension Avatar {
     }
   }
 
-  func receiveItems(_ stacks: [ItemStack], from source: PhysicalEntity) {
+  func receiveItems(_ stacks: [ItemStack], from source: Thing) {
     for stack in stacks {
       // FIXME: check if cannot insert
       let _ = inventory.insert(stack.item, count: stack.count)

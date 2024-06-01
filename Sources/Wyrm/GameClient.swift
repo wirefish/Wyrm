@@ -75,7 +75,7 @@ struct NeighborProperties: Encodable {
   let health: Int?
   let maxHealth: Int?
 
-  init(_ entity: PhysicalEntity) {
+  init(_ entity: Thing) {
     key = entity.id
     brief = entity.describeBriefly([])
     icon = entity.icon
@@ -97,11 +97,11 @@ extension Avatar {
     sendMessage("setNeighbors", args)
   }
 
-  func updateNeighbor(_ entity: PhysicalEntity) {
+  func updateNeighbor(_ entity: Thing) {
     sendMessage("updateNeighbor", [NeighborProperties(entity)])
   }
 
-  func removeNeighbor(_ entity: PhysicalEntity) {
+  func removeNeighbor(_ entity: Thing) {
     sendMessage("removeNeighbor", [entity.id])
   }
 }

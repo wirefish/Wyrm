@@ -26,7 +26,7 @@ final class Region: Scope {
 final class Location: Entity {
   var name = ""
   var description = ""
-  var contents = [PhysicalEntity]()
+  var contents = [Thing]()
   var exits = [Portal]()
   var tutorial: String?
   var domain: String?
@@ -66,12 +66,12 @@ final class Location: Entity {
     try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
   }
 
-  func insert(_ entity: PhysicalEntity) {
+  func insert(_ entity: Thing) {
     contents.append(entity)
     entity.container = self
   }
 
-  func remove(_ entity: PhysicalEntity) {
+  func remove(_ entity: Thing) {
     if let index = contents.firstIndex(where: { $0 == entity }) {
       contents.remove(at: index)
       entity.container = nil

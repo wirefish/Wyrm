@@ -1,9 +1,9 @@
 //
-//  PhysicalEntity.swift
+//  Thing.swift
 //  Wyrm
 //
 
-class PhysicalEntity: Entity, Viewable, Matchable {
+class Thing: Entity, Viewable, Matchable {
     var brief: NounPhrase?
     var pose: String?
     var description: String?
@@ -14,7 +14,7 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     weak var container: Entity?
 
     override func copyProperties(from other: Entity) {
-        let other = other as! PhysicalEntity
+        let other = other as! Thing
         brief = other.brief
         pose = other.pose
         description = other.description
@@ -26,14 +26,14 @@ class PhysicalEntity: Entity, Viewable, Matchable {
     }
 
     private static let accessors = [
-        "brief": Accessor(\PhysicalEntity.brief),
-        "pose": Accessor(\PhysicalEntity.pose),
-        "description": Accessor(\PhysicalEntity.description),
-        "icon": Accessor(\PhysicalEntity.icon),
-        "isObvious": Accessor(\PhysicalEntity.isObvious),  // FIXME: -> implied
-        "alts": Accessor(\PhysicalEntity.alts),
-        "size": Accessor(\PhysicalEntity.size),
-        "location": Accessor(\PhysicalEntity.location),
+        "brief": Accessor(\Thing.brief),
+        "pose": Accessor(\Thing.pose),
+        "description": Accessor(\Thing.description),
+        "icon": Accessor(\Thing.icon),
+        "isObvious": Accessor(\Thing.isObvious),  // FIXME: -> implied
+        "alts": Accessor(\Thing.alts),
+        "size": Accessor(\Thing.size),
+        "location": Accessor(\Thing.location),
     ]
 
     override func get(_ member: String) -> Value? {

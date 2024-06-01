@@ -104,7 +104,7 @@ extension EnemyList {
 
 // MARK: - Creature
 
-class Creature: PhysicalEntity, Combatant, Questgiver {
+class Creature: Thing, Combatant, Questgiver {
   // Attackable
   var level = 1
   var health = ClampedInt(1, maxValue: 1)

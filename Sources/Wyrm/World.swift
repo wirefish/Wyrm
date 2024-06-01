@@ -108,7 +108,7 @@ class World {
                           ("creature", Creature()),
                           ("entity", Entity()),
                           ("equipment", Equipment()),
-                          ("fixture", PhysicalEntity()),
+                          ("fixture", Thing()),
                           ("item", Item()),
                           ("location", Location()),
                           ("portal", Portal()),

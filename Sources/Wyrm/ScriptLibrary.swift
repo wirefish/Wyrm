@@ -68,7 +68,7 @@ struct ScriptLibrary {
         .future { fn in World.schedule(delay: delay) { fn() } }
     }
 
-    static func spawn(proto: PhysicalEntity, location: Location, delay: Double) {
+    static func spawn(proto: Thing, location: Location, delay: Double) {
         World.schedule(delay: delay) {
             // FIXME: trigger an event
             location.insert(proto.clone())
@@ -108,11 +108,11 @@ struct ScriptLibrary {
         avatar.showTutorial(key, message)
     }
 
-    static func showNear(actor: PhysicalEntity, message: String) {
+    static func showNear(actor: Thing, message: String) {
         actor.location.updateAll { $0.show(message) }
     }
 
-    static func tell(actor: PhysicalEntity, avatar: Avatar, message: String) {
+    static func tell(actor: Thing, avatar: Avatar, message: String) {
         avatar.showSay(actor, "says", message, false)
     }
 
@@ -164,13 +164,13 @@ struct ScriptLibrary {
         return direction.opposite
     }
 
-    static func travel(actor: PhysicalEntity, exit: Portal) -> Bool {
+    static func travel(actor: Thing, exit: Portal) -> Bool {
         return actor.travel(via: exit)
     }
 
     // Quest-related functions.
 
-    static func offerQuest(npc: PhysicalEntity, quest: Quest, avatar: Avatar) -> Bool {
+    static func offerQuest(npc: Thing, quest: Quest, avatar: Avatar) -> Bool {
         return triggerEvent("offerQuest", in: avatar.location, participants: [npc, avatar],
                             args: [npc, quest, avatar]) {
             avatar.receiveOffer(QuestOffer(questgiver: npc, quest: quest))
@@ -201,11 +201,11 @@ struct ScriptLibrary {
 
     // Inventory-related functions.
 
-    static func giveItem(avatar: Avatar, proto: Item, target: PhysicalEntity) {
+    static func giveItem(avatar: Avatar, proto: Item, target: Thing) {
         avatar.giveItems(to: target) { $0.prototype == proto }
     }
 
-    static func receiveItems(avatar: Avatar, items: [ItemStack], source: PhysicalEntity) {
+    static func receiveItems(avatar: Avatar, items: [ItemStack], source: Thing) {
         avatar.receiveItems(items, from: source)
     }
 }

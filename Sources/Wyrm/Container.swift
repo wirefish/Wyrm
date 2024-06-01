@@ -4,7 +4,7 @@
 //
 
 // An Entity that can contain ItemStacks.
-class Container: PhysicalEntity {
+class Container: Thing {
   var contents = ItemCollection()
 
   var scriptContents: [ItemStack] {

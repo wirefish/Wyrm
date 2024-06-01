@@ -175,7 +175,7 @@ extension Responder {
 }
 
 struct QuestOffer: Offer {
-  weak var questgiver: PhysicalEntity?
+  weak var questgiver: Thing?
   let quest: Quest
 
   func accept(_ avatar: Avatar) {

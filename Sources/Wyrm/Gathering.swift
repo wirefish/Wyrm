@@ -5,7 +5,7 @@
 
 // MARK: - ResourceNode
 
-class ResourceNode: PhysicalEntity {
+class ResourceNode: Thing {
     // The skill required to see and use the node.
     var requiredSkill: Ref?
 

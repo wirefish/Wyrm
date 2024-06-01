@@ -15,7 +15,7 @@ enum PortalState: ValueRepresentableEnum {
     })
 }
 
-class Portal: PhysicalEntity {
+class Portal: Thing {
     var direction: Direction = .in
     var destination: Ref?
     var isCloseable = false
@@ -124,7 +124,7 @@ let goCommand = Command("go|head direction", aliases: goAliases, help: goHelp) {
 
 // MARK: - travel-related extensions
 
-extension PhysicalEntity {
+extension Thing {
     @discardableResult
     func travel(via portal: Portal) -> Bool {
         let avatar = self as? Avatar

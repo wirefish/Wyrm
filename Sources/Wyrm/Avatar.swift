@@ -90,7 +90,7 @@ enum Gender: Codable, ValueRepresentableEnum {
 
 // MARK: - Avatar
 
-final class Avatar: PhysicalEntity {
+final class Avatar: Thing {
   var level = 1
 
   // Experience gained toward next level.
@@ -344,7 +344,7 @@ extension Avatar {
     sendMessage("showNotice", .string(message))
   }
 
-  func showSay(_ actor: PhysicalEntity, _ verb: String, _ message: String, _ isChat: Bool) {
+  func showSay(_ actor: Thing, _ verb: String, _ message: String, _ isChat: Bool) {
     sendMessage("showSay",
                 .string(actor.describeBriefly([.capitalized, .definite])),
                 .string(verb),
@@ -400,7 +400,7 @@ extension Avatar {
 let lookCommand = Command("look at:target with|using|through:tool") { actor, verb, clauses in
   if case let .tokens(target) = clauses[0] {
     guard let targetMatch = match(target,
-                                  against: actor.location.contents, [PhysicalEntity](actor.location.exits),
+                                  against: actor.location.contents, [Thing](actor.location.exits),
                                   where: { $0.isVisible(to: actor) }) else {
       actor.show("You don't see anything like that here.")
       return
