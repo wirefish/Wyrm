@@ -81,7 +81,7 @@ extension MatchResult: Collection {
   func index(after i: Int) -> Int { i + 1 }
 }
 
-func match<T: Matchable>(_ tokens: [String], against subjectLists: [T]...) -> MatchResult<T>? {
+func match<T: Matchable>(_ tokens: [String], against subjectLists: any Sequence<T>...) -> MatchResult<T>? {
   var tokens = tokens[...]
 
   let matchQuantity = consumeQuantity(&tokens)
@@ -123,27 +123,6 @@ func match<K, V: Matchable>(_ tokens: [String], againstValues subjectDict: [K:V]
       matchQuality = quality
     } else if quality == matchQuality {
       matches.append(key)
-    }
-  }
-
-  return matches.isEmpty ? nil : MatchResult(quality: matchQuality, quantity: matchQuantity,
-                                             matches: matches)
-}
-
-func match<K: Matchable, V>(_ tokens: [String], againstKeys subjectDict: [K:V]) -> MatchResult<K>? {
-  var tokens = tokens[...]
-
-  let matchQuantity = consumeQuantity(&tokens)
-  var matchQuality = MatchQuality.partial
-  var matches = [K]()
-
-  for subject in subjectDict.keys {
-    let quality = subject.match(tokens)
-    if quality > matchQuality {
-      matches = [subject]
-      matchQuality = quality
-    } else if quality == matchQuality {
-      matches.append(subject)
     }
   }
 

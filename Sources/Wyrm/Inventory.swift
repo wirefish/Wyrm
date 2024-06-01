@@ -137,7 +137,7 @@ extension Avatar {
       unequip(in: item.slot!)
       slot = item.slot!
     }
-    inventory.remove(item)
+    let _ = inventory.remove(item)
     equipped[slot] = item
     removeFromInventory([ItemStack(count: 1, item: item)])
     updateEquipment([slot])
@@ -185,7 +185,7 @@ let inventoryCommand = Command("inventory item", help: inventoryHelp) {
       }
       matched = true
     }
-    if let matches = match(item, againstKeys: actor.inventory.items) {
+    if let matches = match(item, against: actor.inventory.items.keys) {
       for item in matches {
         actor.show("\(item.describeBriefly([.capitalized, .indefinite])) (in inventory): \(item.describeFully())")
       }
@@ -262,7 +262,8 @@ let takeCommand = Command("take item from:container", help: takeHelp) {
 let equipCommand = Command("equip item in|on:slot") {
   actor, verb, clauses in
   if case let .tokens(item) = clauses[0] {
-    guard let matches = match(item, against: actor.inventory.items.compactMap { $0 as? Equipment}) else {
+    let equipment = actor.inventory.items.keys.compactMap { $0 as? Equipment }
+    guard let matches = match(item, against: equipment) else {
       actor.show("You aren't carrying any equipment like that.")
       return
     }
