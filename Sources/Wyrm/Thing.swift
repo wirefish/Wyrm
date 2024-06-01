@@ -8,7 +8,7 @@ class Thing: Entity, Viewable, Matchable {
   var pose: String?
   var description: String?
   var icon: String?
-  var implied = false
+  var implicit = false
   var alts = [NounPhrase]()
   var size = Size.huge
   weak var container: Entity?
@@ -19,7 +19,7 @@ class Thing: Entity, Viewable, Matchable {
     pose = other.pose
     description = other.description
     icon = other.icon
-    implied = other.implied
+    implicit = other.implicit
     alts = other.alts
     size = other.size
     super.copyProperties(from: other)
@@ -30,7 +30,7 @@ class Thing: Entity, Viewable, Matchable {
     "pose": Accessor(\Thing.pose),
     "description": Accessor(\Thing.description),
     "icon": Accessor(\Thing.icon),
-    "implied": Accessor(\Thing.implied),
+    "implicit": Accessor(\Thing.implicit),
     "alts": Accessor(\Thing.alts),
     "size": Accessor(\Thing.size),
     "location": Accessor(\Thing.location),

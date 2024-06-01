@@ -10,7 +10,7 @@ protocol Viewable {
 
   // Set to true if the object should be excluded from being shown as a member
   // of the contents of the observer's location.
-  var implied: Bool { get }
+  var implicit: Bool { get }
 
   // Returns a brief description of the object, e.g. "a ball of string".
   func describeBriefly(_ format: Text.Format) -> String
@@ -28,7 +28,7 @@ protocol Viewable {
 
 extension Viewable {
   func isVisible(to observer: Avatar) -> Bool { true }
-  var implied: Bool { false }
+  var implicit: Bool { false }
   func describePose() -> String { "is here." }
   func describeFully() -> String {
     "\(self.describeBriefly([.capitalized, .definite])) is unremarkable."

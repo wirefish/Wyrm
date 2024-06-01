@@ -368,10 +368,10 @@ extension Avatar {
   }
 
   func describeLocation() {
-    let exits = location.exits.filter{ !$0.implied && $0.isVisible(to: self) }
+    let exits = location.exits.filter{ !$0.implicit && $0.isVisible(to: self) }
       .map { ClientValue.string(String(describing: $0.direction)) }
 
-    let contents = location.contents.filter { $0 != self && !$0.implied && $0.isVisible(to: self) }
+    let contents = location.contents.filter { $0 != self && !$0.implicit && $0.isVisible(to: self) }
       .map {
         ClientValue.list([.integer($0.id),
                           .string($0.describeBriefly([.capitalized, .indefinite])),

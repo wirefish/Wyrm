@@ -92,7 +92,7 @@ struct NeighborProperties: Encodable {
 extension Avatar {
   func setNeighbors() {
     let args = location.contents.compactMap { entity -> NeighborProperties? in
-      entity != self && !entity.implied && entity.isVisible(to: self) ? NeighborProperties(entity) : nil
+      entity != self && !entity.implicit && entity.isVisible(to: self) ? NeighborProperties(entity) : nil
     }
     sendMessage("setNeighbors", args)
   }
