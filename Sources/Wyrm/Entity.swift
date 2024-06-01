@@ -3,7 +3,7 @@
 //  Wyrm
 //
 
-class Entity: Scope {
+class Entity: Scope, Responder {
   static var idIterator = (1...).makeIterator()
 
   let id = idIterator.next()!
@@ -11,7 +11,9 @@ class Entity: Scope {
   let prototype: Entity?
 
   var members = [String:Value]()
-  var handlers = [EventHandler]()
+
+  var handlers = EventHandlers()
+  var delegate: Responder? { prototype }
 
   required init(prototype: Entity? = nil) {
     self.prototype = prototype

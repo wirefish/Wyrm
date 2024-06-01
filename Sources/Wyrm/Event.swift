@@ -7,70 +7,29 @@ enum EventPhase {
   case allow, before, when, after
 }
 
-struct EventHandlerKey: Hashable {
+struct Event: Hashable {
   let phase: EventPhase
   let name: String
 }
 
-typealias EventHandlers = [EventHandlerKey:[ScriptFunction]]
+typealias EventHandlers = [Event:[ScriptFunction]]
 
-func eventHandlerApplies(fn: ScriptFunction, args: [Value]) -> Bool {
-  guard args.count == fn.parameters.count else {
-    return false
-  }
-  let observer = args.first!
-  return zip(args, fn.parameters).allSatisfy { arg, param in
-    switch param.constraint {
-    case .none:
-      return true
-    case .self:
-      return arg == observer
-    case let .prototype(ref):
-      let ref = ref.toAbsolute(in: fn.module)
-      switch arg {
-      case let .entity(entity): return entity.isa(ref)
-      case let .quest(quest): return quest.ref == ref
-      default: return false
-      }
-      case let .quest(ref, phase):
-        guard let avatar = Avatar.fromValue(arg),
-              case let .quest(quest) = World.instance.lookup(ref, context: fn.module) else {
-          return false
-        }
-        switch phase {
-        case "available": return quest.acceptableBy(avatar)
-        case "offered": return (avatar.offer as? QuestOffer)?.quest === quest
-        case "complete": return avatar.completedQuests[quest.ref] != nil
-        case "incomplete": return avatar.activeQuests[quest.ref]?.phase == phase
-        default: return avatar.activeQuests[quest.ref]?.phase == phase
-        }
-        case let .race(ref):
-          return Avatar.fromValue(arg)?.race?.ref == ref
-        case let .equipped(ref):
-          return Avatar.fromValue(arg)?.hasEquipped(ref) ?? false
-    }
-  }
-}
-
-struct EventHandler {
-  let phase: EventPhase
-  let event: String
-  let fn: ScriptFunction
-
-  func appliesTo(phase: EventPhase, event: String, args: [Value]) -> Bool {
-    guard phase == self.phase && event == self.event && args.count == fn.parameters.count else {
+extension ScriptFunction {
+  // Returns true if the constraints on this function's parameters match the given
+  // arguments.
+  func appliesTo(args: [Value]) -> Bool {
+    guard args.count == parameters.count else {
       return false
     }
-
     let observer = args.first!
-    return zip(args, fn.parameters).allSatisfy { arg, param in
+    return zip(args, parameters).allSatisfy { arg, param in
       switch param.constraint {
       case .none:
         return true
       case .self:
         return arg == observer
       case let .prototype(ref):
-        let ref = ref.toAbsolute(in: fn.module)
+        let ref = ref.toAbsolute(in: module)
         switch arg {
         case let .entity(entity): return entity.isa(ref)
         case let .quest(quest): return quest.ref == ref
@@ -78,7 +37,7 @@ struct EventHandler {
         }
       case let .quest(ref, phase):
         guard let avatar = Avatar.fromValue(arg),
-              case let .quest(quest) = World.instance.lookup(ref, context: fn.module) else {
+              case let .quest(quest) = World.instance.lookup(ref, context: module) else {
           return false
         }
         switch phase {
@@ -97,45 +56,49 @@ struct EventHandler {
   }
 }
 
-extension Entity {
+protocol Responder: Scope, ValueRepresentable {
+  var handlers: EventHandlers { get }
+  var delegate: Responder? { get }
+}
+
+extension Responder {
   @discardableResult
-  final func handleEvent(_ phase: EventPhase, _ event: String, args: [Value]) -> Value {
-    let args = [.entity(self)] + args
-    var observer: Entity! = self
+  func respondTo(_ event: Event, args: [Value]) -> Value {
+    let args = [toValue()] + args
+    var observer: Responder! = self
     while observer != nil {
-      for handler in observer.handlers {
-        guard handler.appliesTo(phase: phase, event: event, args: args) else {
-          continue
-        }
-        do {
-          switch try handler.fn.call(args, context: [self]) {
-          case let .value(value):
-            return value
-          case .await:
-            return .nil
-          case .fallthrough:
-            break
+      if let fns = observer.handlers[event] {
+        let context: [Scope] = [observer]
+        for fn in fns {
+          if fn.appliesTo(args: args) {
+            do {
+              switch try fn.call(args, context: context) {
+              case let .value(value):
+                return value
+              case .await:
+                return .nil
+              case .fallthrough:
+                break
+              }
+            } catch {
+              logger.error("error in event handler for \(self) \(event): \(error)")
+              return .nil
+            }
           }
-        } catch {
-          logger.error("error in event handler for \(self) \(phase) \(event): \(error)")
-          return .nil
         }
       }
-      observer = observer.prototype
+      observer = observer.delegate
     }
     return .nil
   }
 
-  final func allowEvent(_ event: String, args: [Value]) -> Bool {
-    return handleEvent(.allow, event, args: args) != .boolean(false)
+  func allow(_ name: String, args: [Value]) -> Bool {
+    return respondTo(Event(phase: .allow, name: name), args: args) != .boolean(false)
   }
 
-  final func canRespondTo(phase: EventPhase, event: String) -> Bool {
-    if handlers.contains(where: { $0.phase == phase && $0.event == event }) {
-      return true
-    } else {
-      return prototype?.canRespondTo(phase: phase, event: event) ?? false
-    }
+  func canRespondTo(phase: EventPhase, name: String) -> Bool {
+    return (handlers[Event(phase: phase, name: name)] != nil ||
+            (delegate?.canRespondTo(phase: phase, name: name) ?? false))
   }
 }
 
@@ -147,17 +110,17 @@ func triggerEvent(_ event: String, in location: Location, participants: [Entity]
     !participants.contains($0)
   }
 
-  guard observers.allSatisfy({ $0.allowEvent(event, args: args) }) else {
+  guard observers.allSatisfy({ $0.allow(event, args: args) }) else {
     return false
   }
 
-  observers.forEach { $0.handleEvent(.before, event, args: args) }
+  observers.forEach { $0.respondTo(Event(phase: .before, name: event), args: args) }
 
   body()
 
-  participants.forEach { $0.handleEvent(.when, event, args: args) }
+  participants.forEach { $0.respondTo(Event(phase: .when, name: event), args: args) }
 
-  observers.forEach { $0.handleEvent(.after, event, args: args) }
+  observers.forEach { $0.respondTo(Event(phase: .after, name: event), args: args) }
 
   return true
 }

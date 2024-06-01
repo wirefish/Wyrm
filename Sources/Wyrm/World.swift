@@ -65,7 +65,7 @@ extension Ref: Codable, CustomStringConvertible {
 
 struct Extension {
   let ref: Ref
-  var handlers = [EventHandler]()
+  var handlers = EventHandlers()
   var methods = [String:Value]()
 }
 
@@ -185,11 +185,12 @@ class World {
 extension World {
   func start() {
     logger.info("starting \(locations.count) locations")
+    let event = Event(phase: .when, name: "startWorld")
     for location in locations {
-      location.handleEvent(.when, "startWorld", args: [])
+      location.respondTo(event, args: [])
       for entity in location.contents {
         entity.location = location
-        entity.handleEvent(.when, "startWorld", args: [])
+        entity.respondTo(event, args: [])
       }
     }
   }
@@ -301,16 +302,16 @@ extension World {
   }
 
   private func compileEventHandlers(_ handlers: [Definition.Handler],
-                                    in module: Module) -> [EventHandler] {
-    handlers.compactMap {
-      let (phase, event, params, body) = $0
+                                    in module: Module) -> EventHandlers {
+    var result = EventHandlers()
+    for (phase, name, params, body) in handlers {
       let compiler = Compiler()
       if let fn = compiler.compileFunction(parameters: addSelf(params), body: body, in: module) {
-        return EventHandler(phase: phase, event: event, fn: fn)
-      } else {
-        return nil
+        let event = Event(phase: phase, name: name)
+        result[event, default: []].append(fn)
       }
     }
+    return result
   }
 
   private func compileMethods(_ methods: [Definition.Method], in module: Module) -> [String:Value] {
@@ -423,7 +424,9 @@ extension World {
         logger.warning("cannot apply extension to undefined entity \(ext.ref)")
         continue
       }
-      entity.handlers = ext.handlers + entity.handlers
+      entity.handlers.merge(ext.handlers) { (old, new) -> [ScriptFunction] in
+        new + old
+      }
       entity.members.merge(ext.methods) { (old, new) -> Value in
         logger.warning("extension cannot replace existing method")
         return old

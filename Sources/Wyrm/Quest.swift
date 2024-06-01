@@ -155,20 +155,22 @@ extension Questgiver {
   }
 }
 
-extension Entity {
-  // Returns true if this entity has an event handler constrained to a
+extension Responder {
+  // Returns true if a responder has an event handler constrained to a
   // specific quest and phase, indicating that it is involved in advancing the
   // quest. This is used to mark entities on the map, etc.
   func advancesQuest(_ quest: Quest, phase: String) -> Bool {
-    return handlers.contains { handler in
-      handler.fn.parameters.contains {
-        if case let .quest(r, p) = $0.constraint {
-          return quest.ref == r.toAbsolute(in: handler.fn.module) && phase == p
-        } else {
-          return false
+    return handlers.values.contains { fns in
+      fns.contains { fn in
+        fn.parameters.contains {
+          if case let .quest(r, p) = $0.constraint {
+            return quest.ref == r.toAbsolute(in: fn.module) && phase == p
+          } else {
+            return false
+          }
         }
       }
-    } || (prototype?.advancesQuest(quest, phase: phase) == true)
+    } || (delegate?.advancesQuest(quest, phase: phase) == true)
   }
 }
 
