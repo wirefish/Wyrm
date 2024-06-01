@@ -129,3 +129,24 @@ func match<K, V: Matchable>(_ tokens: [String], againstValues subjectDict: [K:V]
   return matches.isEmpty ? nil : MatchResult(quality: matchQuality, quantity: matchQuantity,
                                              matches: matches)
 }
+
+func match<K: Matchable, V>(_ tokens: [String], againstKeys subjectDict: [K:V]) -> MatchResult<K>? {
+  var tokens = tokens[...]
+
+  let matchQuantity = consumeQuantity(&tokens)
+  var matchQuality = MatchQuality.partial
+  var matches = [K]()
+
+  for subject in subjectDict.keys {
+    let quality = subject.match(tokens)
+    if quality > matchQuality {
+      matches = [subject]
+      matchQuality = quality
+    } else if quality == matchQuality {
+      matches.append(subject)
+    }
+  }
+
+  return matches.isEmpty ? nil : MatchResult(quality: matchQuality, quantity: matchQuantity,
+                                             matches: matches)
+}

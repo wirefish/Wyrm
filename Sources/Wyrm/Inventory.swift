@@ -185,7 +185,7 @@ let inventoryCommand = Command("inventory item", help: inventoryHelp) {
       }
       matched = true
     }
-    if let matches = match(item, against: actor.inventory.items.keys.map { $0 }) {
+    if let matches = match(item, againstKeys: actor.inventory.items) {
       for item in matches {
         actor.show("\(item.describeBriefly([.capitalized, .indefinite])) (in inventory): \(item.describeFully())")
       }
@@ -247,7 +247,7 @@ let takeCommand = Command("take item from:container", help: takeHelp) {
 
     for entity in matches {
       if let item = entity as? Item {
-        actor.takeItem(item)
+        actor.takeItem(ItemStack(count: 1, item: item))  // FIXME: quantity
       } else {
         actor.show("You cannot take \(entity.describeBriefly([.definite])).")
       }
@@ -262,7 +262,7 @@ let takeCommand = Command("take item from:container", help: takeHelp) {
 let equipCommand = Command("equip item in|on:slot") {
   actor, verb, clauses in
   if case let .tokens(item) = clauses[0] {
-    guard let matches = match(item, against: actor.inventory.compactMap { $0 as? Equipment}) else {
+    guard let matches = match(item, against: actor.inventory.items.compactMap { $0 as? Equipment}) else {
       actor.show("You aren't carrying any equipment like that.")
       return
     }

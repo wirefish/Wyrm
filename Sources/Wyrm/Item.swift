@@ -109,7 +109,7 @@ class Item: PhysicalEntity, Codable {
 
 // MARK: ItemStack
 
-struct ItemStack: Codable {  // FIXME: remove Codable
+struct ItemStack: Codable {  // FIXME: remove Codable. make immutable.
   var count = 1
   var item: Item
 
