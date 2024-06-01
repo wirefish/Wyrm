@@ -3,19 +3,26 @@
 - Collect client updates and send them at the end of a "frame". Maybe add an Update
   object to Avatar that collects them.
 
-- Change handlers from [EventHandler] to [EventKey: [EventHandler]]
-
-- When cloning with !{...}, add code that sets any overridden members.
-
-- remove `of` operator and use more general !{...} instead
-
 - add `def command` for commands that have no interaction with the engine, e.g.
-  meditate.
+  meditate. It basically just triggers an event with the same name. The command
+  itself is a responder and gets added to the observers. It could
+  look like
 
-- add `def event` for similar reasons to above
+    def command meditate {
+      help = "..."
+      allow meditate(actor) { ... }
+      after meditate(actor) { ...}
+    }
 
-- Split string literals into a separate case from Text, which is always an
-  InterpolatedString. Move the conjunction extension somewhere, like String+Foo.
+  Maybe add support for a simple grammar = "..." if needed.
+
+  If there's a duration member use a generalized EventActivity, and allow
+  startMessage, interruptMessage, finishMessage members.
+
+- Range operators ... and ..<
+
+- Prefix ? operator that picks a random value from the next (range) expr:
+  ?1...10 rolls a 10-sided die.
 
 # Older...
 
