@@ -43,6 +43,7 @@ def location hilltop: isleLocation {
     ancient standing stones encircles the crown of the hill. The long grass that
     covers the hillside sways back and forth in the gentle breeze.
     """
+
   tutorial = """
     Welcome to Atalea! As a new player, you will sometimes see green text like
     this. These messages provide tips to help you get started. For details, type
@@ -55,6 +56,7 @@ def location hilltop: isleLocation {
 
     Head `south` to begin your adventure!
     """
+
   contents = [standingStones]
   exits = [gravelPath -> 'south to pavilion]
 }
@@ -73,7 +75,7 @@ def entity spiritWarden: lib.npc {
   after enterLocation(actor: .quest(chooseARace, available), location, entry) {
     await sleep(1)
     if actor.location == location {
-      show(actor, "The spirit warden beckons in your direction.")
+      show(actor, "The spirit warden beckons to you.")
     }
   }
 
@@ -1460,7 +1462,7 @@ def entity wineBottles: fixture {
   brief = "wine bottle"
   description = """
     You may have been dead for hundreds of years, but wine hasn't changed all
-    that much; you still recognize the cheap stuff when you see it.
+    that much; you still recognize the cheap stuff when you smell it.
     """
   implicit = true
 }
@@ -1497,8 +1499,8 @@ def entity dockSign: fixture {
   brief = "an informative sign"
   pose = "is posted here."
   description = """
-    The sign indicates that a ship frequently arrives here to carry passengers
-    across the sea to the village of Arwyck.
+    The sign indicates that a ship called the *Siren* frequently arrives here to
+    carry passengers across the sea to the town of Arwyck.
     """
 }
 
@@ -1542,7 +1544,7 @@ def location theSiren: lib.routeFollower {
   name = "The *Siren*"
   description = """
     This sturdy single-masted vessel makes frequent trips between the Isle of
-    Dawn and the village of Arwyck on the mainland.
+    Dawn and the town of Arwyck on the mainland.
     """
   domain = 'outdoor
   surface = 'wood

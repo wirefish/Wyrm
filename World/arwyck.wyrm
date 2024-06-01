@@ -15,7 +15,7 @@ def region {
     """
 }
 
-// General prototypes.
+//# General prototypes
 
 def entity ruttedPath: portal {
   brief = "a rutted path"
@@ -37,7 +37,15 @@ def entity cobbledRoad: portal {
   brief = "a cobbled road"
 }
 
-// docks
+def entity guard: lib.npc {
+  brief =  "a guard"
+  description = """
+    The guard wears a chainmail hauberk and, over that, a tabard displaying the
+    coat-of-arms of Arwyck: a golden sheave of wheat on a dark green field.
+    """
+}
+
+//# docks
 
 def entity dockLocation: location {
   domain = 'outdoor
@@ -84,7 +92,7 @@ def location eastDock: dockLocation {
   exits = [ruttedPath -> 'south to baysidePlaza4]
 }
 
-// bayside plaza
+//# bayside plaza
 
 def entity plazaPortal: lib.continuingPortal {
   brief = "the plaza"
@@ -141,7 +149,7 @@ def location baysidePlaza3: plazaLocation {
     you may buy.
 
     Trainers are represented on the map by an upward-pointing arrow icon. Use
-    the `guild` command near a trainer to learn more.
+    the `learn` command near a trainer to learn more.
     """
 }
 
@@ -334,7 +342,7 @@ def location baysidePlaza5: plazaLocation {
   exits = [plazaPortal -> 'west to baysidePlaza4]
 }
 
-// harbor road
+//# harbor road
 
 def entity harborRoad: location {
   name = "Harbor Road"
@@ -354,7 +362,7 @@ def location harborRoad2: harborRoad {
   exits = [dirtRoad -> 'north to harborRoad1, dirtRoad -> 'south to squareN]
 }
 
-// miner's guild
+//# miner's guild
 
 def entity miningTrainer: lib.miningTrainer {
   brief = "Marigold"
@@ -416,7 +424,7 @@ def location minersGuildhall: location {
   exits = [lib.exitDoorway -> 'west to harborRoad1]
 }
 
-// village square
+//## village square
 
 def entity square: location {
   name = "Village Square"
@@ -572,7 +580,7 @@ def location squareSe: square {
   exits = [squarePortal -> 'west to squareS, squarePortal -> 'north to squareE]
 }
 
-// sword shop
+//# sword shop
 
 def entity swordVendor: lib.npc {
   brief = "Bryndan O'Donnel"
@@ -621,7 +629,7 @@ def location swordShop: location {
   exits = [lib.exitDoorway -> 'east to squareNw]
 }
 
-// axe shop
+//# axe shop
 
 def entity axeVendor: lib.npc {
   brief = "Durg Bighands"
@@ -649,7 +657,7 @@ def location axeShop: location {
   exits = [lib.exitDoorway -> 'south to squareNe]
 }
 
-// inn
+//# inn
 
 def entity innRoom: location {
   domain =  'indoor
@@ -766,7 +774,7 @@ def location largeGuestRoom: innRoom {
   exits = [lib.doorway -> 'west to innUpstairsHall]
 }
 
-// armory
+//# armory
 
 def entity warriorTrainer: lib.npc {  // FIXME: lib.warriorTrainer
   brief = "Andalya"
@@ -802,7 +810,7 @@ def location armoryTrainingHall: location {
   exits = [lib.exitDoorway -> 'south to squareNw]
 }
 
-// explorers' lodge
+//# explorers' lodge
 
 def entity lodgeRoom: location {
   domain = 'indoor
@@ -917,7 +925,7 @@ def location lodgeWorkshop: lodgeRoom {
            lib.exitDoorway -> 'south to wallStreet1]
 }
 
-// mages' tower
+//# mages' tower
 
 def entity towerRoom: location {
   domain = 'indoor
@@ -1000,7 +1008,7 @@ def location towerStudy: towerRoom {
   exits = [lib.stairway -> 'down to towerLibrary]
 }
 
-// east road
+//# east road
 
 def entity eastRoad: location {
   name = "East Road"
@@ -1031,7 +1039,7 @@ def quest iNeedBread {
   }
 }
 
-// FIXME: This quest is kind of a mess.
+//# FIXME: This quest is kind of a mess.
 def entity urchin: lib.npc {
   brief = "a street urchin"
   pose = "sits alongside the road."
@@ -1100,7 +1108,7 @@ def location eastRoad3: eastRoad {
            lib.entryDoorway -> 'north to templeSanctuary]
 }
 
-// mace shop
+//# mace shop
 
 def entity maceVendor: lib.npc {
   brief = "Maury na Munigan"
@@ -1131,7 +1139,7 @@ def location maceShop: location {
   exits = [lib.exitDoorway -> 'north to eastRoad1]
 }
 
-// temple
+//# temple
 
 def entity oldPriest: lib.npc {
   brief = "an aged priest"
@@ -1192,10 +1200,9 @@ def location templeSanctuary: location {
   exits = [lib.exitDoorway -> 'south to eastRoad3]
 }
 
-// east gate
+//# east gate
 
-def entity eastGuard: lib.npc {
-  brief = "the gate guard"
+def entity eastGuard: guard {
   pose = "leans against the wall of the gatehouse."
 
   when talk(actor: .quest(atTheGates, active), self, topic) {
@@ -1227,7 +1234,7 @@ def location eastGate: location {
   exits = [dirtRoad -> 'west to eastRoad3, dirtRoad -> 'east to mistmarsh.muddyPathA12]
 }
 
-// muggers' alley
+//# muggers' alley
 
 def entity muggersAlley: location {
   name = "Muggers' Alley"
@@ -1254,7 +1261,7 @@ def location muggersAlley3: muggersAlley {
            lib.entryDoorway -> 'west to crowBar]
 }
 
-// potion shop
+//# potion shop
 
 def entity potionVendor: lib.npc {
   brief = "Gemma"
@@ -1388,7 +1395,7 @@ def location alchemyWorkshop: location {
   exits = [lib.doorway -> 'west to potionShop]
 }
 
-// dagger shop
+//# dagger shop
 
 def entity daggerVendor: lib.npc {
   brief = "Jimmy the Hare"
@@ -1433,7 +1440,7 @@ def location daggerShop: location {
   exits = [lib.exitDoorway -> 'east to muggersAlley2]
 }
 
-// crow bar
+//# crow bar
 
 def entity barkeep: lib.npc {
   brief = "a barkeep"
@@ -1488,7 +1495,7 @@ def location crowBar: location {
   }
 }
 
-// warehouse
+//# warehouse
 
 def entity warehouse: location {
   domain = 'indoor
@@ -1584,7 +1591,7 @@ def location warehouseMeetingRoom: warehouse {
   }
 }
 
-// south road
+//# south road
 
 def entity southRoad: location {
   name = "South Road"
@@ -1605,7 +1612,7 @@ def location southRoad2: southRoad {
            lib.entryDoorway -> 'east to spearShop]
 }
 
-// looted shop
+//# looted shop
 
 def entity distraughtShopkeep: lib.npc {
   brief = "Mirabel"
@@ -1951,7 +1958,7 @@ extend distraughtShopkeep {
   }
 }
 
-// spear shop
+//# spear shop
 
 def entity spearVendor: lib.npc {
   brief = "Miglin"
@@ -1992,7 +1999,7 @@ def location spearShop: location {
   exits = [lib.exitDoorway -> 'west to southRoad2]
 }
 
-// wall street
+//# wall street
 
 def entity monkey: lib.npc {
   brief = "a costumed monkey"
@@ -2079,7 +2086,7 @@ def location wallStreet6: wallStreet {
        lib.entryDoorway -> 'east to craftersHall1nw]
 }
 
-// armor emporium
+//# armor emporium
 
 def entity armorEmporium: location {
   subregion = "Armor Emporium"
@@ -2214,12 +2221,11 @@ def location heavyArmorShop: armorEmporium {
     """
 }
 
-// FIXME: crafters' hall
+//# FIXME: crafters' hall
 
-// south gate
+//# south gate
 
-def entity southGuard: lib.npc {
-  brief = "the gate guard"
+def entity southGuard: guard {
   pose = "stands at attention, spear in hand."
 
   when talk(actor: .quest(atTheGates, active), self, topic) {
@@ -2247,7 +2253,7 @@ def location southGate: location {
   exits = [cobbledRoad -> 'north to wallStreet3]
 }
 
-// locksmith shop
+//# locksmith shop
 
 def entity pewterKey: item {
   brief = "a tiny pewter key"
@@ -2326,7 +2332,7 @@ def location locksmithShop: location {
   exits = [lib.exitDoorway -> 'north to wallStreet4]
 }
 
-// forest road
+//# forest road
 
 def entity forestRoad: location {
   name = "Forest Road"
@@ -2356,7 +2362,7 @@ def location forestRoad3: forestRoad {
            narrowPath -> 'north to groveSw]
 }
 
-// shack
+//# shack
 
 def entity gangMember: creature {
   level = 1
@@ -2421,7 +2427,7 @@ def location shack: location {
   exits = [lib.exitDoorway -> 'north to forestRoad2]
 }
 
-// secluded grove
+//# secluded grove
 
 def entity grove: location {
   name = "Secluded Grove"
@@ -2487,7 +2493,7 @@ def location groveSe: grove {
   exits = [narrowPath -> 'north to groveNe, narrowPath -> 'west to groveSw]
 }
 
-// garden
+//# garden
 
 def entity botanyTrainer: lib.npc {
   brief = "Gariande"
@@ -2538,7 +2544,7 @@ def location tidyGarden: location {
   exits = [narrowPath -> 'south to groveNe]
 }
 
-// forest gate
+//# forest gate
 
 def quest findMySon {
   name = "Find My Son"
@@ -2634,8 +2640,7 @@ def entity rhody: lib.npc {
   }
 }
 
-def entity forestGuard: lib.npc {
-  brief = "the gate guard"
+def entity forestGuard: guard {
   pose = "keeps an eye on the road."
 
   when talk(actor: .quest(atTheGates, active), self, topic) {
