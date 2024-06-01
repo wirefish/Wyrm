@@ -8,1456 +8,1554 @@
 // Finally, the town has its own short quest arc involving a rash of thefts from
 // various shops.
 
-defregion {
-    name = "Arwyck"
-    description = |
-        This once-sleepy hamlet has recently become a hub of adventuring
-        activity.
+def region {
+  name = "Arwyck"
+  description = """
+    This once-sleepy hamlet has recently become a hub of adventuring activity.
+    """
 }
 
 // General prototypes.
 
-def ruttedPath: portal {
-    brief = "a rutted path"
+def entity ruttedPath: portal {
+  brief = "a rutted path"
 }
 
-def dirtRoad: portal {
-    brief = "a dirt road"
+def entity dirtRoad: portal {
+  brief = "a dirt road"
 }
 
-def narrowPath: portal {
-    brief = "a narrow path"
+def entity narrowPath: portal {
+  brief = "a narrow path"
 }
 
-def alley: portal {
-    brief = "a narrow alley"
+def entity alley: portal {
+  brief = "a narrow alley"
 }
 
-def cobbledRoad: portal {
-    brief = "a cobbled road"
+def entity cobbledRoad: portal {
+  brief = "a cobbled road"
 }
 
 // docks
 
-def dockLocation: location {
-    domain = 'outdoor
-    surface = 'wood
+def entity dockLocation: location {
+  domain = 'outdoor
+  surface = 'wood
 }
 
-def stevedore: lib.npc {
-    brief = "a surly stevedore"
-    pose = "stares out to sea."
-    description = "The man wears stained overalls and a sour frown."
+def entity stevedore: lib.npc {
+  brief = "a surly stevedore"
+  pose = "stares out to sea."
+  description = "The man wears stained overalls and a sour frown."
 
-    when talk(actor: .quest(isleOfDawn.documentDelivery, done), self, topic) {
-        tell(self, actor) |
-            Hey, thanks. I've been needin' those. Here's your coin! You'll be
-            glad of it if you'll be visitin' the shops here in Arwyck. It's no
-            bleedin' city, but you can find most of what you'll be needin' here
-            in town.
-        receiveItems(actor, [10 of lib.silverCoin], self)
-        completeQuest(actor, isleOfDawn.documentDelivery)
-    }
+  when talk(actor: .quest(isleOfDawn.documentDelivery, done), self, topic) {
+    tell(self, actor) """
+      Hey, thanks. I've been needin' those. Here's your coin! You'll be glad of
+      it if you'll be visitin' the shops here in Arwyck. It's no bleedin' city,
+      but you can find most of what you'll be needin' here in town.
+      """
+    receiveItems(actor, [10 @ lib.silverCoin], self)
+    completeQuest(actor, isleOfDawn.documentDelivery)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Ah, to be sailing the Emerald Sea. But here I am, stuck ashore,
-            loading and unloading gods-know-what for gods-know-whom. Well, it's
-            a living.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Ah, to be sailing the Emerald Sea. But here I am, stuck ashore, loading
+      and unloading gods-know-what for gods-know-whom. Well, it's a living.
+      """
+  }
 }
 
-deflocation westDock: dockLocation {
-    name = "West Dock"
-    description = "A short wooden dock juts out into the bay."
-    contents = [stevedore]
-    exits = [ruttedPath -> 'south to baysidePlaza2]
+def location westDock: dockLocation {
+  name = "West Dock"
+  description = "A short wooden dock juts out into the bay."
+  contents = [stevedore]
+  exits = [ruttedPath -> 'south to baysidePlaza2]
 
-    before enterLocation(actor: .quest(isleOfDawn.documentDelivery, active), location, entry) {
-        advanceQuest(actor, isleOfDawn.documentDelivery)
-    }
+  before enterLocation(actor: .quest(isleOfDawn.documentDelivery, active), location, entry) {
+    advanceQuest(actor, isleOfDawn.documentDelivery)
+  }
 }
 
-deflocation eastDock: dockLocation {
-    brief = "East Dock"
-    description = "A rickety wooden dock extends out into the bay."
-    exits = [ruttedPath -> 'south to baysidePlaza4]
+def location eastDock: dockLocation {
+  brief = "East Dock"
+  description = "A rickety wooden dock extends out into the bay."
+  exits = [ruttedPath -> 'south to baysidePlaza4]
 }
 
 // bayside plaza
 
-def plazaPortal: lib.continuingPortal {
-    brief = "the plaza"
+def entity plazaPortal: lib.continuingPortal {
+  brief = "the plaza"
 }
 
-def plazaLocation: location {
-    name = "Bayside Plaza"
-    description = "A cobbled stone plaza runs along the shore of the bay."
-    domain = 'outdoor
-    surface = 'stone
+def entity plazaLocation: location {
+  name = "Bayside Plaza"
+  description = "A cobbled stone plaza runs along the shore of the bay."
+  domain = 'outdoor
+  surface = 'stone
 }
 
-def beggar: lib.npc {
-    brief = "an old beggar"
-    pose = "sits nearby."
-    description = |
-        The beggar looks like he's been dragged through a mile of mud. He smells
-        worse than he looks.
+def entity beggar: lib.npc {
+  brief = "an old beggar"
+  pose = "sits nearby."
+  description = """
+    The beggar looks like he's been dragged through a mile of mud. He smells
+    worse than he looks.
+    """
 
-    when talk(actor, self, topic) {
-        show(actor) |
-            The beggar looks up at you with milky white eyes and doesn't say a
-            word. Despite his apparent blindness, he perfectly tracks your every
-            move.
-    }
+  when talk(actor, self, topic) {
+    show(actor) """
+      The beggar looks up at you with milky white eyes and doesn't say a word.
+      Despite his apparent blindness, he perfectly tracks your every move.
+      """
+  }
 }
 
-deflocation baysidePlaza1: plazaLocation {
-    contents = [beggar]
-    exits = [plazaPortal -> 'east to baysidePlaza2]
+def location baysidePlaza1: plazaLocation {
+  contents = [beggar]
+  exits = [plazaPortal -> 'east to baysidePlaza2]
 }
 
-deflocation baysidePlaza2: plazaLocation {
-    exits = [plazaPortal -> 'west to baysidePlaza1,
-             plazaPortal -> 'east to baysidePlaza3,
-             ruttedPath -> 'north to westDock]
+def location baysidePlaza2: plazaLocation {
+  exits = [plazaPortal -> 'west to baysidePlaza1, plazaPortal -> 'east to baysidePlaza3,
+           ruttedPath -> 'north to westDock]
 }
 
-deflocation baysidePlaza3: plazaLocation {
-    exits = [plazaPortal -> 'west to baysidePlaza2, plazaPortal -> 'east to baysidePlaza4,
-             dirtRoad -> 'south to harborRoad1]
+def location baysidePlaza3: plazaLocation {
+  exits = [plazaPortal -> 'west to baysidePlaza2, plazaPortal -> 'east to baysidePlaza4,
+           dirtRoad -> 'south to harborRoad1]
 
-    tutorial = |
-        Welcome to Arwyck! In this lively town you will find numerous
-        vendors and trainers.
+  tutorial = """
+    Welcome to Arwyck! In this lively town you will find numerous vendors and
+    trainers.
 
-        Vendors can sell you many items, including armor and weapons, which will
-        prove invaluable in your adventures. They are represented on the map by
-        an icon that looks like a stack of coins. Use the `buy` command near a
-        vendor to see what's for sale.
+    Vendors can sell you many items, including armor and weapons, which will
+    prove invaluable in your adventures. They are represented on the map by an
+    icon that looks like a stack of coins. Use the `buy` command near a vendor
+    to see what's for sale.
 
-        Trainers are representatives of `help:guilds`. By joining a guild you
-        gain access to certain `help:skills`, including those required to use
-        any weapons you may buy.
+    Trainers are representatives of `help:guilds`. By joining a guild you gain
+    access to certain `help:skills`, including those required to use any weapons
+    you may buy.
 
-        Trainers are represented on the map by an upward-pointing arrow icon.
-        Use the `guild` command near a trainer to learn more."
+    Trainers are represented on the map by an upward-pointing arrow icon. Use
+    the `guild` command near a trainer to learn more.
+    """
 }
 
-defquest danceMonkey {
-    name = "Dance Monkey"
-    summary = |
-        Find the monkey and dance for it, dance for it, dance for it, oh oh oh.
-    level = 1
+def quest danceMonkey {
+  name = "Dance Monkey"
+  summary = """
+    Find the monkey and dance for it, dance for it, dance for it, oh oh oh.
+    """
+  level = 1
 
-    phase active {
-        summary = |
-            Find the monkey in Arwyck and dance for it, dance for it, dance for
-            it, oh oh oh.
-    }
+  phase active {
+    summary = """
+      Find the monkey in Arwyck and dance for it, dance for it, dance for it, oh
+      oh oh.
+      """
+  }
 
-    phase done {
-        summary = |
-            Return to the young laborer and recount your dancing exploits.
-    }
+  phase done {
+    summary = """
+      Return to the young laborer and recount your dancing exploits.
+      """
+  }
 }
 
-def youngLaborer: lib.npc {
-    brief = "a young laborer"
-    pose = "scrubs the cobbles nearby."
-    description = |
-        The laborer is a boy of perhaps fourteen summers. He is on his knees,
-        scrubbing the cobbles with an old wire brush.
-    offersQuests = [danceMonkey]
+def entity youngLaborer: lib.npc {
+  brief = "a young laborer"
+  pose = "scrubs the cobbles nearby."
+  description = """
+    The laborer is a boy of perhaps fourteen summers. He is on his knees,
+    scrubbing the cobbles with an old wire brush.
+    """
+  offersQuests = [danceMonkey]
 
-    when talk(actor: .quest(danceMonkey, available), self, topic) {
-        show(actor) "The boy looks up from his work."
-        tell(self, actor) |
-            Oh my, I like your style! If you've got a moment, there's something
-            that's been bothering me lately. I could really use your help.
-        offerQuest(self, danceMonkey, actor)
-    }
+  when talk(actor: .quest(danceMonkey, available), self, topic) {
+    show(actor) "The boy looks up from his work."
+    tell(self, actor) """
+      Oh my, I like your style! If you've got a moment, there's something that's
+      been bothering me lately. I could really use your help.
+      """
+    offerQuest(self, danceMonkey, actor)
+  }
 
-    after acceptQuest(actor, quest: danceMonkey, self) {
-        tell(self, actor) |
-            There's this dancing monkey, you see. It wanders around the south
-            end of town. It spends its days dancing for people, but it seems so
-            sad. It makes me wanna cry.
+  after acceptQuest(actor, quest: danceMonkey, self) {
+    tell(self, actor) """
+      There's this dancing monkey, you see. It wanders around the south end of
+      town. It spends its days dancing for people, but it seems so sad. It makes
+      me wanna cry.
 
-            I think someone should dance for the monkey for once. My boss would
-            break my arm if I left work, but...could you do it for me?
+      I think someone should dance for the monkey for once. My boss would break
+      my arm if I left work, but...could you do it for me?
+      """
 
-        showTutorial(actor, 'emote) |
-            You can perform simple gestures using the `emote` command. For
-            example, you could type `emote dances for the monkey.` Type `help
-            emote` for more information.
-    }
+    showTutorial(actor, 'emote) """
+      You can perform simple gestures using the `emote` command. For example,
+      you could type `emote dances for the monkey.` Type `help emote` for more
+      information.
+      """
+  }
 
-    when talk(actor: .quest(danceMonkey, active), self, topic) {
-        tell(self, actor) |
-            Did you find the monkey? When you're done I won't make you do it all
-            again, I promise.
-    }
+  when talk(actor: .quest(danceMonkey, active), self, topic) {
+    tell(self, actor) """
+      Did you find the monkey? When you're done I won't make you do it all
+      again, I promise.
+      """
+  }
 
-    when talk(actor: .quest(danceMonkey, done), self, topic) {
-        tell(self, actor) |
-            Look me in the eyes... you did it, didn't you? Ha ha I never thought
-            you would, but thank you anyway!
-        completeQuest(actor, danceMonkey)
-    }
+  when talk(actor: .quest(danceMonkey, done), self, topic) {
+    tell(self, actor) """
+      Look me in the eyes... you did it, didn't you? Ha ha I never thought you
+      would, but thank you anyway!
+      """
+    completeQuest(actor, danceMonkey)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor, "Just look at these cobbles. Do you see the way they shine?")
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor, "Just look at these cobbles. Do you see the way they shine?")
+  }
 }
 
-deflocation baysidePlaza4: plazaLocation {
-    contents = [youngLaborer]
-    exits = [plazaPortal -> 'west to baysidePlaza3, plazaPortal -> 'east to baysidePlaza5,
-             ruttedPath -> 'north to eastDock]
+def location baysidePlaza4: plazaLocation {
+  contents = [youngLaborer]
+  exits = [plazaPortal -> 'west to baysidePlaza3, plazaPortal -> 'east to baysidePlaza5,
+           ruttedPath -> 'north to eastDock]
 }
 
-defquest ticketPlease {
-    name = "Ticket, Please"
-    summary = "Grab a ticket from the dispenser and present it to the attendant."
-    level = 1
+def quest ticketPlease {
+  name = "Ticket, Please"
+  summary = "Grab a ticket from the dispenser and present it to the attendant."
+  level = 1
 
-    phase active {
-        summary = "Grab a ticket from the dispenser."
-    }
+  phase active {
+    summary = "Grab a ticket from the dispenser."
+  }
 
-    phase done {
-        summary = "Present the ticket to the attendant."
-    }
+  phase done {
+    summary = "Present the ticket to the attendant."
+  }
 }
 
-def yellowTicket: item {
-    brief = "a yellow ticket"
-    description = |
-        Tiny letters imprinted on the ticket read, "May be exchanged for 50
-        silver coins. The issuer is not liable for any injury, death, or financial
-        loss caused by goods or services purchased with said coins, or by the
-        decision not to spend them."
-    quest = ticketPlease
+def entity yellowTicket: item {
+  brief = "a yellow ticket"
+  description = """
+    Tiny letters imprinted on the ticket read, \"May be exchanged for 50
+    silver coins. The issuer is not liable for any injury, death, or financial
+    loss caused by goods or services purchased with said coins, or by the
+    decision not to spend them.\"
+    """
+  quest = ticketPlease
 }
 
-def ticketDispenser: fixture {
-    brief = "a ticket dispenser"
-    icon = 'flatChest
-    description = |
-        A plaque atop the device reads:
+def entity ticketDispenser: fixture {
+  brief = "a ticket dispenser"
+  icon = 'flatChest
+  description = """
+    A plaque atop the device reads:
 
-        > This ticket dispenser is provided as a free service of the Explorer's Guild.
+    > This ticket dispenser is provided as a free service of the Explorer's
+      Guild.
+    """
 
-    // FIXME: receiveMessage = "%tB rattles briefly then dispenses %ab."
+  // FIXME: receiveMessage = "%tB rattles briefly then dispenses %ab."
 
-    when use(actor: .quest(ticketPlease, active), self, target) {
-        receiveItems(actor, [yellowTicket], self)
-        showTutorial(actor, 'giveItems) |
-            You can use the `give` command to give an item to a non-player
-            character. To complete this quest, give the ticket to the attendant.
-        advanceQuest(actor, ticketPlease)
-    }
+  when use(actor: .quest(ticketPlease, active), self, target) {
+    receiveItems(actor, [yellowTicket], self)
+    showTutorial(actor, 'giveItems) """
+      You can use the `give` command to give an item to a non-player character.
+      To complete this quest, give the ticket to the attendant.
+      """
+    advanceQuest(actor, ticketPlease)
+  }
 
-    when use(actor, self, target) {
-        show(actor) "Try as you might, you cannot activate the ticket dispenser."
-    }
+  when use(actor, self, target) {
+    show(actor) "Try as you might, you cannot activate the ticket dispenser."
+  }
 }
 
-def attendant: lib.npc {
-    brief = "an attendant"
-    description = |
-        The attendant is extremely tall and thin. He wears a long, striped coat
-        and a comically tall tophat.
-    offersQuests = [ticketPlease]
+def entity attendant: lib.npc {
+  brief = "an attendant"
+  description = """
+    The attendant is extremely tall and thin. He wears a long, striped coat and
+    a comically tall tophat.
+    """
+  offersQuests = [ticketPlease]
 
-    when talk(actor: .quest(ticketPlease, available), self, topic) {
-        tell(self, actor) |
-            You look like one of those reborn heroes who keep popping up. I bet
-            you need some coin. I'd be happy to be of service!
-        offerQuest(self, ticketPlease, actor)
-    }
+  when talk(actor: .quest(ticketPlease, available), self, topic) {
+    tell(self, actor) """
+      You look like one of those reborn heroes who keep popping up. I bet you
+      need some coin. I'd be happy to be of service!
+      """
+    offerQuest(self, ticketPlease, actor)
+  }
 
-    after acceptQuest(actor, quest: ticketPlease, self) {
-        tell(self, actor) |
-            See that ticket dispenser over there? If you `use` it, it will give
-            you a ticket. If you then give that ticket me, I will exchange it
-            for 50 silver coins! It seems too good to be true, but I assure you
-            the offer is real. Why not give it a try?
+  after acceptQuest(actor, quest: ticketPlease, self) {
+    tell(self, actor) """
+      See that ticket dispenser over there? If you `use` it, it will give you a
+      ticket. If you then give that ticket me, I will exchange it for 50 silver
+      coins! It seems too good to be true, but I assure you the offer is real.
+      Why not give it a try?
+      """
 
-        showTutorial(actor, 'use) |
-            The `use` command lets you use an item you are carrying or an item
-            in your surroundings. It is a general-purpose way to employ an item
-            for some effect.
-    }
+    showTutorial(actor, 'use) """
+      The `use` command lets you use an item you are carrying or an item in your
+      surroundings. It is a general-purpose way to employ an item for some
+      effect.
+      """
+  }
 
-    when talk(actor: .quest(ticketPlease, active), self, topic) {
-        tell(self, actor) |
-            Go ahead and `use` the dispenser. It won't bite.
-    }
+  when talk(actor: .quest(ticketPlease, active), self, topic) {
+    tell(self, actor) """
+      Go ahead and `use` the dispenser. It won't bite.
+      """
+  }
 
-    allow giveItem(actor, item: yellowTicket, self) {
-        return true
-    }
+  allow giveItem(actor, item: yellowTicket, self) {
+    return true
+  }
 
-    after giveItem(actor: .quest(ticketPlease, done), item: yellowTicket, self) {
-        tell(self, actor) |
-            Another ticket redeemed! My bonus this month is going to be off the
-            charts! Here's your silver. Don't spend it all in one place!
-        receiveItems(actor, [50 of lib.silverCoin], self)
-        completeQuest(actor, ticketPlease, 'done)
-    }
+  after giveItem(actor: .quest(ticketPlease, done), item: yellowTicket, self) {
+    tell(self, actor) """
+      Another ticket redeemed! My bonus this month is going to be off the
+      charts! Here's your silver. Don't spend it all in one place!
+      """
+    receiveItems(actor, [50 @ lib.silverCoin], self)
+    completeQuest(actor, ticketPlease, 'done)
+  }
 }
 
-deflocation baysidePlaza5: plazaLocation {
-    contents = [attendant, ticketDispenser]
-    exits = [plazaPortal -> 'west to baysidePlaza4]
+def location baysidePlaza5: plazaLocation {
+  contents = [attendant, ticketDispenser]
+  exits = [plazaPortal -> 'west to baysidePlaza4]
 }
 
 // harbor road
 
-def harborRoad: location {
-    name = "Harbor Road"
-    description = |
-        A rutted dirt road runs between the harbor and the village proper.
-    surface = 'dirt
-    domain = 'outdoor
+def entity harborRoad: location {
+  name = "Harbor Road"
+  description = """
+    A rutted dirt road runs between the harbor and the village proper.
+    """
+  surface = 'dirt
+  domain = 'outdoor
 }
 
-deflocation harborRoad1: harborRoad {
-    exits = [dirtRoad -> 'north to baysidePlaza3, dirtRoad -> 'south to harborRoad2,
-             lib.entryDoorway -> 'east to minersGuildhall]
+def location harborRoad1: harborRoad {
+  exits = [dirtRoad -> 'north to baysidePlaza3, dirtRoad -> 'south to harborRoad2,
+           lib.entryDoorway -> 'east to minersGuildhall]
 }
 
-deflocation harborRoad2: harborRoad {
-    exits = [dirtRoad -> 'north to harborRoad1, dirtRoad -> 'south to squareN]
+def location harborRoad2: harborRoad {
+  exits = [dirtRoad -> 'north to harborRoad1, dirtRoad -> 'south to squareN]
 }
 
 // miner's guild
 
-def miningTrainer: lib.miningTrainer {
-    brief = "Marigold"
-    pose = "is nearby, poking through a stack of ore."
-    description = |
-        Marigold is a cheerful, rosy-cheeked dwarven woman who looks strong
-        enough to crush rocks. Her leather garments are streaked with soot.
+def entity miningTrainer: lib.miningTrainer {
+  brief = "Marigold"
+  pose = "is nearby, poking through a stack of ore."
+  description = """
+    Marigold is a cheerful, rosy-cheeked dwarven woman who looks strong enough
+    to crush rocks. Her leather garments are streaked with soot.
+    """
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Welcome to Arwyck! I am the local representative of the Underhill
-            Consortium, a guild for those interested in mining. This workshop
-            serves as a gathering place for our members.
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Welcome to Arwyck! I am the local representative of the Underhill
+      Consortium, a guild for those interested in mining. This workshop serves
+      as a gathering place for our members.
 
-            As a miner you can extract ore, raw gemstones, and other valuable
-            resources from deposits scattered around the world. If this sounds
-            useful, I'd love to welcome you to our guild! Type `guild info` for
-            more information or `guild join` to sign up.
+      As a miner you can extract ore, raw gemstones, and other valuable
+      resources from deposits scattered around the world. If this sounds useful,
+      I'd love to welcome you to our guild! Type `guild info` for more
+      information or `guild join` to sign up.
 
-            If you decide mining's for you, Hermetch over there sells the tools
-            you'll need to begin your mining career.
-    }
+      If you decide mining's for you, Hermetch over there sells the tools you'll
+      need to begin your mining career.
+      """
+  }
 }
 
-def miningVendor: lib.npc {  // FIXME: lib.vendor
-    brief = "Hermetch the Bald"
-    pose = "stands in front of the tool rack, whistling idly."
-    description = |
-        Hermetch lives up to his apellation; his head shines almost as brightly
-        as the polished blades of the pickaxes on the rack behind him.
-    sells = [lib.copperPickaxe, lib.bronzePickaxe]
+def entity miningVendor: lib.npc {  // FIXME: lib.vendor
+  brief = "Hermetch the Bald"
+  pose = "stands in front of the tool rack, whistling idly."
+  description = """
+    Hermetch lives up to his apellation; his head shines almost as brightly as
+    the polished blades of the pickaxes on the rack behind him.
+    """
+  sells = [lib.copperPickaxe, lib.bronzePickaxe]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            I sell the finest tools in the land! The absolute finest!
-        await sleep(1)
-        show(actor) "Marigold rolls her eyes."
-        await sleep(1)
-        tell(self, actor) |
-            Pay her no mind... Type `buy` to see what's available.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      I sell the finest tools in the land! The absolute finest!
+      """
+    await sleep(1)
+    show(actor) "Marigold rolls her eyes."
+    await sleep(1)
+    tell(self, actor) """
+      Pay her no mind... Type `buy` to see what's available.
+      """
+  }
 }
 
-deflocation minersGuildhall: location {
-    name = "Miners' Guildhall"
-    description = |
-        This cavernous warehouse contains numerous carts filled with different
-        types of ore. A rack on the south wall holds a variety of pickaxes,
-        shovels, and other tools useful for mining.
-    domain = 'indoor
-    surface = 'wood
-    contents = [miningTrainer, miningVendor]
-    exits = [lib.exitDoorway -> 'west to harborRoad1]
+def location minersGuildhall: location {
+  name = "Miners' Guildhall"
+  description = """
+    This cavernous warehouse contains numerous carts filled with different types
+    of ore. A rack on the south wall holds a variety of pickaxes, shovels, and
+    other tools useful for mining.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [miningTrainer, miningVendor]
+  exits = [lib.exitDoorway -> 'west to harborRoad1]
 }
 
 // village square
 
-def square: location {
-    name = "Village Square"
-    description = |
-        This cobbled plaza is the heart of the village. Various shops line its
-        perimeter.
-    domain = 'outdoor
-    surface = 'stone
+def entity square: location {
+  name = "Village Square"
+  description = """
+    This cobbled plaza is the heart of the village. Various shops line its
+    perimeter.
+    """
+  domain = 'outdoor
+  surface = 'stone
 }
 
-def squarePortal: lib.continuingPortal {
+def entity squarePortal: lib.continuingPortal {
   brief = "the square"
 }
 
-def shaggyDog: lib.npc {
-    brief = "a shaggy white dog"
-    description = |
-        The dog is very curious and closely watches anyone who passes by. Its
-        fur is matted and dirty but it seems happy.
+def entity shaggyDog: lib.npc {
+  brief = "a shaggy white dog"
+  description = """
+    The dog is very curious and closely watches anyone who passes by. Its fur is
+    matted and dirty but it seems happy.
+    """
 
-    lyingDown = "lies nearby, curiously eyeing passers-by."
-    standing = "stands nearby and looks around."
+  lyingDown = "lies nearby, curiously eyeing passers-by."
+  standing = "stands nearby and looks around."
 
-    when startWorld() {
-        while true {
-            showNear(self, "The shaggy dog lays down in a comfortable spot.")
-            self.pose = self.lyingDown
-            await sleep(20)
+  when startWorld() {
+    while true {
+      showNear(self, "The shaggy dog lays down in a comfortable spot.")
+      self.pose = self.lyingDown
+      await sleep(20)
 
-            showNear(self, "The shaggy dog stands up and stretches.")
-            self.pose = self.standing
-            await sleep(5)
+      showNear(self, "The shaggy dog stands up and stretches.")
+      self.pose = self.standing
+      await sleep(5)
 
-            var exits = [exit for exit in self.location.exits if isa(exit, squarePortal)]
-            travel(self, randomElement(exits))
-            await sleep(5)
-        }
+      var exits = [exit for exit in self.location.exits if isa(exit, squarePortal)]
+      travel(self, randomElement(exits))
+      await sleep(5)
     }
+  }
 
-    when talk(actor, self, topic) {
-        show(actor) "The dog's ears perk up and it tilts its head to the side."
-    }
+  when talk(actor, self, topic) {
+    show(actor) "The dog's ears perk up and it tilts its head to the side."
+  }
 }
 
-deflocation squareNw: square {
-    contents = [shaggyDog]
-    exits = [squarePortal -> 'east to squareN, squarePortal -> 'south to squareW,
-             lib.entryDoorway -> 'north to armoryTrainingHall,
-             lib.entryDoorway -> 'west to swordShop]
+def location squareNw: square {
+  contents = [shaggyDog]
+  exits = [squarePortal -> 'east to squareN, squarePortal -> 'south to squareW,
+           lib.entryDoorway -> 'north to armoryTrainingHall,
+           lib.entryDoorway -> 'west to swordShop]
 }
 
-deflocation squareN: square {
-    exits = [squarePortal -> 'west to squareNw, squarePortal -> 'east to squareNe,
-             squarePortal -> 'south to squareC, dirtRoad -> 'north to harborRoad2]
+def location squareN: square {
+  exits = [squarePortal -> 'west to squareNw, squarePortal -> 'east to squareNe,
+           squarePortal -> 'south to squareC, dirtRoad -> 'north to harborRoad2]
 }
 
-deflocation squareNe: square {
-    exits = [squarePortal -> 'west to squareN, squarePortal -> 'south to squareE,
-             lib.entryDoorway -> 'east to innCommonRoom,
-             lib.exitDoorway -> 'north to axeShop]
+def location squareNe: square {
+  exits = [squarePortal -> 'west to squareN, squarePortal -> 'south to squareE,
+           lib.entryDoorway -> 'east to innCommonRoom,
+           lib.exitDoorway -> 'north to axeShop]
 }
 
-deflocation squareW: square {
-    exits = [squarePortal -> 'north to squareNw, squarePortal -> 'east to squareC,
-             squarePortal -> 'south to squareSw,
-             lib.entryDoorway -> 'west to towerLibrary]
+def location squareW: square {
+  exits = [squarePortal -> 'north to squareNw, squarePortal -> 'east to squareC,
+           squarePortal -> 'south to squareSw,
+           lib.entryDoorway -> 'west to towerLibrary]
 }
 
-def squareSign: fixture {
-    brief = "a directional sign"
-    pose = "stands nearby."
-    description = |
-        Wooden arrows affixed atop the signpost read as follows:
+def entity squareSign: fixture {
+  brief = "a directional sign"
+  pose = "stands nearby."
+  description = """
+    Wooden arrows affixed atop the signpost read as follows:
 
-        | North: Docks
-        | West: Silverwood
-        | South: Wall Street
-        | East: Mistmarsh
+    | North: Docks
+    | West: Silverwood
+    | South: Wall Street
+    | East: Mistmarsh
+    """
 }
 
-def spiritstone: lib.spiritstone {
+def entity spiritstone: lib.spiritstone {
   pose = "stands on a small pedestal in the center of the square."
 }
 
-deflocation squareC: square {
-    contents = [spiritstone, squareSign]
-    exits = [squarePortal -> 'west to squareW, squarePortal -> 'east to squareE,
-             squarePortal -> 'north to squareN, squarePortal -> 'south to squareS]
+def location squareC: square {
+  contents = [spiritstone, squareSign]
+  exits = [squarePortal -> 'west to squareW, squarePortal -> 'east to squareE,
+           squarePortal -> 'north to squareN, squarePortal -> 'south to squareS]
 
-    tutorial = |
-        You can `use` a spiritstone to bind your life essence to its location.
-        If you later die, your spirit will return here and your body will be
-        resurrected by the stone.
+  tutorial = """
+    You can `use` a spiritstone to bind your life essence to its location. If
+    you later die, your spirit will return here and your body will be
+    resurrected by the stone.
+    """
 }
 
-deflocation squareE: square {
-    exits = [squarePortal -> 'west to squareC, squarePortal -> 'north to squareNe,
-             squarePortal -> 'south to squareSe, dirtRoad -> 'east to eastRoad1]
+def location squareE: square {
+  exits = [squarePortal -> 'west to squareC, squarePortal -> 'north to squareNe,
+           squarePortal -> 'south to squareSe, dirtRoad -> 'east to eastRoad1]
 }
 
-deflocation squareSw: square {
-    exits = [squarePortal -> 'north to squareW, squarePortal -> 'east to squareS,
-             dirtRoad -> 'west to forestRoad1, lib.entryDoorway -> 'south to lodgeFoyer]
+def location squareSw: square {
+  exits = [squarePortal -> 'north to squareW, squarePortal -> 'east to squareS,
+           dirtRoad -> 'west to forestRoad1, lib.entryDoorway -> 'south to lodgeFoyer]
 }
 
-deflocation squareS: square {
-    exits = [squarePortal -> 'west to squareSw, squarePortal -> 'east to squareSe,
-             squarePortal -> 'north to squareC, dirtRoad -> 'south to southRoad1]
+def location squareS: square {
+  exits = [squarePortal -> 'west to squareSw, squarePortal -> 'east to squareSe,
+           squarePortal -> 'north to squareC, dirtRoad -> 'south to southRoad1]
 }
 
-def crone: lib.npc {
-    brief = "an old crone"
-    pose = "stands off to the side, watching people pass by."
-    description = |
-        The crone wears a faded gray cloak. Her wavy white hair spills from
-        beneath her hood. Her eyes are bright, and she watches any passersby
-        with great interest.
+def entity crone: lib.npc {
+  brief = "an old crone"
+  pose = "stands off to the side, watching people pass by."
+  description = """
+    The crone wears a faded gray cloak. Her wavy white hair spills from beneath
+    her hood. Her eyes are bright, and she watches any passersby with great
+    interest.
+    """
 
-    after enterLocation(actor: avatar, location, entry) {
-        show(actor) "The crone stares at you for a moment, then looks away."
-    }
+  after enterLocation(actor: avatar, location, entry) {
+    show(actor) "The crone stares at you for a moment, then looks away."
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Greetings, stranger. Your new body may be young, but I can sense the
-            age of your spirit. This is not your first time around the block, so
-            to speak. In a past life you were a great hero, but perhaps you have
-            forgotten your deeds. A pity.
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Greetings, stranger. Your new body may be young, but I can sense the
+      age of your spirit. This is not your first time around the block, so
+      to speak. In a past life you were a great hero, but perhaps you have
+      forgotten your deeds. A pity.
 
-            Know this: you are here for a reason. This world needs you; I feel
-            it in my bones, I hear it on the wind...but I know not why. What
-            threat could be so grave that, in order to overcome it, we must tear
-            history's heroes away from their peaceful slumber in the Dreamlands?
+      Know this: you are here for a reason. This world needs you; I feel
+      it in my bones, I hear it on the wind...but I know not why. What
+      threat could be so grave that, in order to overcome it, we must tear
+      history's heroes away from their peaceful slumber in the Dreamlands?
 
-            Of course that raises another question: who or what is doing the
-            tearing?
+      Of course that raises another question: who or what is doing the
+      tearing?
 
-            In the village of my birth there is an old curse: "May you live in
-            interesting times." Perhaps I will be lucky and my days will end
-            before things become too interesting. For you, though, I foresee no
-            such luck.
-    }
+      In the village of my birth there is an old curse: \"May you live in
+      interesting times.\" Perhaps I will be lucky and my days will end
+      before things become too interesting. For you, though, I foresee no
+      such luck.
+      """
+  }
 }
 
-deflocation squareSe: square {
-    contents = [crone]
-    exits = [squarePortal -> 'west to squareS, squarePortal -> 'north to squareE]
+def location squareSe: square {
+  contents = [crone]
+  exits = [squarePortal -> 'west to squareS, squarePortal -> 'north to squareE]
 }
 
 // sword shop
 
-def swordVendor: lib.npc {
-    brief = "Bryndan O'Donnel"
-    pose = "cleans a longsword with an oiled rag."
-    description = |
-        Bryndan is a lanky man with freckled skin and gray eyes. His auburn hair
-        hangs down to his shoulders.
-    sells = []  // FIXME: [copperSword, bronzeSword, copperGreatsword, bronzeGreatsword]
+def entity swordVendor: lib.npc {
+  brief = "Bryndan O'Donnel"
+  pose = "cleans a longsword with an oiled rag."
+  description = """
+    Bryndan is a lanky man with freckled skin and gray eyes. His auburn hair
+    hangs down to his shoulders.
+    """
+  sells = []  // FIXME: [copperSword, bronzeSword, copperGreatsword, bronzeGreatsword]
 
-    when talk(actor: .quest(talkingShop, active), self, topic) {
-        tell(self, actor) |
-            Ah, yes, I heard about Mirabel. Those bastards stole a few blades
-            from me, perhaps a week past.
+  when talk(actor: .quest(talkingShop, active), self, topic) {
+    tell(self, actor) """
+      Ah, yes, I heard about Mirabel. Those bastards stole a few blades from me,
+      perhaps a week past.
 
-            If you've not heard of the Gray Hand, well, that's a good thing. But
-            every merchant in town knows 'em. They want a piece of the pie, and
-            say they'll protect us. Little good they did this time. My contact
-            there swears they had nothing to do with any of these recent thefts.
-            But what good is the word of a thief?
+      If you've not heard of the Gray Hand, well, that's a good thing. But every
+      merchant in town knows 'em. They want a piece of the pie, and say they'll
+      protect us. Little good they did this time. My contact there swears they
+      had nothing to do with any of these recent thefts. But what good is the
+      word of a thief?
 
-            That being said, I've never had particular problems with the Hand
-            before. So maybe this is something different.
+      That being said, I've never had particular problems with the Hand before.
+      So maybe this is something different.
+      """
 
-        advanceQuest(actor, talkingShop, 'swordVendor)
-    }
+    advanceQuest(actor, talkingShop, 'swordVendor)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Welcome to my shop! I have a variety of swords for sale.
-            Type `buy` to see what I have available.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Welcome to my shop! I have a variety of swords for sale. Type `buy` to see
+      what I have available.
+      """
+  }
 }
 
-deflocation swordShop: location {
-    name = "Bryndan's House of Blades"
-    description = |
-        A variety of bladed weapons are displayed in racks that fill this small
-        shop.
-    domain = 'indoor
-    surface = 'wood
-    contents = [swordVendor]
-    exits = [lib.exitDoorway -> 'east to squareNw]
+def location swordShop: location {
+  name = "Bryndan's House of Blades"
+  description = """
+    A variety of bladed weapons are displayed in racks that fill this small
+    shop.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [swordVendor]
+  exits = [lib.exitDoorway -> 'east to squareNw]
 }
 
 // axe shop
 
-def axeVendor: lib.npc {
-    brief = "Durg Bighands"
-    pose = "sits atop a chair that is clearly too small for him."
-    description = |
-        Durg is an ogre. Although he is very small for his kind, he is still far
-        too large for the typical furniture found in Arwyck.
-    sells = []  // FIXME: [copperAxe, bronzeAxe, copperBattleaxe, bronzeBattleaxe]
+def entity axeVendor: lib.npc {
+  brief = "Durg Bighands"
+  pose = "sits atop a chair that is clearly too small for him."
+  description = """
+    Durg is an ogre. Although he is very small for his kind, he is still far too
+    large for the typical furniture found in Arwyck.
+    """
+  sells = []  // FIXME: [copperAxe, bronzeAxe, copperBattleaxe, bronzeBattleaxe]
 
-    when talk(actor, self, topic) {
-        show(actor) "Durg stretches his shoulders."
-        tell(self, actor) |
-            Do you happen to need an axe? Maybe two? Type `buy` to see my wares.
-    }
+  when talk(actor, self, topic) {
+    show(actor) "Durg stretches his shoulders."
+    tell(self, actor) """
+      Do you happen to need an axe? Maybe two? Type `buy` to see my wares.
+      """
+  }
 }
 
-deflocation axeShop: location {
-    name = "Durg's Slicery"
-    description = "The walls are lined with inexpensive but servicable axes."
-    domain = 'indoor
-    surface = 'wood
-    contents = [axeVendor]
-    exits = [lib.exitDoorway -> 'south to squareNe]
+def location axeShop: location {
+  name = "Durg's Slicery"
+  description = "The walls are lined with inexpensive but servicable axes."
+  domain = 'indoor
+  surface = 'wood
+  contents = [axeVendor]
+  exits = [lib.exitDoorway -> 'south to squareNe]
 }
 
 // inn
 
-def innRoom: location {
-    domain =  'indoor
-    surface = 'wood
-    subregion = "Golden Gryphon"
+def entity innRoom: location {
+  domain =  'indoor
+  surface = 'wood
+  subregion = "Golden Gryphon"
 }
 
-def ryeLoaf: lib.food {
-    brief = "a loa[f|ves] of rye bread"
-    description = "The loaf of rye bread looks rather delicious."
-    icon = 'bread
-    price = 2 of lib.silverCoin
+def entity ryeLoaf: lib.food {
+  brief = "a loa[f|ves] of rye bread"
+  description = "The loaf of rye bread looks rather delicious."
+  icon = 'bread
+  price = 2 @ lib.silverCoin
 }
 
-def fishSoup: lib.food {
-    brief = "a bowl[s] of fish soup"
-    description = "Warning: Fish content not guaranteed."
-    price = 3 of lib.silverCoin
+def entity fishSoup: lib.food {
+  brief = "a bowl[s] of fish soup"
+  description = "Warning: Fish content not guaranteed."
+  price = 3 @ lib.silverCoin
 }
 
-def sienna: lib.npc {
-    brief = "Sienna"
-    pose = "is working behind the bar."
-    description = |
-        Sienna is a tall woman with short yellow hair and light brown eyes. She
-        keeps a close eye on her patrons.
-    sells = [ryeLoaf, fishSoup]
+def entity sienna: lib.npc {
+  brief = "Sienna"
+  pose = "is working behind the bar."
+  description = """
+    Sienna is a tall woman with short yellow hair and light brown eyes. She
+    keeps a close eye on her patrons.
+    """
+  sells = [ryeLoaf, fishSoup]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Welcome to the Golden Gryphon! I sell food and drink. I'd say it's
-            the best in town but my mam told me never to lie, so I won't. If
-            you're learning to cook, I can sell you a few recipes as well. Type
-            `buy` to see what I have for sale.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Welcome to the Golden Gryphon! I sell food and drink. I'd say it's the
+      best in town but my mam told me never to lie, so I won't. If you're
+      learning to cook, I can sell you a few recipes as well. Type `buy` to see
+      what I have for sale.
+      """
+  }
 }
 
-deflocation innCommonRoom: innRoom {
-    name = "Common Room"
-    description = |
-        The common room of the Golden Gryphon is a cheerful place. A crackling
-        fire burns in the stone hearth. Numerous tables and chairs give the
-        space a crowded feel, even when few customers are present. A long oak
-        bar lines one wall.
-    contents = [sienna]
-    exits = [lib.exitDoorway -> 'west to squareNe,
-             lib.doorway -> 'north to innKitchen,
-             lib.stairway -> 'up to innUpstairsHall]
+def location innCommonRoom: innRoom {
+  name = "Common Room"
+  description = """
+    The common room of the Golden Gryphon is a cheerful place. A crackling fire
+    burns in the stone hearth. Numerous tables and chairs give the space a
+    crowded feel, even when few customers are present. A long oak bar lines one
+    wall.
+    """
+  contents = [sienna]
+  exits = [lib.exitDoorway -> 'west to squareNe,
+           lib.doorway -> 'north to innKitchen,
+           lib.stairway -> 'up to innUpstairsHall]
 }
 
-def cookingTrainer: lib.npc {
-    brief = "Dully the Cook"
-    pose = "is stirring a pot of...something."
-    description = |
-        Dully is a portly dwarven male with a scraggly beard. He wears a
-        grease-stained apron and a strange, poofy hat. He wields a huge wooden spoon
-        as if it were a weapon.
-    teaches = []  // FIXME:
+def entity cookingTrainer: lib.npc {
+  brief = "Dully the Cook"
+  pose = "is stirring a pot of...something."
+  description = """
+    Dully is a portly dwarven male with a scraggly beard. He wears a
+    grease-stained apron and a strange, poofy hat. He wields a huge wooden spoon
+    as if it were a weapon.
+    """
+  teaches = []  // FIXME:
 
-    after enterLocation(actor, location, entry) {
-        tell(self, actor) "Aye, it's a good day for a stew, ain't it?"
-    }
+  after enterLocation(actor, location, entry) {
+    tell(self, actor) "Aye, it's a good day for a stew, ain't it?"
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Aye, if ye be lookin' ta learn ta cook, I be yer dwarf. Type `learn`
-            ta see wha I can teach ya, or `help skills` ta learn more about
-            skills an' such.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Aye, if ye be lookin' ta learn ta cook, I be yer dwarf. Type `learn` ta
+      see wha I can teach ya, or `help skills` ta learn more about skills an'
+      such.
+      """
+  }
 }
 
-deflocation innKitchen: innRoom {
-    name = "Kitchen"
-    description = |
-        This large and somewhat disorganized kitchen smells faintly of ale and
-        grease.
-    contents = [cookingTrainer]
-    exits = [lib.doorway -> 'south to innCommonRoom]
+def location innKitchen: innRoom {
+  name = "Kitchen"
+  description = """
+    This large and somewhat disorganized kitchen smells faintly of ale and
+    grease.
+    """
+  contents = [cookingTrainer]
+  exits = [lib.doorway -> 'south to innCommonRoom]
 }
 
-deflocation innUpstairsHall: innRoom {
-    name = "Upstairs Hall"
-    description = |
-        This dark, windowless hall leads to the Golden Gryphon's guest rooms.
-    exits = [lib.stairway -> 'down to innCommonRoom,
-             lib.doorway -> 'west to smallGuestRoom,
-             lib.doorway -> 'east to largeGuestRoom]
+def location innUpstairsHall: innRoom {
+  name = "Upstairs Hall"
+  description = """
+    This dark, windowless hall leads to the Golden Gryphon's guest rooms.
+    """
+  exits = [lib.stairway -> 'down to innCommonRoom,
+           lib.doorway -> 'west to smallGuestRoom,
+           lib.doorway -> 'east to largeGuestRoom]
 }
 
-deflocation smallGuestRoom: innRoom {
-    name = "Small Guest Room"
-    description = |
-        This cramped room holds a small bed and an iron-bound chest. The window
-        overlooks the village square.
-    exits = [lib.doorway -> 'east to innUpstairsHall]
+def location smallGuestRoom: innRoom {
+  name = "Small Guest Room"
+  description = """
+    This cramped room holds a small bed and an iron-bound chest. The window
+    overlooks the village square.
+    """
+  exits = [lib.doorway -> 'east to innUpstairsHall]
 }
 
-deflocation largeGuestRoom: innRoom {
-    name = "Large Guest Room"
-    description = |
-        This room is tastefully furnished. The wide feather bed is lumpy but
-        comfortable. An oak wardrobe features carvings of trees and forest
-        creatures. The window provides a view of nearby rooftops and the rolling
-        hills east of the village.
-    exits = [lib.doorway -> 'west to innUpstairsHall]
+def location largeGuestRoom: innRoom {
+  name = "Large Guest Room"
+  description = """
+    This room is tastefully furnished. The wide feather bed is lumpy but
+    comfortable. An oak wardrobe features carvings of trees and forest
+    creatures. The window provides a view of nearby rooftops and the rolling
+    hills east of the village.
+    """
+  exits = [lib.doorway -> 'west to innUpstairsHall]
 }
 
 // armory
 
-def warriorTrainer: lib.npc {  // FIXME: lib.warriorTrainer
-    brief = "Andalya"
-    pose = "is in the center of the room, idly swinging a slender longsword."
-    description = |
-        Andalya is a lean, graying woman who wears loose clothing befitting
-        one who teaches the martial arts.
+def entity warriorTrainer: lib.npc {  // FIXME: lib.warriorTrainer
+  brief = "Andalya"
+  pose = "is in the center of the room, idly swinging a slender longsword."
+  description = """
+    Andalya is a lean, graying woman who wears loose clothing befitting one who
+    teaches the martial arts.
+    """
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Welcome, stranger. I am Andalya. It is my privilege to be the local
-            representative of the Company of the Blade. We are a band dedicated
-            to the practice of the martial arts. It is my job to train those who
-            are interested in learning to defend themselves with good steel.
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Welcome, stranger. I am Andalya. It is my privilege to be the local
+      representative of the Company of the Blade. We are a band dedicated to the
+      practice of the martial arts. It is my job to train those who are
+      interested in learning to defend themselves with good steel.
 
-            Type `guild info` to learn more about my guild. If you want to join,
-            type `guild join`.
-    }
+      Type `guild info` to learn more about my guild. If you want to join, type
+      `guild join`.
+      """
+  }
 }
 
-deflocation armoryTrainingHall: location {
-    name = "Training Hall"
-    description = |
-        This long hall has stone walls and an arched ceiling. The soft wooden
-        floor is clean but marred from the many training matches that have been
-        fought here.
-    domain = 'indoor
-    surface = 'wood
-    contents = [warriorTrainer]
-    exits = [lib.exitDoorway -> 'south to squareNw]
+def location armoryTrainingHall: location {
+  name = "Training Hall"
+  description = """
+    This long hall has stone walls and an arched ceiling. The soft wooden floor
+    is clean but marred from the many training matches that have been fought
+    here.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [warriorTrainer]
+  exits = [lib.exitDoorway -> 'south to squareNw]
 }
 
 // explorers' lodge
 
-def lodgeRoom: location {
-    domain = 'indoor
-    surface = 'wood
-    subregion = "Explorers' Lodge"
+def entity lodgeRoom: location {
+  domain = 'indoor
+  surface = 'wood
+  subregion = "Explorers' Lodge"
 }
 
-def quartermaster: lib.npc {
-    brief = "the quartermaster"
-    pose = "stands nearby."
-    description = |
-        The quartermaster is a slender man with graying hair and elegant
-        mustaches. His clothing, although impeccably clean, seems a little too big
-        for him.
-    sells = []  // FIXME:
+def entity quartermaster: lib.npc {
+  brief = "the quartermaster"
+  pose = "stands nearby."
+  description = """
+    The quartermaster is a slender man with graying hair and elegant mustaches.
+    His clothing, although impeccably clean, seems a little too big for him.
+    """
+  sells = []  // FIXME:
 
-    when talk(actor, self, topic) {
-        tell(self, actor) "Good day to you, traveler."
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) "Good day to you, traveler."
+  }
 }
 
-deflocation lodgeFoyer: lodgeRoom {
-    name = "Foyer"
-    description = |
-        This airy room has wood-paneled walls and a thick carpet on the floor.
-    contents = [quartermaster]
-    exits = [lib.exitDoorway -> 'north to squareSw,
-             lib.doorway -> 'south to lodgeTrophyRoom,
-             lib.doorway -> 'west to lodgeStudy]
+def location lodgeFoyer: lodgeRoom {
+  name = "Foyer"
+  description = """
+    This airy room has wood-paneled walls and a thick carpet on the floor.
+    """
+  contents = [quartermaster]
+  exits = [lib.exitDoorway -> 'north to squareSw,
+           lib.doorway -> 'south to lodgeTrophyRoom,
+           lib.doorway -> 'west to lodgeStudy]
 }
 
-def stuffedGorilla: fixture {
-    brief = "a stuffed gorilla"
-    pose = "stands at the end of the room."
-    icon = 'gorilla
-    description = |
-        This intimidating creature stands over eight feet tall. Even in death
-        its expression is fierce. A plaque mounted on the wall reads:
+def entity stuffedGorilla: fixture {
+  brief = "a stuffed gorilla"
+  pose = "stands at the end of the room."
+  icon = 'gorilla
+  description = """
+    This intimidating creature stands over eight feet tall. Even in death its
+    expression is fierce. A plaque mounted on the wall reads:
 
-        > Although it slew several dogs and gravely wounded a scout, our party
-        defeated this beast as we traversed the jungles of Phaa, CY 549.
+    > Although it slew several dogs and gravely wounded a scout, our party
+    defeated this beast as we traversed the jungles of Phaa, CY 549.
+    """
 }
 
-deflocation lodgeTrophyRoom: lodgeRoom {
-    name = "Trophy Room"
-    description = |
-        The walls of this long room are lined with hunting prizes of all kinds:
-        antlers, horns, mounted heads, and more.
-    contents = [stuffedGorilla]
-    exits = [lib.doorway -> 'north to lodgeFoyer, lib.doorway -> 'west to lodgeWorkshop]
+def location lodgeTrophyRoom: lodgeRoom {
+  name = "Trophy Room"
+  description = """
+    The walls of this long room are lined with hunting prizes of all kinds:
+    antlers, horns, mounted heads, and more.
+    """
+  contents = [stuffedGorilla]
+  exits = [lib.doorway -> 'north to lodgeFoyer, lib.doorway -> 'west to lodgeWorkshop]
 }
 
-def lordOlmquist: lib.npc {
-    brief = "Lord Olmquist"
-    pose = "sits in a chair, smoking a pipe."
-    description = |
-        Olmquist is a rather stout, red-cheeked fellow with a bushy white beard
-        and bald pate. Horn-rimmed spectacles perch upon his substantial nose.
-        He wears a velvet smoking jacket, an open-necked white shirt, and dark
-        silk trousers.
+def entity lordOlmquist: lib.npc {
+  brief = "Lord Olmquist"
+  pose = "sits in a chair, smoking a pipe."
+  description = """
+    Olmquist is a rather stout, red-cheeked fellow with a bushy white beard and
+    bald pate. Horn-rimmed spectacles perch upon his substantial nose. He wears
+    a velvet smoking jacket, an open-necked white shirt, and dark silk trousers.
+    """
 
-    when talk(actor, self, topic) {
-        tell(self, actor) "Why yes, be a dear and fetch me a bourbon, won't you?"
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) "Why yes, be a dear and fetch me a bourbon, won't you?"
+  }
 }
 
-deflocation lodgeStudy: lodgeRoom {
-    name = "Study"
-    description = |
-        Two walls of this room are lined with shelves full of books. A number of
-        comfortable armchairs and small tables fill the remainder of the space.
-    contents = [lordOlmquist]
-    exits = [lib.doorway -> 'east to lodgeFoyer, lib.doorway -> 'south to lodgeWorkshop]
+def location lodgeStudy: lodgeRoom {
+  name = "Study"
+  description = """
+    Two walls of this room are lined with shelves full of books. A number of
+    comfortable armchairs and small tables fill the remainder of the space.
+    """
+  contents = [lordOlmquist]
+  exits = [lib.doorway -> 'east to lodgeFoyer, lib.doorway -> 'south to lodgeWorkshop]
 }
 
-def explorerTrainer: lib.npc {
-    brief = "Naman Artani"
-    pose = "is hunched over a strange device on the table."
-    description = |
-        Naman is a wiry young man who wears a scarred leather apron over his
-        practical attire. His curly auburn hair floats in a wild cloud around
-        his head.
-    teaches = []  // FIXME: swimming, climbing, ...?
+def entity explorerTrainer: lib.npc {
+  brief = "Naman Artani"
+  pose = "is hunched over a strange device on the table."
+  description = """
+    Naman is a wiry young man who wears a scarred leather apron over his
+    practical attire. His curly auburn hair floats in a wild cloud around his
+    head.
+    """
+  teaches = []  // FIXME: swimming, climbing, ...?
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Welcome to the Explorer's Lodge. Members of our guild travel across
-            Atalea in search of rarities: strange creatures, lost treasures, and
-            ancient knowledge. As you might imagine, survival skills come in
-            quite handy in this vocation!
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Welcome to the Explorer's Lodge. Members of our guild travel across Atalea
+      in search of rarities: strange creatures, lost treasures, and ancient
+      knowledge. As you might imagine, survival skills come in quite handy in
+      this vocation!
 
-            I am happy to teach you some of those skills. Type `learn` to see
-            what I can teach you.
-    }
+      I am happy to teach you some of those skills. Type `learn` to see what I
+      can teach you.
+      """
+  }
 }
 
-deflocation lodgeWorkshop: lodgeRoom {
-    name =  "Workshop"
-    description = |
-        A long table fills the center of this room; various implements are
-        strewn across its surface. Shelves along the walls hold all manner of
-        tools and contraptions.
-    contents = [explorerTrainer]
-    exits = [lib.doorway -> 'north to lodgeStudy, lib.doorway -> 'east to lodgeTrophyRoom,
-             lib.exitDoorway -> 'south to wallStreet1]
+def location lodgeWorkshop: lodgeRoom {
+  name =  "Workshop"
+  description = """
+    A long table fills the center of this room; various implements are strewn
+    across its surface. Shelves along the walls hold all manner of tools and
+    contraptions.
+    """
+  contents = [explorerTrainer]
+  exits = [lib.doorway -> 'north to lodgeStudy, lib.doorway -> 'east to lodgeTrophyRoom,
+           lib.exitDoorway -> 'south to wallStreet1]
 }
 
 // mages' tower
 
-def towerRoom: location {
-    domain = 'indoor
-    surface = 'stone
-    subregion = "Mages' Tower"
+def entity towerRoom: location {
+  domain = 'indoor
+  surface = 'stone
+  subregion = "Mages' Tower"
 }
 
-deflocation towerLibrary: towerRoom {
-    name = "Library"
-    description = |
-        This large, circular room encompasses the entire ground floor of a
-        squat, stone tower. The walls are lined with shelves full of
-        leather-bound books.
-    exits = [lib.exitDoorway -> 'east to squareW,
-             lib.stairway -> 'down to towerBasement,
-             lib.stairway -> 'up to towerStudy]
+def location towerLibrary: towerRoom {
+  name = "Library"
+  description = """
+    This large, circular room encompasses the entire ground floor of a squat,
+    stone tower. The walls are lined with shelves full of leather-bound books.
+    """
+  exits = [lib.exitDoorway -> 'east to squareW,
+           lib.stairway -> 'down to towerBasement,
+           lib.stairway -> 'up to towerStudy]
 }
 
-def wandVendor: lib.npc {
-    brief = "Giglox Tiglox"
-    pose = "excitedly awaits your attention."
-    description = |
-        Giglox is a tiny, long-eared creature. His toothy smile is both
-        infectious and somewhat frightening.
-    sells = []  // FIXME: [pineWand, oakWand]
+def entity wandVendor: lib.npc {
+  brief = "Giglox Tiglox"
+  pose = "excitedly awaits your attention."
+  description = """
+    Giglox is a tiny, long-eared creature. His toothy smile is both infectious
+    and somewhat frightening.
+    """
+  sells = []  // FIXME: [pineWand, oakWand]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            You look like you need a wand. And who doesn't? Type `buy` to see
-            what I have available.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      You look like you need a wand. And who doesn't? Type `buy` to see what I
+      have available.
+      """
+  }
 }
 
-deflocation towerBasement: towerRoom {
-    name = "Basement"
-    description = |
-        The basement of the library is full of books, scrolls, and other
-        scholarly items. Everything is neatly stacked and organized, if a little
-        dusty.
-    contents = [wandVendor]
-    exits = [lib.stairway -> 'up to towerLibrary]
+def location towerBasement: towerRoom {
+  name = "Basement"
+  description = """
+    The basement of the library is full of books, scrolls, and other scholarly
+    items. Everything is neatly stacked and organized, if a little dusty.
+    """
+  contents = [wandVendor]
+  exits = [lib.stairway -> 'up to towerLibrary]
 }
 
-def mageTrainer: lib.npc {
-    brief = "Milena Landeris"
-    pose = "sits at a nearby desk, perusing a scroll."
-    description = |
-        Milena is pleasant-looking young woman. Her clothing is casual and
-        practical. Her long black hair is carefully plaited. She seems somewhat
-        bored with the scroll in her hands and her eyes often wander to the
-        nearest window.
-    teaches = []  // FIXME:
+def entity mageTrainer: lib.npc {
+  brief = "Milena Landeris"
+  pose = "sits at a nearby desk, perusing a scroll."
+  description = """
+    Milena is pleasant-looking young woman. Her clothing is casual and
+    practical. Her long black hair is carefully plaited. She seems somewhat
+    bored with the scroll in her hands and her eyes often wander to the nearest
+    window.
+    """
+  teaches = []  // FIXME:
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Hello! I'm glad for the interruption. I am supposed to be studying
-            this scroll, but the mating rituals of the southern blue-tailed
-            cockatrice are really not my cup of tea.
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Hello! I'm glad for the interruption. I am supposed to be studying this
+      scroll, but the mating rituals of the southern blue-tailed cockatrice are
+      really not my cup of tea.
 
-            I am the local representative of the College of Arcanists, a guild
-            for those who wish to study magic. I am just an apprentice myself,
-            but I can teach you some basic skills; type `learn` to see what I
-            can teach. If you are new in town, you might want to type `help
-            skills` to learn more about skills in general.
-    }
+      I am the local representative of the College of Arcanists, a guild for
+      those who wish to study magic. I am just an apprentice myself, but I can
+      teach you some basic skills; type `learn` to see what I can teach. If you
+      are new in town, you might want to type `help skills` to learn more about
+      skills in general.
+      """
+  }
 }
 
-deflocation towerStudy: towerRoom {
-    name = "Study"
-    description = |
-        This circular room commands an excellent view of Arwyck through a number
-        of large, glass-paned windows. A desk and padded leather chair have been
-        placed beneath each window.
-    contents = [mageTrainer]
-    exits = [lib.stairway -> 'down to towerLibrary]
+def location towerStudy: towerRoom {
+  name = "Study"
+  description = """
+    This circular room commands an excellent view of Arwyck through a number of
+    large, glass-paned windows. A desk and padded leather chair have been placed
+    beneath each window.
+    """
+  contents = [mageTrainer]
+  exits = [lib.stairway -> 'down to towerLibrary]
 }
 
 // east road
 
-def eastRoad: location {
-    name = "East Road"
-    description = |
-        This broad dirt road connects the center of Arwyck to the village's
-        eastern gate.
-    domain = 'outdoor
-    surface = 'dirt
+def entity eastRoad: location {
+  name = "East Road"
+  description = """
+    This broad dirt road connects the center of Arwyck to the village's eastern
+    gate.
+    """
+  domain = 'outdoor
+  surface = 'dirt
 }
 
-deflocation eastRoad1: eastRoad {
-    exits = [dirtRoad -> 'west to squareE, dirtRoad -> 'east to eastRoad2,
-             lib.entryDoorway -> 'south to maceShop]
+def location eastRoad1: eastRoad {
+  exits = [dirtRoad -> 'west to squareE, dirtRoad -> 'east to eastRoad2,
+           lib.entryDoorway -> 'south to maceShop]
 }
 
-defquest iNeedBread {
-    name = "Feed the Poor"
-    summary = "Purchase a loaf of rye bread and give it to the hungry street urchin."
-    level = 1
+def quest iNeedBread {
+  name = "Feed the Poor"
+  summary = "Purchase a loaf of rye bread and give it to the hungry street urchin."
+  level = 1
 
-    phase active {
-        summary = "Purchase a loaf of rye bread at the inn."
-    }
+  phase active {
+    summary = "Purchase a loaf of rye bread at the inn."
+  }
 
-    phase done {
-        summary = "Give the rye bread to the street urchin."
-    }
+  phase done {
+    summary = "Give the rye bread to the street urchin."
+  }
 }
 
 // FIXME: This quest is kind of a mess.
-def urchin: lib.npc {
-    brief = "a street urchin"
-    pose = "sits alongside the road."
-    description = |
-        The urchin is a young girl, perhaps eight years old. Her clothes are
-        little more than dirty rags.
-    offersQuests = [iNeedBread]
+def entity urchin: lib.npc {
+  brief = "a street urchin"
+  pose = "sits alongside the road."
+  description = """
+    The urchin is a young girl, perhaps eight years old. Her clothes are little
+    more than dirty rags.
+    """
+  offersQuests = [iNeedBread]
 
-    when talk(actor: .quest(iNeedBread, available), self, topic) {
-        tell(self, actor) |
-            You seem like you have many important things to do, so I hate to
-            bother you. But could you spare a loaf of bread? My family is
-            desperate for food, you see, and I wasn't able to beg for enough
-            coin to buy any.
-        offerQuest(self, iNeedBread, actor)
-    }
+  when talk(actor: .quest(iNeedBread, available), self, topic) {
+    tell(self, actor) """
+      You seem like you have many important things to do, so I hate to bother
+      you. But could you spare a loaf of bread? My family is desperate for food,
+      you see, and I wasn't able to beg for enough coin to buy any.
+      """
+    offerQuest(self, iNeedBread, actor)
+  }
 
-    after acceptQuest(actor, quest: iNeedBread, npc) {
-        tell(self, actor) |
-            Oh, thank you! If you go to the inn, the innkeeper sells a very nice
-            loaf of rye. I'd really appreciate if you could `give` me one.
-    }
+  after acceptQuest(actor, quest: iNeedBread, npc) {
+    tell(self, actor) """
+      Oh, thank you! If you go to the inn, the innkeeper sells a very nice loaf
+      of rye. I'd really appreciate if you could `give` me one.
+      """
+  }
 
-    when talk(actor: .quest(iNeedBread, active), self, topic) {
-        show(actor) |
-            The urchin looks at you with a hint of expectation.
-        tell(self, actor) |
-            Were you able to find the inn?
-    }
+  when talk(actor: .quest(iNeedBread, active), self, topic) {
+    show(actor) "The urchin looks at you with a hint of expectation."
+    tell(self, actor) "Were you able to find the inn?"
+  }
 
-    when talk(actor: .quest(iNeedBread, done), self, topic) {
-        tell(npc, avatar) |
-            I truly appreciate your offer to help my family. If you have a spare
-            loaf of rye, I'd be happy if you could `give` it to me.
-    }
+  when talk(actor: .quest(iNeedBread, done), self, topic) {
+    tell(npc, avatar) """
+      I truly appreciate your offer to help my family. If you have a spare loaf
+      of rye, I'd be happy if you could `give` it to me.
+      """
+  }
 
-    allow giveItem(actor, item: ryeLoaf, self) {
-        return true
-    }
+  allow giveItem(actor, item: ryeLoaf, self) {
+    return true
+  }
 
-    after giveItem(actor: .quest(iNeedBread, done), item: ryeLoaf, self) {
-        show(actor) "The urchin grins from ear to ear."
+  after giveItem(actor: .quest(iNeedBread, done), item: ryeLoaf, self) {
+    show(actor) "The urchin grins from ear to ear."
 
-        tell(self, actor) |
-            Thank you so much! You've truly done my family a great service
-            today. May the gods' blessings return to us all!
+    tell(self, actor) """
+      Thank you so much! You've truly done my family a great service today. May
+      the gods' blessings return to us all!
+      """
 
-        completeQuest(actor, iNeedBread)
-    }
+    completeQuest(actor, iNeedBread)
+  }
 
-    after giveItem(actor, item: ryeLoaf, self) {
-        tell(self, actor) "Thank you for your kindness!"
-    }
+  after giveItem(actor, item: ryeLoaf, self) {
+    tell(self, actor) "Thank you for your kindness!"
+  }
 }
 
-deflocation eastRoad2: eastRoad {
-    contents = [urchin]
-    exits = [dirtRoad -> 'west to eastRoad1, dirtRoad -> 'east to eastRoad3,
-             alley -> 'south to muggersAlley1]
+def location eastRoad2: eastRoad {
+  contents = [urchin]
+  exits = [dirtRoad -> 'west to eastRoad1, dirtRoad -> 'east to eastRoad3,
+           alley -> 'south to muggersAlley1]
 }
 
-deflocation eastRoad3: eastRoad {
-    exits = [dirtRoad -> 'west to eastRoad2, dirtRoad -> 'east to eastGate,
-             lib.entryDoorway -> 'north to templeSanctuary]
+def location eastRoad3: eastRoad {
+  exits = [dirtRoad -> 'west to eastRoad2, dirtRoad -> 'east to eastGate,
+           lib.entryDoorway -> 'north to templeSanctuary]
 }
 
 // mace shop
 
-def maceVendor: lib.npc {
-    brief = "Maury na Munigan"
-    pose = "stands behind the counter, arms crossed."
-    description = |
-        Maury is a burly man with a full beard and little hair left atop his
-        head. He looks strong enough to crack a few skulls without the aid of
-        the weapons he sells.
-    sells = [lib.copperMace, lib.bronzeMace, lib.copperMaul, lib.bronzeMaul]
+def entity maceVendor: lib.npc {
+  brief = "Maury na Munigan"
+  pose = "stands behind the counter, arms crossed."
+  description = """
+    Maury is a burly man with a full beard and little hair left atop his head.
+    He looks strong enough to crack a few skulls without the aid of the weapons
+    he sells.
+    """
+  sells = [lib.copperMace, lib.bronzeMace, lib.copperMaul, lib.bronzeMaul]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Welcome to my shop, {actor}. You'll find my wares to be of better
-            quality than most, I think.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Welcome to my shop, {actor}. You'll find my wares to be of better quality
+      than most, I think.
+      """
+  }
 }
 
-deflocation maceShop: location {
-    name = "Maury's Maces"
-    description = |
-        This shop sells a variety of weapons ideal for cracking skulls.
-    domain = 'indoor
-    surface = 'wood
-    contents = [maceVendor]
-    exits = [lib.exitDoorway -> 'north to eastRoad1]
+def location maceShop: location {
+  name = "Maury's Maces"
+  description = """
+    This shop sells a variety of weapons ideal for cracking skulls.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [maceVendor]
+  exits = [lib.exitDoorway -> 'north to eastRoad1]
 }
 
 // temple
 
-def oldPriest: lib.npc {
-    brief = "an aged priest"
-    pose = "kneels before the altar."
-    description = |
-        The priest is unkempt and dirty. His robes are in desperate need of
-        repair and his scraggly beard is in dire need of a trim. You can see
-        intelligence and compassion in his striking blue eyes, but also a touch
-        of madness.
+def entity oldPriest: lib.npc {
+  brief = "an aged priest"
+  pose = "kneels before the altar."
+  description = """
+    The priest is unkempt and dirty. His robes are in desperate need of repair
+    and his scraggly beard is in dire need of a trim. You can see intelligence
+    and compassion in his striking blue eyes, but also a touch of madness.
+    """
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Be welcome in this temple, friend.
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Be welcome in this temple, friend.
 
-            My flock is few in number these days. As the gods abandoned the
-            people, so too did the people abandon the gods. I do not blame them.
-            As for myself, I cannot turn my back on a lifetime of belief. Not
-            yet.
+      My flock is few in number these days. As the gods abandoned the people, so
+      too did the people abandon the gods. I do not blame them. As for myself, I
+      cannot turn my back on a lifetime of belief. Not yet.
+      """
 
-        await sleep(1)
-        show(actor) "The priest pauses for a moment, collecting his thoughts."
-        await sleep(1)
+    await sleep(1)
+    show(actor) "The priest pauses for a moment, collecting his thoughts."
+    await sleep(1)
 
-        tell(self, actor) |
-            It began slowly at first, nearly a century ago. The gods had always
-            lent their power to their faithful servants. Members of the
-            priesthood wielded magic as powerful as that of any mage.
+    tell(self, actor) """
+      It began slowly at first, nearly a century ago. The gods had always lent
+      their power to their faithful servants. Members of the priesthood wielded
+      magic as powerful as that of any mage.
 
-            But then our powers began to fail. One by one, the gods stopped
-            granting us their blessings. Did they lose interest in us? Did they
-            go elsewhere? Perhaps they simply ceased to exist?
+      But then our powers began to fail. One by one, the gods stopped granting
+      us their blessings. Did they lose interest in us? Did they go elsewhere?
+      Perhaps they simply ceased to exist?
 
-            It is heresy to think such things. But now it has been thirty years
-            since the last of them disappeared. My order no longer wields any
-            power and we can do little to help the people we once protected.
-            Perhaps we no longer deserve the gods' aid and guidance? I do not
-            know, but I will continue my search for answers.
+      It is heresy to think such things. But now it has been thirty years since
+      the last of them disappeared. My order no longer wields any power and we
+      can do little to help the people we once protected. Perhaps we no longer
+      deserve the gods' aid and guidance? I do not know, but I will continue my
+      search for answers.
 
-            The absence of the gods leaves a great void. My only hope is that
-            evil and darkness do not fill it.
-    }
+      The absence of the gods leaves a great void. My only hope is that evil and
+      darkness do not fill it.
+      """
+  }
 }
 
-deflocation templeSanctuary: location {
-    name = "Sanctuary"
-    description = |
-        This large room was once a place where people gathered to worship the
-        gods, but it has clearly not been used in many years. A large altar
-        stands near one end of the room and various statues reside in niches
-        along the walls. Dust and grime cover every surface; puddles on the
-        floor mark the spots where the wooden roof has begun to fail. The
-        tapestries that once lined the walls have fallen into ruin.
-    domain = 'indoor
-    surface = 'stone
-    contents = [oldPriest]
-    exits = [lib.exitDoorway -> 'south to eastRoad3]
+def location templeSanctuary: location {
+  name = "Sanctuary"
+  description = """
+    This large room was once a place where people gathered to worship the gods,
+    but it has clearly not been used in many years. A large altar stands near
+    one end of the room and various statues reside in niches along the walls.
+    Dust and grime cover every surface; puddles on the floor mark the spots
+    where the wooden roof has begun to fail. The tapestries that once lined the
+    walls have fallen into ruin.
+    """
+  domain = 'indoor
+  surface = 'stone
+  contents = [oldPriest]
+  exits = [lib.exitDoorway -> 'south to eastRoad3]
 }
 
 // east gate
 
-def eastGuard: lib.npc {
-    brief = "the gate guard"
-    pose = "leans against the wall of the gatehouse."
+def entity eastGuard: lib.npc {
+  brief = "the gate guard"
+  pose = "leans against the wall of the gatehouse."
 
-    when talk(actor: .quest(atTheGates, active), self, topic) {
-        tell(self, actor) |
-            Mirabel's boy? Yes, he passed through in the dead of night, maybe
-            three weeks past. As shady as ever, that one. He was with two others
-            who looked even worse.
-        // advanceQuest(actor, atTheGates, 'nextPhase)
-    }
+  when talk(actor: .quest(atTheGates, active), self, topic) {
+    tell(self, actor) """
+      Mirabel's boy? Yes, he passed through in the dead of night, maybe three
+      weeks past. As shady as ever, that one. He was with two others who looked
+      even worse.
+      """
+    // advanceQuest(actor, atTheGates, 'nextPhase)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            East of here is Mistmarsh. It's a dangerous area. Don't fall in a
-            sinkhole...I'm not comin' to drag you out!
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      East of here is Mistmarsh. It's a dangerous area. Don't fall in a
+      sinkhole...I'm not comin' to drag you out!
+      """
+  }
 }
 
-deflocation eastGate: location {
-    name = "East Gate"
-    description = |
-        A squat stone gatehouse stands at the village's entrance. To the east, a
-        road winds through marshes that stretch along the coast of Emerald Bay.
-    domain = 'outdoor
-    surface = 'stone
-    contents = [eastGuard]
-    exits = [dirtRoad -> 'west to eastRoad3, dirtRoad -> 'east to mistmarsh.muddyPathA12]
+def location eastGate: location {
+  name = "East Gate"
+  description = """
+    A squat stone gatehouse stands at the village's entrance. To the east, a
+    road winds through marshes that stretch along the coast of Emerald Bay.
+    """
+  domain = 'outdoor
+  surface = 'stone
+  contents = [eastGuard]
+  exits = [dirtRoad -> 'west to eastRoad3, dirtRoad -> 'east to mistmarsh.muddyPathA12]
 }
 
 // muggers' alley
 
-def muggersAlley: location {
-    name = "Muggers' Alley"
-    description = |
-        This narrow, muddy lane cuts through the least savory section of Arwyck.
-    domain = 'outdoor
-    surface = 'dirt
+def entity muggersAlley: location {
+  name = "Muggers' Alley"
+  description = """
+    This narrow, muddy lane cuts through the least savory section of Arwyck.
+    """
+  domain = 'outdoor
+  surface = 'dirt
 }
 
-deflocation muggersAlley1: muggersAlley {
-    exits = [alley -> 'north to eastRoad2, alley -> 'south to muggersAlley2,
-             lib.entryDoorway -> 'east to potionShop]
+def location muggersAlley1: muggersAlley {
+  exits = [alley -> 'north to eastRoad2, alley -> 'south to muggersAlley2,
+           lib.entryDoorway -> 'east to potionShop]
 }
 
-deflocation muggersAlley2: muggersAlley {
-    exits = [alley -> 'north to muggersAlley1, alley -> 'south to muggersAlley3,
-             lib.entryDoorway -> 'west to daggerShop]
+def location muggersAlley2: muggersAlley {
+  exits = [alley -> 'north to muggersAlley1, alley -> 'south to muggersAlley3,
+           lib.entryDoorway -> 'west to daggerShop]
 }
 
-deflocation muggersAlley3: muggersAlley {
-    exits = [alley -> 'north to muggersAlley2, alley -> 'south to wallStreet6,
-             lib.entryDoorway -> 'east to warehouseAnteroom,
-             lib.entryDoorway -> 'west to crowBar]
+def location muggersAlley3: muggersAlley {
+  exits = [alley -> 'north to muggersAlley2, alley -> 'south to wallStreet6,
+           lib.entryDoorway -> 'east to warehouseAnteroom,
+           lib.entryDoorway -> 'west to crowBar]
 }
 
 // potion shop
 
-def potionVendor: lib.npc {
-    brief = "Gemma"
-    pose = "cleans a clay jar with a greasy cloth."
-    description = |
-        The alchemist's daughter is a pudgy young woman who looks extremely
-        bored with her work.
-    sells = []  // FIXME:
+def entity potionVendor: lib.npc {
+  brief = "Gemma"
+  pose = "cleans a clay jar with a greasy cloth."
+  description = """
+    The alchemist's daughter is a pudgy young woman who looks extremely bored
+    with her work.
+    """
+  sells = []  // FIXME:
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Hello there. What brings you in? Supplies have been rather hard to
-            come by lately, but I have a few potions to sell. Type `buy` to see
-            what's in stock.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Hello there. What brings you in? Supplies have been rather hard to come by
+      lately, but I have a few potions to sell. Type `buy` to see what's in
+      stock.
+      """
+  }
 }
 
-deflocation potionShop: location {
-    name = "Dilwar's Elixiry"
-    description = |
-        The north wall is lined with shelves, but they hold only a few lonely
-        jars and bottles.
-    domain = 'indoor
-    surface = 'wood
-    contents = [potionVendor]
-    exits = [lib.exitDoorway -> 'west to muggersAlley1,
-             lib.doorway -> 'east to alchemyWorkshop]
+def location potionShop: location {
+  name = "Dilwar's Elixiry"
+  description = """
+    The north wall is lined with shelves, but they hold only a few lonely jars
+    and bottles.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [potionVendor]
+  exits = [lib.exitDoorway -> 'west to muggersAlley1,
+           lib.doorway -> 'east to alchemyWorkshop]
 }
 
-def venomExtractor: item {
-    brief = "a venom extractor"
-    description = |
-        This contraption can be used to extract a vial of venom from fresh
-        corpses of certain creatures.
-    quest = getSomeVenom
+def entity venomExtractor: item {
+  brief = "a venom extractor"
+  description = """
+    This contraption can be used to extract a vial of venom from fresh corpses
+    of certain creatures.
+    """
+  quest = getSomeVenom
 
-    allow use(actor, self, target: mistmarsh.giantCentipedeCorpse) {
-        return true
-    }
+  allow use(actor, self, target: mistmarsh.giantCentipedeCorpse) {
+    return true
+  }
 
-    when use(actor, self, target: mistmarsh.giantCentipedeCorpse) {
-        show(actor) |
-            You stick the needle of the venom extractor into the corpse and pull
-            the trigger. The device sucks a small amount of venom into an
-            internal chamber.
-        advanceQuest(actor, getSomeVenom, 1)
-    }
+  when use(actor, self, target: mistmarsh.giantCentipedeCorpse) {
+    show(actor) """
+      You stick the needle of the venom extractor into the corpse and pull the
+      trigger. The device sucks a small amount of venom into an internal
+      chamber.
+      """
+    advanceQuest(actor, getSomeVenom, 1)
+  }
 }
 
-defquest getSomeVenom {
-    name = "It's Centipedal"
-    summary = "Kill giant centipedes in the Mistmarsh and return their venom to Dilwar."
-    level = 2
+def quest getSomeVenom {
+  name = "It's Centipedal"
+  summary = "Kill giant centipedes in the Mistmarsh and return their venom to Dilwar."
+  level = 2
 
-    phase active {
-        summary = "Obtain venom from the corpses of giant centipedes."
-        initialState = 3
-    }
+  phase active {
+    summary = "Obtain venom from the corpses of giant centipedes."
+    initialState = 3
+  }
 
-    phase done {
-        summary = "Return the venom to Dilwar."
-    }
+  phase done {
+    summary = "Return the venom to Dilwar."
+  }
 }
 
-def alchemist: lib.npc {
-    brief = "Dilwar"
-    pose = "stares at the smoking remains of a shattered bowl, lost in thought."
-    description = |
-        The alchemist is a rotund, red-faced man with wisps of white hair that
-        float over his head like smoke.
+def entity alchemist: lib.npc {
+  brief = "Dilwar"
+  pose = "stares at the smoking remains of a shattered bowl, lost in thought."
+  description = """
+    The alchemist is a rotund, red-faced man with wisps of white hair that float
+    over his head like smoke.
+    """
 
-    offersQuests = [silverwood.mossResults, getSomeVenom]
-    // FIXME: endsQuests = [@getSomeVenom, @silverwood/analyzeThis]
+  offersQuests = [silverwood.mossResults, getSomeVenom]
+  // FIXME: endsQuests = [@getSomeVenom, @silverwood/analyzeThis]
 
-    when talk(actor: .quest(getSomeVenom, available), self, topic) {
-        tell(self, actor) "Can't you see I'm busy here?"
-        await sleep(1)
-        show(actor) "The alchemist scratches his chin."
-        tell(self, actor) |
-            On second thought, you might be of use...unless you're scared of
-            bugs. Big bugs. Very, very big bugs.
-    }
+  when talk(actor: .quest(getSomeVenom, available), self, topic) {
+    tell(self, actor) "Can't you see I'm busy here?"
+    await sleep(1)
+    show(actor) "The alchemist scratches his chin."
+    tell(self, actor) """
+      On second thought, you might be of use...unless you're scared of bugs. Big
+      bugs. Very, very big bugs.
+      """
+  }
 
-    after acceptQuest(actor, quest: getSomeVenom, self) {
-        tell(self, actor) |
-            As you might have noticed, our inventory is rather depleted. I was
-            mixing up some new love potions, but I seem to have blown them up.
-            Faulty equipment, I'm sure.
+  after acceptQuest(actor, quest: getSomeVenom, self) {
+    tell(self, actor) """
+      As you might have noticed, our inventory is rather depleted. I was mixing
+      up some new love potions, but I seem to have blown them up. Faulty
+      equipment, I'm sure.
 
-            Sadly, that was the last of my centipede venom. I'll pay you well if
-            you can bring me some. Here, take this, you'll need it.
+      Sadly, that was the last of my centipede venom. I'll pay you well if you
+      can bring me some. Here, take this, you'll need it.
+      """
 
-        receiveItems(actor, [venomExtractor], self)
+    receiveItems(actor, [venomExtractor], self)
 
-        tell(self, actor) |
-            Use the device on three centipede corpses and you'll get plenty of
-            venom. You can find centipedes in the Mistmarch, east of town.
-    }
+    tell(self, actor) """
+      Use the device on three centipede corpses and you'll get plenty of venom.
+      You can find centipedes in the Mistmarch, east of town.
+      """
+  }
 
-    when talk(actor: .quest(getSomeVenom, active), self, topic) {
-        tell(self, actor) "Please stop wasting my time. I need that venom."
-    }
+  when talk(actor: .quest(getSomeVenom, active), self, topic) {
+    tell(self, actor) "Please stop wasting my time. I need that venom."
+  }
 
-    when talk(actor: .quest(getSomVenom, done), self, topic) {
-        tell(self, actor) |
-            Yes, this will do quite nicely. A job well done. You've earned your
-            reward.
-        receiveItems(actor, [20 of lib.silverCoin], self)
-    }
+  when talk(actor: .quest(getSomVenom, done), self, topic) {
+    tell(self, actor) """
+      Yes, this will do quite nicely. A job well done. You've earned your
+      reward.
+      """
+    receiveItems(actor, [20 @ lib.silverCoin], self)
+  }
 }
 
-deflocation alchemyWorkshop: location {
-    name = "Dilwar's Workshop"
-    description = |
-        This small room is packed with glassware, tubes, and esoteric materials
-        stored in haphazardly-arranged bins and jars.
-    domain = 'indoor
-    surface = 'wood
-    contents = [alchemist]
-    exits = [lib.doorway -> 'west to potionShop]
+def location alchemyWorkshop: location {
+  name = "Dilwar's Workshop"
+  description = """
+    This small room is packed with glassware, tubes, and esoteric materials
+    stored in haphazardly-arranged bins and jars.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [alchemist]
+  exits = [lib.doorway -> 'west to potionShop]
 }
 
 // dagger shop
 
-def daggerVendor: lib.npc {
-    brief = "Jimmy the Hare"
-    pose = "cleans his fingernails with a silver knife."
-    description = |
-        Jimmy is a greasy-haired young man whose eyes dart around nervously, as
-        if he expects someone to leap from the shadows at any moment.
-    sells = [lib.copperDagger, lib.bronzeDagger]
+def entity daggerVendor: lib.npc {
+  brief = "Jimmy the Hare"
+  pose = "cleans his fingernails with a silver knife."
+  description = """
+    Jimmy is a greasy-haired young man whose eyes dart around nervously, as if
+    he expects someone to leap from the shadows at any moment.
+    """
+  sells = [lib.copperDagger, lib.bronzeDagger]
 
-    when talk(actor: .quest(talkingShop, active), self, topic) {
-        tell(self, actor) |
-            Mirabel? It's a bleedin' shame, it is. Now, the Gray Hand is bad
-            enough, but they've got honor after a fashion. Pay their price, you
-            see, and they leave you alone. In a small town like this, the price
-            is not unbearable for a prosperous business. Or so I hear.
+  when talk(actor: .quest(talkingShop, active), self, topic) {
+    tell(self, actor) """
+      Mirabel? It's a bleedin' shame, it is. Now, the Gray Hand is bad enough,
+      but they've got honor after a fashion. Pay their price, you see, and they
+      leave you alone. In a small town like this, the price is not unbearable
+      for a prosperous business. Or so I hear.
 
-            This job ain't the Hand's style. Someone else must be workin' town.
-            I pity them if the Hand gets its, uh, hands on them...
+      This job ain't the Hand's style. Someone else must be workin' town. I pity
+      them if the Hand gets its, uh, hands on them...
+      """
 
-        advanceQuest(actor, talkingShop, 'daggerVendor)
-    }
+    advanceQuest(actor, talkingShop, 'daggerVendor)
+  }
 
-    when talk(actor, self, topic) {
-        show(actor) "Jimmy looks around warily."
+  when talk(actor, self, topic) {
+    show(actor) "Jimmy looks around warily."
 
-        tell(self, actor) |
-            Hey stranger, keep yer distance. If ya be needin' a dagger, yer in
-            the right place. Pick one ya like an' leave yer silver on the table
-            on yer way out.
-    }
+    tell(self, actor) """
+      Hey stranger, keep yer distance. If ya be needin' a dagger, yer in the
+      right place. Pick one ya like an' leave yer silver on the table on yer way
+      out.
+      """
+  }
 }
 
-deflocation daggerShop: location {
-    name = "Shivs n' Such"
-    description = "This shop sells all manner of knives and daggers."
-    domain = 'indoor
-    surface = 'wood
-    contents = [daggerVendor]
-    exits = [lib.exitDoorway -> 'east to muggersAlley2]
+def location daggerShop: location {
+  name = "Shivs n' Such"
+  description = "This shop sells all manner of knives and daggers."
+  domain = 'indoor
+  surface = 'wood
+  contents = [daggerVendor]
+  exits = [lib.exitDoorway -> 'east to muggersAlley2]
 }
 
 // crow bar
 
-def barkeep: lib.npc {
-    brief = "a barkeep"
-    pose = "stands behind the counter."
-    sells = []  // FIXME:
+def entity barkeep: lib.npc {
+  brief = "a barkeep"
+  pose = "stands behind the counter."
+  sells = []  // FIXME:
 }
 
-def scarecrow: lib.npc {
-    brief = "the scarecrow"
-    pose = "sits alone at a table."
-    description = |
-        The scarecrow is a gaunt young man with a nest of straw-colored hair.
-        His clothes are dirty and ill-fitting.
+def entity scarecrow: lib.npc {
+  brief = "the scarecrow"
+  pose = "sits alone at a table."
+  description = """
+    The scarecrow is a gaunt young man with a nest of straw-colored hair. His
+    clothes are dirty and ill-fitting.
+    """
 
-    when use(actor: .quest(scareTheScarecrow, scare), item: mistmarsh.giantCentipedeHead, self) {
-        show(actor) "The scarecrow recoils in horror."
-        tell(self, actor) |
-            Gah! Get that thing away from me and I'll tell you anything!
+  when use(actor: .quest(scareTheScarecrow, scare), item: mistmarsh.giantCentipedeHead, self) {
+    show(actor) "The scarecrow recoils in horror."
+    tell(self, actor) """
+      Gah! Get that thing away from me and I'll tell you anything!
+      """
 
-        await sleep(1)
-        show(actor) "You ask the scarecrow about Evend."
-        await sleep(1)
+    await sleep(1)
+    show(actor) "You ask the scarecrow about Evend."
+    await sleep(1)
 
-        tell(self, actor) |
-            Evend? Yeah, he's back. He brought two goons with him. They're holed
-            up in a shack along the road that leads toward the forest, west of
-            here. He's changed...he was always a little dark, but now he
-            honestly scares me a little.
+    tell(self, actor) """
+      Evend? Yeah, he's back. He brought two goons with him. They're holed up in
+      a shack along the road that leads toward the forest, west of here. He's
+      changed...he was always a little dark, but now he honestly scares me a
+      little.
+      """
 
-        advanceQuest(actor, scareTheScarecrow)
-    }
+    advanceQuest(actor, scareTheScarecrow)
+  }
 }
 
-deflocation crowBar: location {
-    name = "The Crow Bar"
-    description = |
-        This shadowy, smoke-filled room contains a handful of mismatched tables
-        and chairs. A stained wooden counter runs along the west wall.
-    domain = 'indoor
-    surface = 'wood
-    contents = [barkeep, scarecrow]
-    exits = [lib.exitDoorway -> 'east to muggersAlley3]
+def location crowBar: location {
+  name = "The Crow Bar"
+  description = """
+    This shadowy, smoke-filled room contains a handful of mismatched tables and
+    chairs. A stained wooden counter runs along the west wall.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [barkeep, scarecrow]
+  exits = [lib.exitDoorway -> 'east to muggersAlley3]
 
-    after enterLocation(actor: .quest(scareTheScarecrow, scare), location, entry) {
-        showTutorial(actor, 'scare) |
-            To scare the scarecrow, just `use` a giant centipede head on him.
-    }
+  after enterLocation(actor: .quest(scareTheScarecrow, scare), location, entry) {
+    showTutorial(actor, 'scare) """
+      To scare the scarecrow, just `use` a giant centipede head on him.
+      """
+  }
 }
 
 // warehouse
 
-def warehouse: location {
-    domain = 'indoor
-    surface = 'wood
-    subregion = "Warehouse"
+def entity warehouse: location {
+  domain = 'indoor
+  surface = 'wood
+  subregion = "Warehouse"
 }
 
-deflocation warehouseAnteroom: warehouse {
-    name = "Anteroom"
-    description = |
-        This cramped room has stained walls and an uneven wooden floor. The
-        air is heavy with smoke.
-    exits = [lib.exitDoorway -> 'west to muggersAlley3,
-             lib.doorway -> 'east to warehouseStoreroom,
-             lib.stairway -> 'up to warehouseOffice]
+def location warehouseAnteroom: warehouse {
+  name = "Anteroom"
+  description = """
+    This cramped room has stained walls and an uneven wooden floor. The air is
+    heavy with smoke.
+    """
+  exits = [lib.exitDoorway -> 'west to muggersAlley3,
+           lib.doorway -> 'east to warehouseStoreroom,
+           lib.stairway -> 'up to warehouseOffice]
 }
 
-def vagabondTrainer: lib.npc {
-    brief = "Shady Roger"
-    pose = "sits in a chair with his feet on the desk."
-    description = |
-        Roger is a scrawny man with three days' stubble. His gaze is constantly
-        scanning the room, as if he expects an enemy to appear at any moment. He
-        wears well-worn leather garments and a bandolier of knives across his
-        chest.
+def entity vagabondTrainer: lib.npc {
+  brief = "Shady Roger"
+  pose = "sits in a chair with his feet on the desk."
+  description = """
+    Roger is a scrawny man with three days' stubble. His gaze is constantly
+    scanning the room, as if he expects an enemy to appear at any moment. He
+    wears well-worn leather garments and a bandolier of knives across his chest.
+    """
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            I see you found our secret lair. Well, not so secret, really; if it
-            were we'd have no recruits!
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      I see you found our secret lair. Well, not so secret, really; if it were
+      we'd have no recruits!
 
-            I am a representative of the Gray Hand. My brothers and sisters work
-            to achieve our goals through subtlety, misdirection, and the
-            occasional knife in the back. Brute force is for suckers! As for
-            magic, well...not everyone likes to spend their days reading musty
-            old scrolls. I'd rather be out in the streets, where the action is!
+      I am a representative of the Gray Hand. My brothers and sisters work to
+      achieve our goals through subtlety, misdirection, and the occasional knife
+      in the back. Brute force is for suckers! As for magic, well...not everyone
+      likes to spend their days reading musty old scrolls. I'd rather be out in
+      the streets, where the action is!
 
-            I can teach you some of the basic skills favored by my guild. Type
-            `guild info` for more information, or type `learn` to see what you
-            can learn from me.
-    }
+      I can teach you some of the basic skills favored by my guild. Type `guild
+      info` for more information, or type `learn` to see what you can learn from
+      me.
+      """
+  }
 }
 
-deflocation warehouseOffice: warehouse {
-    name = "Office"
-    description = |
-        A huge mahogany desk dominates this small room. Shelves along the walls
-        are packed with numerous scrolls, ledgers, and other documents.
-    contents = [vagabondTrainer]
-    exits = [lib.stairway -> 'down to warehouseAnteroom]
+def location warehouseOffice: warehouse {
+  name = "Office"
+  description = """
+    A huge mahogany desk dominates this small room. Shelves along the walls are
+    packed with numerous scrolls, ledgers, and other documents.
+    """
+  contents = [vagabondTrainer]
+  exits = [lib.stairway -> 'down to warehouseAnteroom]
 }
 
-deflocation warehouseStoreroom: warehouse {
-    name = "Storeroom"
-    description = |
-        This large room has a high ceiling supported by heavy beams. All shapes
-        and sizes of crates, barrels, and boxes are stacked on the floor.
-    exits = [lib.doorway -> 'west to warehouseAnteroom,
-             lib.doorway -> 'east to warehouseMeetingRoom]
+def location warehouseStoreroom: warehouse {
+  name = "Storeroom"
+  description = """
+    This large room has a high ceiling supported by heavy beams. All shapes and
+    sizes of crates, barrels, and boxes are stacked on the floor.
+    """
+  exits = [lib.doorway -> 'west to warehouseAnteroom,
+           lib.doorway -> 'east to warehouseMeetingRoom]
 }
 
 /* TODO: remove trap, for testing. Also the trap should attack the target to
-    apply the aura, which allows for evasion.
+  apply the aura, which allows for evasion.
 
 proto fire-aura (damage-aura)
   (name "firestorm")
@@ -1473,1029 +1571,1098 @@ proto fire-trap (entity)
   (hidden t))
 */
 
-deflocation warehouseMeetingRoom: warehouse {
-    name = "Meeting Room"
-    description = |
-        This cramped room contains a long table and numerous chairs and stools.
-    exits = [lib.doorway -> 'west to warehouseStoreroom]
-    // FIXME: contents = [fireTrap()]
+def location warehouseMeetingRoom: warehouse {
+  name = "Meeting Room"
+  description = """
+    This cramped room contains a long table and numerous chairs and stools.
+    """
+  exits = [lib.doorway -> 'west to warehouseStoreroom]
+  // FIXME: contents = [fireTrap()]
 
-    after enterLocation(actor: avatar, location, entry) {
-        // FIXME: applyAura(self, actor, fireAura())
-    }
+  after enterLocation(actor: avatar, location, entry) {
+    // FIXME: applyAura(self, actor, fireAura())
+  }
 }
 
 // south road
 
-def southRoad: location {
-    name = "South Road"
-    description = |
-        This dirt road connects the village square with the south gate.
-    domain = 'outdoor
-    surface = 'dirt
+def entity southRoad: location {
+  name = "South Road"
+  description = """
+    This dirt road connects the village square with the south gate.
+    """
+  domain = 'outdoor
+  surface = 'dirt
 }
 
-deflocation southRoad1: southRoad {
-    exits = [dirtRoad -> 'north to squareS, dirtRoad -> 'south to southRoad2,
-             lib.entryDoorway -> 'east to lootedShop]
+def location southRoad1: southRoad {
+  exits = [dirtRoad -> 'north to squareS, dirtRoad -> 'south to southRoad2,
+           lib.entryDoorway -> 'east to lootedShop]
 }
 
-deflocation southRoad2: southRoad {
-    exits = [dirtRoad -> 'north to southRoad1, dirtRoad -> 'south to wallStreet3,
-             lib.entryDoorway -> 'east to spearShop]
+def location southRoad2: southRoad {
+  exits = [dirtRoad -> 'north to southRoad1, dirtRoad -> 'south to wallStreet3,
+           lib.entryDoorway -> 'east to spearShop]
 }
 
 // looted shop
 
-def distraughtShopkeep: lib.npc {
-    brief = "Mirabel"
-    pose = "sweeps broken glass from the floor."
-    description = |
-        Mirabel is a middle-aged woman with chestnut hair in a tight bun.
-    offersQuests = [talkingShop, atTheGates, scareTheScarecrow, theKeyIsTheKey,
-                     theEndOfEvend]
+def entity distraughtShopkeep: lib.npc {
+  brief = "Mirabel"
+  pose = "sweeps broken glass from the floor."
+  description = """
+    Mirabel is a middle-aged woman with chestnut hair in a tight bun.
+    """
+  offersQuests = [talkingShop, atTheGates, scareTheScarecrow, theKeyIsTheKey,
+                  theEndOfEvend]
 
-    when talk(actor: .quest(theEndOfEvend, complete), self, topic) {
-        tell(self, actor) |
-            Hello again, {actor}. I hope you're staying out of trouble. I'm
-            still picking up the pieces, but life goes on. Take care.
-    }
+  when talk(actor: .quest(theEndOfEvend, complete), self, topic) {
+    tell(self, actor) """
+      Hello again, {actor}. I hope you're staying out of trouble. I'm still
+      picking up the pieces, but life goes on. Take care.
+      """
+  }
 }
 
-deflocation lootedShop: location {
-    name = "Looted Shop"
-    description = |
-        It's hard to tell what this shop sells, since its entire inventory
-        appears to have been stolen. The thieves also damaged the furniture and
-        broke those few items they did not take.
-    domain = 'indoor
-    surface = 'wood
-    contents = [distraughtShopkeep]
-    exits = [lib.exitDoorway -> 'west to southRoad1]
+def location lootedShop: location {
+  name = "Looted Shop"
+  description = """
+    It's hard to tell what this shop sells, since its entire inventory appears
+    to have been stolen. The thieves also damaged the furniture and broke those
+    few items they did not take.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [distraughtShopkeep]
+  exits = [lib.exitDoorway -> 'west to southRoad1]
 }
 
-defquest talkingShop {
-    name = "Talking Shop"
-    summary = |
-        Talk to shopkeepers around Arwyck who may have information about the
-        recent spate of thefts.
-    level = 2
+def quest talkingShop {
+  name = "Talking Shop"
+  summary = """
+    Talk to shopkeepers around Arwyck who may have information about the recent
+    spate of thefts.
+    """
+  level = 2
 
-    phase active {
-        summary = |
-            Talk to shopkeepers around Arwyck who may have information about the
-            recent spate of thefts.
-        initialState = ['swordVendor, 'daggerVendor, 'spearVendor]
-    }
+  phase active {
+    summary = """
+      Talk to shopkeepers around Arwyck who may have information about the
+      recent spate of thefts.
+      """
+    initialState = ['swordVendor, 'daggerVendor, 'spearVendor]
+  }
 
-    phase done {
-        summary = |
-            Report your findings to Mirabel.
-    }
-}
-
-extend distraughtShopkeep {
-    when talk(actor: .quest(talkingShop, available), self, topic) {
-        tell(self, actor) |
-            I'm sorry, but we're closed. As you can see, everything's been
-            stolen. But you look like a capable sort; maybe you can help me out?
-        offerQuest(self, talkingShop, actor)
-    }
-
-    after acceptQuest(actor, quest: talkingShop, self) {
-        tell(self, actor) |
-            You're a gods-send. As you may be aware, thieves have broken into a
-            number of local shops recently. In most cases they took a few
-            valuables and caused a little damage. In my case, however, they were
-            less kind...I've no idea why.
-
-            Please talk to some of the other shopkeepers. Maybe they have some
-            information that can help me figure out why this happened to me?
-    }
-
-    when talk(actor: .quest(talkingShop, active), self, topic) {
-        tell(self, actor) |
-            Have you talked to the other shopkeepers yet? They should
-            be marked on your map, if that helps.
-    }
-
-    when talk(actor: .quest(talkingShop, done), self, topic) {
-        tell(self, actor) |
-            Thank you for your help. If my peers are correct, these thefts are
-            the work of a new player in town. I can't help but think my wayward
-            son may be involved.
-
-            From the look on your face, I can see I owe you an explanation.
-
-            I moved here from Irridel with my son, Evend, when he was a young
-            boy. Irridel, as you may know, is a much larger town to the south.
-            Evend hated it here and never forgave me for the move. Our
-            relationship slowly soured until, one day, we had a huge argument.
-            He left that night, swearing he wanted nothing more to do with
-            Arwyck or with me.
-
-            He was always a bitter, vengeful boy. In that way he takes after his
-            late father. If Evend is back in town, I'd like to know about it. I
-            have some friends who might know something more.
-
-        completeQuest(actor, talkingShop)
-    }
-}
-
-defquest atTheGates {
-    name = "At the Gates"
-    summary = |
-        Talk to the gate guards in Arwyck to see if Mirabel's son has been
-        seen entering the town.
-    level = 2
-    requiredQuests = [talkingShop]
-
-    phase active {
-        summary = |
-            Ask the gate guards in Arwyck if they've seen Mirabel's son.
-        initialState = ['westGate, 'eastGate, 'southGate]
-    }
-
-    phase done {
-        summary = |
-            Report your findings to Mirabel.
-    }
+  phase done {
+    summary = "Report your findings to Mirabel."
+  }
 }
 
 extend distraughtShopkeep {
-    when talk(actor: .quest(atTheGates, available), self, topic) {
-        tell(self, actor) |
-            You've already been a great help, but I think I know how we can
-            determine if my son has come back to town.
-        offerQuest(self, atTheGates, actor)
-    }
+  when talk(actor: .quest(talkingShop, available), self, topic) {
+    tell(self, actor) """
+      I'm sorry, but we're closed. As you can see, everything's been stolen. But
+      you look like a capable sort; maybe you can help me out?
+      """
+    offerQuest(self, talkingShop, actor)
+  }
 
-    after acceptQuest(actor, quest: atTheGates, self) {
-        tell(self, actor) |
-            There are only three ways into town, if we ignore the docks...my son
-            was always deathly afraid of the sea. It just so happens that I am
-            friends with the guards at all three gates.
+  after acceptQuest(actor, quest: talkingShop, self) {
+    tell(self, actor) """
+      You're a gods-send. As you may be aware, thieves have broken into a number
+      of local shops recently. In most cases they took a few valuables and
+      caused a little damage. In my case, however, they were less kind...I've no
+      idea why.
 
-            Go talk to the guards. If my son has dragged himself back to Arwyck,
-            one of them will have seen him.
-    }
+      Please talk to some of the other shopkeepers. Maybe they have some
+      information that can help me figure out why this happened to me?
+      """
+  }
 
-    when talk(actor: .quest(atTheGates, active), self, topic) {
-        tell(self, actor) |
-            All three guards are very observant. You'll find them at the city
-            gates to the west, south, and east.
-    }
+  when talk(actor: .quest(talkingShop, active), self, topic) {
+    tell(self, actor) """
+      Have you talked to the other shopkeepers yet? They should be marked on
+      your map, if that helps.
+      """
+  }
 
-    when talk(actor: .quest(atTheGates, done), self, topic) {
-        show(actor) "Mirabel considers for a moment."
-        tell(self, actor) |
-            So, he's back, and he brought friends. This can't be good.
+  when talk(actor: .quest(talkingShop, done), self, topic) {
+    tell(self, actor) """
+      Thank you for your help. If my peers are correct, these thefts are the
+      work of a new player in town. I can't help but think my wayward son may be
+      involved.
 
-            No doubt you've heard of the Gray Hand. Evend always wanted to join
-            them, but was rebuffed. It's surely not a good sign when even
-            thieves doubt your character.
+      From the look on your face, I can see I owe you an explanation.
 
-            Arwyck is a tiny place. A small gang with some ambition can cause a
-            lot of trouble. I know he's my son, but we need to put an end to
-            this before it gets out of hand.
-        completeQuest(actor, atTheGates)
-    }
+      I moved here from Irridel with my son, Evend, when he was a young boy.
+      Irridel, as you may know, is a much larger town to the south. Evend hated
+      it here and never forgave me for the move. Our relationship slowly soured
+      until, one day, we had a huge argument. He left that night, swearing he
+      wanted nothing more to do with Arwyck or with me.
+
+      He was always a bitter, vengeful boy. In that way he takes after his late
+      father. If Evend is back in town, I'd like to know about it. I have some
+      friends who might know something more.
+      """
+
+    completeQuest(actor, talkingShop)
+  }
 }
 
-defquest scareTheScarecrow {
-    name = "Scare the Scarecrow"
-    summary = |
-        Find a giant centipede head in Mistmarsh and use it to scare the
-        Scarecrow into providing information about Mirabel's son.
-    level = 2
-    requiredQuests = [atTheGates]
+def quest atTheGates {
+  name = "At the Gates"
+  summary = """
+    Talk to the gate guards in Arwyck to see if Mirabel's son has been seen
+    entering the town.
+    """
+  level = 2
+  requiredQuests = [talkingShop]
 
-    phase getAHead {
-        summary = |
-            Hunt giant centipedes in Mistmarsh to obtain one of their heads.
-    }
+  phase active {
+    summary = "Ask the gate guards in Arwyck if they've seen Mirabel's son."
+    initialState = ['westGate, 'eastGate, 'southGate]
+  }
 
-    phase scare {
-        summary = |
-            Find the scarecrow and use the giant centipede head to scare him.
-    }
-
-    phase done {
-        summary = |
-            Return to Mirabel and tell her what you've learned.
-    }
-}
-
-extend distraughtShopkeep {
-    when talk(actor: .quest(scareTheScarecrow, available), self, topic) {
-        tell(self, actor) |
-            We need to find where Evend is hiding. If you're willing to get your
-            hands dirty, I think we can find him.
-        offerQuest(self, scareTheScarecrow, actor)
-    }
-
-    after acceptQuest(avatar, quest: scareTheScarecrow, self) {
-        tell(self, actor) |
-            There's a character in town called the scarecrow. He and Evend were
-            friends. He's well connected among the less savory types in town.
-
-            Normally I wouldn't expect him to rat out a friend, but the
-            scarecrow has a weakness...centipedes. He had a bad experience as a
-            child, I guess.
-
-            Scare him with a giant centipede head and I'm sure he'll become
-            talkative. Look for the centipedes in the swamp to the east.
-    }
-
-    when talk(actor: .quest(scareTheScarecrow, getAHead), self, topic) {
-        tell(self, actor) "Any luck finding a giant centipede head?"
-    }
-
-    when talk(actor: .quest(scareTheScarecrow, scare), self, topic) {
-        tell(self, actor) |
-            Any luck with the scarecrow? I wish I could see his face when you
-            toss that giant head in his lap!
-    }
-
-    when talk(actor: .quest(scareTheScarecrow, done), self, topic) {
-        tell(self, actor) |
-            Well, now we know where he is. All that's left is to get in, and I
-            know just the man to help us.
-    }
-}
-
-defquest theKeyIsTheKey {
-    name = "The Key is the Key"
-    summary = "Get the items Kijian requires, then obtain a key to Evend's hideout."
-    level = 2
-    requiredQuests = [scareTheScarecrow]
-
-    phase findKijian {
-        summary = "Talk to Kijian the locksmith."
-    }
-
-    phase gatherItems {
-        summary = "Give Kijian a silky spiderweb and a kobold trinket."
-        initialState = ['silkySpiderweb, 'koboldTrinket]
-    }
-
-    phase keyReady {
-        summary = "Talk to Kijian to obtain the key."
-    }
-
-    phase done {
-        summary = "Take the key to Mirabel."
-    }
+  phase done {
+    summary = "Report your findings to Mirabel."
+  }
 }
 
 extend distraughtShopkeep {
-    when talk(actor: .quest(theKeyIsTheKey, available), self, topic) {
-        tell(self, actor) |
-            I'm sure Evend keeps his hideout locked up tight, but it so happens
-            I'm friends with the only locksmith in town.
-        offerQuest(self, theKeyIsTheKey, actor)
-    }
+  when talk(actor: .quest(atTheGates, available), self, topic) {
+    tell(self, actor) """
+      You've already been a great help, but I think I know how we can determine
+      if my son has come back to town.
+      """
+    offerQuest(self, atTheGates, actor)
+  }
 
-    after acceptQuest(actor, quest: theKeyIsTheKey, self) {
-        tell(self, actor) |
-            Go pay a visit to Kijian, the locksmith. He made just about every
-            lock in this town, and I'm sure he can help us. Be warned, he's
-            likely going to require something in return. You'll find his shop
-            just inside the wall on the south end of town.
-    }
+  after acceptQuest(actor, quest: atTheGates, self) {
+    tell(self, actor) """
+      There are only three ways into town, if we ignore the docks...my son was
+      always deathly afraid of the sea. It just so happens that I am friends
+      with the guards at all three gates.
 
-    when talk(actor: .quest(theKeyIsTheKey, talkToKijian), self, topic) {
-        tell(self, actor) "Was Kijian willing to help?"
-    }
+      Go talk to the guards. If my son has dragged himself back to Arwyck, one
+      of them will have seen him.
+      """
+  }
 
-    when talk(actor: .quest(theKeyIsTheKey, done), self, topic) {
-        tell(self, actor) |
-            That's the key, then? The end is near. We've only one thing left to
-            do, and it is by far the hardest.
-        completeQuest(actor, theKeyIsTheKey)
-    }
+  when talk(actor: .quest(atTheGates, active), self, topic) {
+    tell(self, actor) """
+      All three guards are very observant. You'll find them at the city gates to
+      the west, south, and east.
+      """
+  }
+
+  when talk(actor: .quest(atTheGates, done), self, topic) {
+    show(actor) "Mirabel considers for a moment."
+    tell(self, actor) """
+      So, he's back, and he brought friends. This can't be good.
+
+      No doubt you've heard of the Gray Hand. Evend always wanted to join them,
+      but was rebuffed. It's surely not a good sign when even thieves doubt your
+      character.
+
+      Arwyck is a tiny place. A small gang with some ambition can cause a lot of
+      trouble. I know he's my son, but we need to put an end to this before it
+      gets out of hand.
+      """
+    completeQuest(actor, atTheGates)
+  }
 }
 
-defquest theEndOfEvend {
-    name = "The End of Evend"
-    summary = "Enter Evend's hideout and defeat his gang."
-    level = 2
-    requiredQuests = [theKeyIsTheKey]
+def quest scareTheScarecrow {
+  name = "Scare the Scarecrow"
+  summary = """
+    Find a giant centipede head in Mistmarsh and use it to scare the Scarecrow
+    into providing information about Mirabel's son.
+    """
+  level = 2
+  requiredQuests = [atTheGates]
 
-    phase active {
-        summary = "Defeat Evend and his gang."
-        initialState = ['evend, 'goon, 'ruffian]
-    }
+  phase getAHead {
+    summary = "Hunt giant centipedes in Mistmarsh to obtain one of their heads."
+  }
 
-    phase done {
-        summary = "Report to Mirabel."
-    }
-}
+  phase scare {
+    summary = "Find the scarecrow and use the giant centipede head to scare him."
+  }
 
-def mirabelsRing: lib.ring {
-    brief = "Mirabel's ring"
-    description = |
-        This ring is one that Mirabel received from her late husband. It is a
-        simple copper band etched with a delicate pattern of twisting vines.
-    level = 2
-    trait = 'vitality
+  phase done {
+    summary = "Return to Mirabel and tell her what you've learned."
+  }
 }
 
 extend distraughtShopkeep {
-    when talk(actor: .quest(theEndOfEvend, available), self, topic) {
-        tell(self, actor) |
-            It breaks my heart to say this, but my son must be taught
-            a lesson. And you look like a willing teacher.
-    }
+  when talk(actor: .quest(scareTheScarecrow, available), self, topic) {
+    tell(self, actor) """
+      We need to find where Evend is hiding. If you're willing to get your hands
+      dirty, I think we can find him.
+      """
+    offerQuest(self, scareTheScarecrow, actor)
+  }
 
-    after acceptQuest(actor, quest: theEndOfEvend, self) {
-        tell(self, actor) |
-            I fear you know what must be done. Head west, find Evend's hideout,
-            and defeat him. Watch out for his friends, they'll surely fight by
-            his side. I wish you luck.
-    }
+  after acceptQuest(avatar, quest: scareTheScarecrow, self) {
+    tell(self, actor) """
+      There's a character in town called the scarecrow. He and Evend were
+      friends. He's well connected among the less savory types in town.
 
-    when talk(actor: .quest(theEndOfEvend, active), self, topic) {
-        tell(self, actor) "Tell me...is it done?"
-    }
+      Normally I wouldn't expect him to rat out a friend, but the scarecrow has
+      a weakness...centipedes. He had a bad experience as a child, I guess.
 
-    when talk(actor: .quest(theEndOfEvend, done), self, topic) {
-        tell(self, actor) |
-            I'm glad that's over, and I hope you were able to beat some sense
-            into Evend. His father never disciplined him, and once Evend was
-            older I dared not, given his dark moods.
+      Scare him with a giant centipede head and I'm sure he'll become talkative.
+      Look for the centipedes in the swamp to the east.
+      """
+  }
 
-            Speaking of my late, no-good husband, he once gave me this ring. I
-            want you to take it. It triggers too many sad memories for me, but
-            you may find it useful.
-        receiveItems(actor, [mirabelsRing], self)
-        completeQuest(actor, theEndOfEvend)
-    }
+  when talk(actor: .quest(scareTheScarecrow, getAHead), self, topic) {
+    tell(self, actor) "Any luck finding a giant centipede head?"
+  }
+
+  when talk(actor: .quest(scareTheScarecrow, scare), self, topic) {
+    tell(self, actor) """
+      Any luck with the scarecrow? I wish I could see his face when you toss
+      that giant head in his lap!
+      """
+  }
+
+  when talk(actor: .quest(scareTheScarecrow, done), self, topic) {
+    tell(self, actor) """
+      Well, now we know where he is. All that's left is to get in, and I know
+      just the man to help us.
+      """
+  }
+}
+
+def quest theKeyIsTheKey {
+  name = "The Key is the Key"
+  summary = "Get the items Kijian requires, then obtain a key to Evend's hideout."
+  level = 2
+  requiredQuests = [scareTheScarecrow]
+
+  phase findKijian {
+    summary = "Talk to Kijian the locksmith."
+  }
+
+  phase gatherItems {
+    summary = "Give Kijian a silky spiderweb and a kobold trinket."
+    initialState = ['silkySpiderweb, 'koboldTrinket]
+  }
+
+  phase keyReady {
+    summary = "Talk to Kijian to obtain the key."
+  }
+
+  phase done {
+    summary = "Take the key to Mirabel."
+  }
+}
+
+extend distraughtShopkeep {
+  when talk(actor: .quest(theKeyIsTheKey, available), self, topic) {
+    tell(self, actor) """
+      I'm sure Evend keeps his hideout locked up tight, but it so happens I'm
+      friends with the only locksmith in town.
+      """
+    offerQuest(self, theKeyIsTheKey, actor)
+  }
+
+  after acceptQuest(actor, quest: theKeyIsTheKey, self) {
+    tell(self, actor) """
+      Go pay a visit to Kijian, the locksmith. He made just about every lock in
+      this town, and I'm sure he can help us. Be warned, he's likely going to
+      require something in return. You'll find his shop just inside the wall on
+      the south end of town.
+      """
+  }
+
+  when talk(actor: .quest(theKeyIsTheKey, talkToKijian), self, topic) {
+    tell(self, actor) "Was Kijian willing to help?"
+  }
+
+  when talk(actor: .quest(theKeyIsTheKey, done), self, topic) {
+    tell(self, actor) """
+      That's the key, then? The end is near. We've only one thing left to do,
+      and it is by far the hardest.
+      """
+    completeQuest(actor, theKeyIsTheKey)
+  }
+}
+
+def quest theEndOfEvend {
+  name = "The End of Evend"
+  summary = "Enter Evend's hideout and defeat his gang."
+  level = 2
+  requiredQuests = [theKeyIsTheKey]
+
+  phase active {
+    summary = "Defeat Evend and his gang."
+    initialState = ['evend, 'goon, 'ruffian]
+  }
+
+  phase done {
+    summary = "Report to Mirabel."
+  }
+}
+
+def entity mirabelsRing: lib.ring {
+  brief = "Mirabel's ring"
+  description = """
+    This ring is one that Mirabel received from her late husband. It is a simple
+    copper band etched with a delicate pattern of twisting vines.
+    """
+  level = 2
+  trait = 'vitality
+}
+
+extend distraughtShopkeep {
+  when talk(actor: .quest(theEndOfEvend, available), self, topic) {
+    tell(self, actor) """
+      It breaks my heart to say this, but my son must be taught a lesson. And
+      you look like a willing teacher.
+      """
+  }
+
+  after acceptQuest(actor, quest: theEndOfEvend, self) {
+    tell(self, actor) """
+      I fear you know what must be done. Head west, find Evend's hideout, and
+      defeat him. Watch out for his friends, they'll surely fight by his side. I
+      wish you luck.
+      """
+  }
+
+  when talk(actor: .quest(theEndOfEvend, active), self, topic) {
+    tell(self, actor) "Tell me...is it done?"
+  }
+
+  when talk(actor: .quest(theEndOfEvend, done), self, topic) {
+    tell(self, actor) """
+      I'm glad that's over, and I hope you were able to beat some sense into
+      Evend. His father never disciplined him, and once Evend was older I dared
+      not, given his dark moods.
+
+      Speaking of my late, no-good husband, he once gave me this ring. I want
+      you to take it. It triggers too many sad memories for me, but you may find
+      it useful.
+      """
+    receiveItems(actor, [mirabelsRing], self)
+    completeQuest(actor, theEndOfEvend)
+  }
 }
 
 // spear shop
 
-def spearVendor: lib.npc {
-    brief = "Miglin"
-    pose = "lounges against the wall."
-    description = |
-        Miglin appears to be human, but his features are strangely reptilian.
-    sells = []  // FIXME: [copperSpear, bronzeSpear]
+def entity spearVendor: lib.npc {
+  brief = "Miglin"
+  pose = "lounges against the wall."
+  description = """
+    Miglin appears to be human, but his features are strangely reptilian.
+    """
+  sells = []  // FIXME: [copperSpear, bronzeSpear]
 
-    when talk(actor: .quest(talkingShop, active), self, topic) {
-        tell(self, actor) |
-            Ah, poor Mirabel. She sold a variety of knickknacks, but nothing of
-            particular value. To be honest I can't figure why she'd be targeted
-            like this.
+  when talk(actor: .quest(talkingShop, active), self, topic) {
+    tell(self, actor) """
+      Ah, poor Mirabel. She sold a variety of knickknacks, but nothing of
+      particular value. To be honest I can't figure why she'd be targeted like
+      this.
 
-            Times have been tough since her son, who had been helping with the
-            shop, left town. Rumor has it he headed off to a bigger city to seek
-            his fortune. Haven't seen him since.
-        advanceQuest(actor, talkingShop, 'spearVendor)
-    }
+      Times have been tough since her son, who had been helping with the shop,
+      left town. Rumor has it he headed off to a bigger city to seek his
+      fortune. Haven't seen him since.
+      """
+    advanceQuest(actor, talkingShop, 'spearVendor)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Miglin's my name. I make the best spears in town. True, they are the
-            only spears in town, but that doesn't disprove my claim. Type `buy`
-            to see what I have for sale.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Miglin's my name. I make the best spears in town. True, they are the only
+      spears in town, but that doesn't disprove my claim. Type `buy` to see what
+      I have for sale.
+      """
+  }
 }
 
-deflocation spearShop: location {
-    name = "Pointy Sticks, Ltd."
-    description = "A variety of spears are artfully arranged along the walls."
-    domain = 'indoor
-    surface = 'wood
-    contents = [spearVendor]
-    exits = [lib.exitDoorway -> 'west to southRoad2]
+def location spearShop: location {
+  name = "Pointy Sticks, Ltd."
+  description = "A variety of spears are artfully arranged along the walls."
+  domain = 'indoor
+  surface = 'wood
+  contents = [spearVendor]
+  exits = [lib.exitDoorway -> 'west to southRoad2]
 }
 
 // wall street
 
-def monkey: lib.npc {
-    brief = "a costumed monkey"
-    pose = "hops from foot to foot."
-    description = "The monkey wears a fitted red coat and a yellow cap."
+def entity monkey: lib.npc {
+  brief = "a costumed monkey"
+  pose = "hops from foot to foot."
+  description = "The monkey wears a fitted red coat and a yellow cap."
 
-    moveDirection = 'east
+  moveDirection = 'east
 
-    when startWorld() {
-        while true {
-            showNear(self, "The monkey dances a lively jig.")
-            await sleep(15)
+  when startWorld() {
+    while true {
+      showNear(self, "The monkey dances a lively jig.")
+      await sleep(15)
 
-            var exit = findExit(self.location, self.moveDirection)
-            if exit != nil {
-                travel(self, exit)
-            } else {
-                showNear(self, "The monkey scratches itself and appears to sigh.")
-                self.moveDirection = oppositeDirection(self.moveDirection)
-            }
-            await sleep(5)
-        }
+      var exit = findExit(self.location, self.moveDirection)
+      if exit != nil {
+        travel(self, exit)
+      } else {
+        showNear(self, "The monkey scratches itself and appears to sigh.")
+        self.moveDirection = oppositeDirection(self.moveDirection)
+      }
+      await sleep(5)
     }
+  }
 
-    after emote(actor: .quest(danceMonkey, active), message) {
-        if (containsSubstring(message, "dance")) {
-            showNear(self) "The monkey claps wildly at {actor}'s dance moves!"
-            completeQuest(actor, danceMonkey)
-        }
+  after emote(actor: .quest(danceMonkey, active), message) {
+    if (containsSubstring(message, "dance")) {
+      showNear(self) "The monkey claps wildly at {actor}'s dance moves!"
+      completeQuest(actor, danceMonkey)
     }
+  }
 }
 
-def wallStreet: location {
-    name = "Wall Street"
-    description = |
-        This narrow cobbled lane parallels the low wall that marks the southern
-        boundary of the village.
-    domain = 'outdoor
-    surface = 'stone
+def entity wallStreet: location {
+  name = "Wall Street"
+  description = """
+    This narrow cobbled lane parallels the low wall that marks the southern
+    boundary of the village.
+    """
+  domain = 'outdoor
+  surface = 'stone
 }
 
-deflocation wallStreet1: wallStreet {
-    contents = [monkey]
-    exits = [cobbledRoad -> 'east to wallStreet2,
-             lib.entryDoorway -> 'north to lodgeWorkshop,
-             lib.entryDoorway -> 'west to frontDesk]
+def location wallStreet1: wallStreet {
+  contents = [monkey]
+  exits = [cobbledRoad -> 'east to wallStreet2,
+       lib.entryDoorway -> 'north to lodgeWorkshop,
+       lib.entryDoorway -> 'west to frontDesk]
 }
 
-deflocation wallStreet2: wallStreet {
-    exits = [cobbledRoad -> 'west to wallStreet1, cobbledRoad -> 'east to wallStreet3]
+def location wallStreet2: wallStreet {
+  exits = [cobbledRoad -> 'west to wallStreet1, cobbledRoad -> 'east to wallStreet3]
 }
 
-def wallStreetSign: fixture {
-    brief = "a directional sign"
-    pose = "stands at the crossroads."
-    description = |
-        Wooden arrows affixed atop the signpost read as follows:
+def entity wallStreetSign: fixture {
+  brief = "a directional sign"
+  pose = "stands at the crossroads."
+  description = """
+    Wooden arrows affixed atop the signpost read as follows:
 
-        | North: Village Square
-        | West: Armor Emporium
-        | South: Perenvale
-        | East: Crafters' Hall
+    | North: Village Square
+    | West: Armor Emporium
+    | South: Perenvale
+    | East: Crafters' Hall
+    """
 }
 
-deflocation wallStreet3: wallStreet {
-    contents = [wallStreetSign]
-    exits = [cobbledRoad -> 'west to wallStreet2, cobbledRoad -> 'east to wallStreet4,
-             cobbledRoad -> 'south to southGate, dirtRoad -> 'north to southRoad2]
+def location wallStreet3: wallStreet {
+  contents = [wallStreetSign]
+  exits = [cobbledRoad -> 'west to wallStreet2, cobbledRoad -> 'east to wallStreet4,
+       cobbledRoad -> 'south to southGate, dirtRoad -> 'north to southRoad2]
 }
 
-deflocation wallStreet4: wallStreet {
-    exits = [cobbledRoad -> 'west to wallStreet3, cobbledRoad -> 'east to wallStreet5,
-             lib.entryDoorway -> 'south to locksmithShop]
+def location wallStreet4: wallStreet {
+  exits = [cobbledRoad -> 'west to wallStreet3, cobbledRoad -> 'east to wallStreet5,
+       lib.entryDoorway -> 'south to locksmithShop]
 }
 
-deflocation wallStreet5: wallStreet {
-    exits = [cobbledRoad -> 'west to wallStreet4, cobbledRoad -> 'east to wallStreet6]
+def location wallStreet5: wallStreet {
+  exits = [cobbledRoad -> 'west to wallStreet4, cobbledRoad -> 'east to wallStreet6]
 }
 
-deflocation wallStreet6: wallStreet {
-    exits = [cobbledRoad -> 'west to wallStreet5, alley -> 'north to muggersAlley3,
-             lib.entryDoorway -> 'east to craftersHall1nw]
+def location wallStreet6: wallStreet {
+  exits = [cobbledRoad -> 'west to wallStreet5, alley -> 'north to muggersAlley3,
+       lib.entryDoorway -> 'east to craftersHall1nw]
 }
 
 // armor emporium
 
-def armorEmporium: location {
-    subregion = "Armor Emporium"
-    domain = 'indoor
-    surface = 'wood
+def entity armorEmporium: location {
+  subregion = "Armor Emporium"
+  domain = 'indoor
+  surface = 'wood
 }
 
-def armorGreeter: lib.npc {
-    brief = "a heavily-armored man"
-    pose = "stands proudly behind a small desk."
-    description = |
-        The man wears a mish-mash of various types of armor, including three
-        different helms stacked atop one another.
+def entity armorGreeter: lib.npc {
+  brief = "a heavily-armored man"
+  pose = "stands proudly behind a small desk."
+  description = """
+    The man wears a mish-mash of various types of armor, including three
+    different helms stacked atop one another.
+    """
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Well met! The vendors beyond can provide you with armor of all
-            types. Peruse their wares and be sure to buy something, you'll need
-            the protection once you venture outside the town.
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Well met! The vendors beyond can provide you with armor of all types.
+      Peruse their wares and be sure to buy something, you'll need the
+      protection once you venture outside the town.
 
-            Be aware that armor comes in three basic types: light, medium, and
-            heavy. Each type provides more protection than the last, but also
-            incurs more penalties in terms of your speed and ability to cast
-            magic spells. Choose wisely!
-    }
+      Be aware that armor comes in three basic types: light, medium, and heavy.
+      Each type provides more protection than the last, but also incurs more
+      penalties in terms of your speed and ability to cast magic spells. Choose
+      wisely!
+      """
+  }
 }
 
-deflocation frontDesk: armorEmporium {
-    name = "Front Desk"
-    description = |
-        A number of battered shields hang on the walls here, displaying the
-        coats-of-arms of prominent area families.
-    contents = [armorGreeter]
-    exits = [lib.exitDoorway -> 'east to wallStreet1,
-             lib.doorway -> 'north to mediumArmorShop,
-             lib.doorway -> 'west to lightArmorShop]
+def location frontDesk: armorEmporium {
+  name = "Front Desk"
+  description = """
+    A number of battered shields hang on the walls here, displaying the
+    coats-of-arms of prominent area families.
+    """
+  contents = [armorGreeter]
+  exits = [lib.exitDoorway -> 'east to wallStreet1,
+       lib.doorway -> 'north to mediumArmorShop,
+       lib.doorway -> 'west to lightArmorShop]
 }
 
-def leatherArmorVendor: lib.npc {
-    brief = "Lingum"
-    description = |
-        The armor vendor is a goblin, and rather small even for his kind. He
-        wears a conical leather hat that has been dyed bright green.
-    sells = []
-    // FIXME: [thinLeatherCap, thinLeatherTunic, thinLeatherGloves,
-    // thinLeatherLeggings, thinLeatherBoots]
+def entity leatherArmorVendor: lib.npc {
+  brief = "Lingum"
+  description = """
+    The armor vendor is a goblin, and rather small even for his kind. He wears a
+    conical leather hat that has been dyed bright green.
+    """
+  sells = []
+  // FIXME: [thinLeatherCap, thinLeatherTunic, thinLeatherGloves,
+  // thinLeatherLeggings, thinLeatherBoots]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Greetings, greetings! Welcome to my humble shop, where you can `buy`
-            leather armor in all shapes and sizes. Leather is the most versatile
-            of materials and affords much-needed protection to an adventurer
-            such as yourself.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Greetings, greetings! Welcome to my humble shop, where you can `buy`
+      leather armor in all shapes and sizes. Leather is the most versatile of
+      materials and affords much-needed protection to an adventurer such as
+      yourself.
+      """
+  }
 }
 
-deflocation lightArmorShop: armorEmporium {
-    name = "Lingum's Leathers"
-    description = |
-        This room smells of tanned animal skin. Leather garments are displayed
-        on numerous wicker manneqins.
-    contents = [leatherArmorVendor]
-    exits = [lib.doorway -> 'east to frontDesk, lib.doorway -> 'north to heavyArmorShop]
+def location lightArmorShop: armorEmporium {
+  name = "Lingum's Leathers"
+  description = """
+    This room smells of tanned animal skin. Leather garments are displayed on
+    numerous wicker manneqins.
+    """
+  contents = [leatherArmorVendor]
+  exits = [lib.doorway -> 'east to frontDesk, lib.doorway -> 'north to heavyArmorShop]
 
-    tutorial = |
-        Light armor, such as that sold here, provides decent protection and does
-        not slow you down or put your magic spells at risk of failure.
+  tutorial = """
+    Light armor, such as that sold here, provides decent protection and does not
+    slow you down or put your magic spells at risk of failure.
+    """
 }
 
-def mediumArmorVendor: lib.npc {
-    brief = "Chiana"
-    description = |
-        The vendor is a white-haired sidhe woman, slim almost to the point of
-        gauntness. She wears an exquisite knee-length shirt of gleaming
-        chainmail.
-    sells = []
-    // FIXME: [brassChainCoif, brassChainShirt, brassChainGloves,
-    // brassChainLeggings, brassChainBoots]
+def entity mediumArmorVendor: lib.npc {
+  brief = "Chiana"
+  description = """
+    The vendor is a white-haired sidhe woman, slim almost to the point of
+    gauntness. She wears an exquisite knee-length shirt of gleaming chainmail.
+    """
+  sells = []
+  // FIXME: [brassChainCoif, brassChainShirt, brassChainGloves,
+  // brassChainLeggings, brassChainBoots]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Feel free to peruse my wares. If you choose to `buy` from me, you
-            can be assured of the finest quality.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Feel free to peruse my wares. If you choose to `buy` from me, you can be
+      assured of the finest quality.
+      """
+  }
 }
 
-deflocation mediumArmorShop: armorEmporium {
-    name = "Chiana's Chainmail"
-    contents = [mediumArmorVendor]
-    exits = [lib.doorway -> 'south to frontDesk, lib.doorway -> 'west to heavyArmorShop]
+def location mediumArmorShop: armorEmporium {
+  name = "Chiana's Chainmail"
+  contents = [mediumArmorVendor]
+  exits = [lib.doorway -> 'south to frontDesk, lib.doorway -> 'west to heavyArmorShop]
 
-    tutorial = |
-        Chiana sells medium armor. It provides more protection than light armor
-        but less than heavy armor. It slows your actions slightly and adds a
-        small chance that your magic spells will fail.
+  tutorial = """
+    Chiana sells medium armor. It provides more protection than light armor but
+    less than heavy armor. It slows your actions slightly when worn.
+    """
 }
 
-def heavyArmorVendor: lib.npc {
-    brief = "Palla"
-    description = |
-        Palla is a dwarven woman. She wears a gaily-colored cotton dress and her
-        waist in girded with a belt of polished steel plates.
-    sells = []
-    // FIXME: [brassPlateCoif, brassPlateShirt, brassPlateGloves,
-    // brassPlateLeggings, brassPlateBoots]
+def entity heavyArmorVendor: lib.npc {
+  brief = "Palla"
+  description = """
+    Palla is a dwarven woman. She wears a gaily-colored cotton dress and her
+    waist in girded with a belt of polished steel plates.
+    """
+  sells = []
+  // FIXME: [brassPlateCoif, brassPlateShirt, brassPlateGloves,
+  // brassPlateLeggings, brassPlateBoots]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Plate armor provides the most protection, it's true! But it is far
-            too heavy to wear all day while tending my shop.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Plate armor provides the most protection, it's true! But it is far too
+      heavy to wear all day while tending my shop.
+      """
+  }
 }
 
-deflocation heavyArmorShop: armorEmporium {
-    name = "Palla's Platemail"
-    contents = [heavyArmorVendor]
-    exits = [lib.doorway -> 'south to lightArmorShop, lib.doorway -> 'east to mediumArmorShop]
+def location heavyArmorShop: armorEmporium {
+  name = "Palla's Platemail"
+  contents = [heavyArmorVendor]
+  exits = [lib.doorway -> 'south to lightArmorShop, lib.doorway -> 'east to mediumArmorShop]
 
-    tutorial = |
-        The heavy armor sold here provides the most protection, but also
-        slows you down considerably and substantially increases the chance your
-        magic spells will fail.
+  tutorial = """
+    The heavy armor sold here provides the most protection, but also slows you
+    down considerably.
+    """
 }
 
 // FIXME: crafters' hall
 
 // south gate
 
-def southGuard: lib.npc {
-    brief = "the gate guard"
-    pose = "stands at attention, spear in hand."
+def entity southGuard: lib.npc {
+  brief = "the gate guard"
+  pose = "stands at attention, spear in hand."
 
-    when talk(actor: .quest(atTheGates, active), self, topic) {
-        tell(self, actor) |
-            Ah, that boy was always a pain in my arse. I can't blame his mother.
-            She's a good woman and did her best. Have I seen him lately? No, he
-            hasn't passed through my gate, that's for certain.
-        advanceQuest(actor, atTheGates, 'southGate)
-    }
+  when talk(actor: .quest(atTheGates, active), self, topic) {
+    tell(self, actor) """
+      Ah, that boy was always a pain in my arse. I can't blame his mother. She's
+      a good woman and did her best. Have I seen him lately? No, he hasn't
+      passed through my gate, that's for certain.
+      """
+    advanceQuest(actor, atTheGates, 'southGate)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            To the south you'll find Perenvale. It's a nice place to visit
-            as long as you avoid the centaurs that roam the plains.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      To the south you'll find Perenvale. It's a nice place to visit as long as
+      you avoid the centaurs that roam the plains.
+      """
+  }
 }
 
-deflocation southGate: location {
-    name = "South Gate"
-    domain = 'outdoor
-    surface = 'stone
-    contents = [southGuard]
-    exits = [cobbledRoad -> 'north to wallStreet3]
+def location southGate: location {
+  name = "South Gate"
+  domain = 'outdoor
+  surface = 'stone
+  contents = [southGuard]
+  exits = [cobbledRoad -> 'north to wallStreet3]
 }
 
 // locksmith shop
 
-def pewterKey: item {
-    brief = "a tiny pewter key"
-    description = |
-        Kijian the locksmith assures you this key will open the door to Evend's
-        hideout.
-    icon = 'silverKey
-    // FIXME: bound = true
+def entity pewterKey: item {
+  brief = "a tiny pewter key"
+  description = """
+    Kijian the locksmith assures you this key will open the door to Evend's
+    hideout.
+    """
+  icon = 'silverKey
+  // FIXME: bound = true
 }
 
-def locksmith: lib.npc {
-    brief = "Kijian"
+def entity locksmith: lib.npc {
+  brief = "Kijian"
 
-    when talk(actor: .quest(theKeyIsTheKey, findKijian), self, topic) {
-        tell(self, actor) |
-            So Mirabel needs to unlock a door, eh? Well of course I'm happy to
-            help. I can make a key to open that lock, but while I work I'll need
-            you to do something for me.
+  when talk(actor: .quest(theKeyIsTheKey, findKijian), self, topic) {
+    tell(self, actor) """
+      So Mirabel needs to unlock a door, eh? Well of course I'm happy to help. I
+      can make a key to open that lock, but while I work I'll need you to do
+      something for me.
 
-            To the west of town, in Silverwood, you can find giant spiders. I
-            need one of their silky spiderwebs for a side project. Don't ask.
+      To the west of town, in Silverwood, you can find giant spiders. I need one
+      of their silky spiderwebs for a side project. Don't ask.
 
-            Also, just north of the forest, there's an abandoned mine that's
-            infested with kobolds. I want to study one of their trinkets.
+      Also, just north of the forest, there's an abandoned mine that's infested
+      with kobolds. I want to study one of their trinkets.
 
-            Bring me both of those items, and I'll give you the key.
-        advanceQuest(actor, theKeyIsTheKey)
-    }
+      Bring me both of those items, and I'll give you the key.
+      """
+    advanceQuest(actor, theKeyIsTheKey)
+  }
 
-    when talk(actor: .quest(theKeyIsTheKey, gatherItems), self, topic) {
-        tell(self, actor) |
-            Did you get the spiderweb and kobold trinket? Hand 'em over and
-            you'll get your key.
-    }
+  when talk(actor: .quest(theKeyIsTheKey, gatherItems), self, topic) {
+    tell(self, actor) """
+      Did you get the spiderweb and kobold trinket? Hand 'em over and you'll get
+      your key.
+      """
+  }
 
-    when giveItem(actor: .quest(theKeyIsTheKey, gatherItems), item: silverwood.silkySpiderweb, self) {
-        tell(self, actor) "Ho ho, that really *is* quite silky!"
-        advanceQuest(actor, theKeyIsTheKey, 'silkySpiderweb)
-    }
+  when giveItem(actor: .quest(theKeyIsTheKey, gatherItems), item: silverwood.silkySpiderweb, self) {
+    tell(self, actor) "Ho ho, that really *is* quite silky!"
+    advanceQuest(actor, theKeyIsTheKey, 'silkySpiderweb)
+  }
 
-    when giveItem(actor: .quest(theKeyIsTheKey, gatherItems), item: copperMine.koboldTrinket, self) {
-        tell(self, actor) |
-            Ho ho, that isn't quite what I imagined, but still very interesting!
-        advanceQuest(actor, theKeyIsTheKey, 'koboldTrinket)
-    }
+  when giveItem(actor: .quest(theKeyIsTheKey, gatherItems), item: copperMine.koboldTrinket, self) {
+    tell(self, actor) """
+      Ho ho, that isn't quite what I imagined, but still very interesting!
+      """
+    advanceQuest(actor, theKeyIsTheKey, 'koboldTrinket)
+  }
 
-    when talk(actor: .quest(theKeyIsTheKey, keyReady), self, topic) {
-        receiveItems(actor, [pewterKey], self)
-        tell(self, actor) |
-            There's your key. Tell Mirabel I wish her all the best.
-        advanceQuest(actor, theKeyIsTheKey)
-    }
+  when talk(actor: .quest(theKeyIsTheKey, keyReady), self, topic) {
+    receiveItems(actor, [pewterKey], self)
+    tell(self, actor) """
+      There's your key. Tell Mirabel I wish her all the best.
+      """
+    advanceQuest(actor, theKeyIsTheKey)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Hullo! Welcome to my shop. Sorry, but we're not quite
-            open for business yet. Please come again.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Hullo! Welcome to my shop. Sorry, but we're not quite open for business
+      yet. Please come again.
+      """
+  }
 }
 
-deflocation locksmithShop: location {
-    name = "Kijian's Locks and Keys"
-    description = |
-        This shop is empty but for a battered workbench and a few crates stacked
-        in the corner.
-    domain = 'indoor
-    surface = 'wood
-    contents = [locksmith]
-    exits = [lib.exitDoorway -> 'north to wallStreet4]
+def location locksmithShop: location {
+  name = "Kijian's Locks and Keys"
+  description = """
+    This shop is empty but for a battered workbench and a few crates stacked in
+    the corner.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [locksmith]
+  exits = [lib.exitDoorway -> 'north to wallStreet4]
 }
 
 // forest road
 
-def forestRoad: location {
-    name = "Forest Road"
-    description = |
-        This narrow dirt road runs between the village and a small forest to
-        the west.
-    domain = 'outdoor
-    surface = 'dirt
+def entity forestRoad: location {
+  name = "Forest Road"
+  description = """
+    This narrow dirt road runs between the village and a small forest to the
+    west.
+    """
+  domain = 'outdoor
+  surface = 'dirt
 }
 
-deflocation forestRoad1: forestRoad {
-    exits = [dirtRoad -> 'east to squareSw, dirtRoad -> 'west to forestRoad2]
+def location forestRoad1: forestRoad {
+  exits = [dirtRoad -> 'east to squareSw, dirtRoad -> 'west to forestRoad2]
 }
 
-def shackDoor: portal {
-    key = pewterKey
+def entity shackDoor: portal {
+  key = pewterKey
 }
 
-deflocation forestRoad2: forestRoad {
-    exits = [dirtRoad -> 'east to forestRoad1, dirtRoad -> 'west to forestRoad3,
-             shackDoor -> 'south to shack]
+def location forestRoad2: forestRoad {
+  exits = [dirtRoad -> 'east to forestRoad1, dirtRoad -> 'west to forestRoad3,
+           shackDoor -> 'south to shack]
 }
 
-deflocation forestRoad3: forestRoad {
-    exits = [dirtRoad -> 'east to forestRoad2, dirtRoad -> 'west to forestGate,
-             narrowPath -> 'north to groveSw]
+def location forestRoad3: forestRoad {
+  exits = [dirtRoad -> 'east to forestRoad2, dirtRoad -> 'west to forestGate,
+           narrowPath -> 'north to groveSw]
 }
 
 // shack
 
-def gangMember: creature {
-    level = 1
-    minHealth = 10
+def entity gangMember: creature {
+  level = 1
+  minHealth = 10
 
+  // FIXME:
+  func visible(observer) {
+    return questPhase(observer, theEndOfEvend) == 'active
+  }
+
+  after kill(actor, self, weapon) {
+    showNear(self) "{self:D} falls to his knees in submission."
+    if advanceQuest(actor, theEndOfEvend, self.questKey) {
+      tell(evend, actor) """
+        I don't know how, but you've beaten us all. I guess we're not strong
+        enough to run this town. For now.
+        """
+      show(actor) """
+        Evend motions to his henchmen, and all three of them stumble out of the
+        shack.
+        """
+    }
+
+    await sleep(60)
     // FIXME:
-    func visible(observer) {
-        return questPhase(observer, theEndOfEvend) == 'active
-    }
-
-    after kill(actor, self, weapon) {
-        showNear(self) "{self:D} falls to his knees in submission."
-        if advanceQuest(actor, theEndOfEvend, self.questKey) {
-            tell(evend, actor) |
-                I don't know how, but you've beaten us all. I guess we're not
-                strong enough to run this town. For now.
-            show(actor) |
-                Evend motions to his henchmen, and all three of them stumble out
-                of the shack.
-        }
-
-        await sleep(60)
-        // FIXME:
-        self.health = self.maxHealth
-    }
+    self.health = self.maxHealth
+  }
 }
 
-def evend: gangMember {
-    brief = "Evend"
-    weapons = []  // FIXME: lib.sword
-    questKey = 'evend
+def entity evend: gangMember {
+  brief = "Evend"
+  weapons = []  // FIXME: lib.sword
+  questKey = 'evend
 
-    after enterLocation(actor: .quest(theEndOfEvend, active), location, entry) {
-        tell(self, actor) |
-            Hey! How did you get in? You'd better turn around and
-            leave, or my friends here will make you sorry.
-    }
+  after enterLocation(actor: .quest(theEndOfEvend, active), location, entry) {
+    tell(self, actor) """
+      Hey! How did you get in? You'd better turn around and leave, or my friends
+      here will make you sorry.
+      """
+  }
 }
 
-def goon: gangMember {
-    brief = "a barrel-chested goon"
-    weapons = []  // FIXME: lib.mace
+def entity goon: gangMember {
+  brief = "a barrel-chested goon"
+  weapons = []  // FIXME: lib.mace
 }
 
-def ruffian: gangMember {
-    brief = "a lanky ruffian"
-    weapons = []  // FIXME: lib.dagger
+def entity ruffian: gangMember {
+  brief = "a lanky ruffian"
+  weapons = []  // FIXME: lib.dagger
 }
 
-deflocation shack: location {
-    name = "Evend's Hideout"
-    description = |
-        Despite the ramshackle appearance of its exterior, the interior of this
-        shack is quite comfortable.
-    domain = 'indoor
-    surface = 'wood
-    contents = [evend, goon, ruffian]
-    exits = [lib.exitDoorway -> 'north to forestRoad2]
+def location shack: location {
+  name = "Evend's Hideout"
+  description = """
+    Despite the ramshackle appearance of its exterior, the interior of this
+    shack is quite comfortable.
+    """
+  domain = 'indoor
+  surface = 'wood
+  contents = [evend, goon, ruffian]
+  exits = [lib.exitDoorway -> 'north to forestRoad2]
 }
 
 // secluded grove
 
-def grove: location {
-    name = "Secluded Grove"
-    description = |
-        This beautiful grove of aspens and birches seems unnaturally quiet,
-        especially given the proximity of the village.
-    domain = 'outdoor
-    surface = 'forest
+def entity grove: location {
+  name = "Secluded Grove"
+  description = """
+    This beautiful grove of aspens and birches seems unnaturally quiet,
+    especially given the proximity of the village.
+    """
+  domain = 'outdoor
+  surface = 'forest
 }
 
-deflocation groveSw: grove {
-    exits = [narrowPath -> 'south to forestRoad3, narrowPath -> 'north to groveNw,
-             narrowPath -> 'east to groveSe]
+def location groveSw: grove {
+  exits = [narrowPath -> 'south to forestRoad3, narrowPath -> 'north to groveNw,
+       narrowPath -> 'east to groveSe]
 }
 
-def druidTrainer: lib.npc {
-    brief = "Raspin Redleaf"
-    pose = "tends to a nearby tree."
-    description = |
-        Raspin is a wiry, rugged-looking man who wears plain brown clothes well
-        suited to travel in the wilderness. His wide leather belt holds numerous
-        small pouches as well as a pair of long, curved daggers."
+def entity druidTrainer: lib.npc {
+  brief = "Raspin Redleaf"
+  pose = "tends to a nearby tree."
+  description = """
+    Raspin is a wiry, rugged-looking man who wears plain brown clothes well
+    suited to travel in the wilderness. His wide leather belt holds numerous
+    small pouches as well as a pair of long, curved daggers.
+    """
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Welcome, friend. I am Raspin, a representative of the Circle of the
-            Grove.
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Welcome, friend. I am Raspin, a representative of the Circle of the Grove.
 
-            My guild teaches skills that draw upon the power of nature to heal,
-            sustain, and---when needed---destroy. Type `learn` to see what I can
-            teach you, or type `help skills` for more general information.
-    }
+      My guild teaches skills that draw upon the power of nature to heal,
+      sustain, and---when needed---destroy. Type `learn` to see what I can teach
+      you, or type `help skills` for more general information.
+      """
+  }
 }
 
-deflocation groveNw: grove {
-    contents = [druidTrainer]
-    exits = [narrowPath -> 'south to groveSw, narrowPath -> 'east to groveNe]
+def location groveNw: grove {
+  contents = [druidTrainer]
+  exits = [narrowPath -> 'south to groveSw, narrowPath -> 'east to groveNe]
 }
 
-deflocation groveNe: grove {
-    exits = [narrowPath -> 'west to groveNw, narrowPath -> 'south to groveSe,
-             narrowPath -> 'north to tidyGarden]
+def location groveNe: grove {
+  exits = [narrowPath -> 'west to groveNw, narrowPath -> 'south to groveSe,
+           narrowPath -> 'north to tidyGarden]
 }
 
-def staffVendor: lib.npc {
-    brief = "Ilivirian"
-    pose = "polishes one of the many staves on display."
-    description = "Ilivirian is a very tall elf with long golden hair."
-    sells = []  // FIXME: [pineStaff, oakStaff]
+def entity staffVendor: lib.npc {
+  brief = "Ilivirian"
+  pose = "polishes one of the many staves on display."
+  description = "Ilivirian is a very tall elf with long golden hair."
+  sells = []  // FIXME: [pineStaff, oakStaff]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Welcome, traveler. Are you in need of a staff, perchance? Type `buy`
-            to see what I have available.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Welcome, traveler. Are you in need of a staff, perchance? Type `buy` to
+      see what I have available.
+      """
+  }
 }
 
-deflocation groveSe: grove {
-    contents = [staffVendor]
-    exits = [narrowPath -> 'north to groveNe, narrowPath -> 'west to groveSw]
+def location groveSe: grove {
+  contents = [staffVendor]
+  exits = [narrowPath -> 'north to groveNe, narrowPath -> 'west to groveSw]
 }
 
 // garden
 
-def botanyTrainer: lib.npc {
-    brief = "Gariande"
-    pose = "is busily tying up bundles of herbs."
-    description = |
-        Gariande is an very old woman with deep wrinkles on her face. Her
-        steel-gray hair is tied in a bun.
-    teaches = []  // FIXME:
+def entity botanyTrainer: lib.npc {
+  brief = "Gariande"
+  pose = "is busily tying up bundles of herbs."
+  description = """
+    Gariande is an very old woman with deep wrinkles on her face. Her steel-gray
+    hair is tied in a bun.
+    """
+  teaches = []  // FIXME:
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Come for some sweet corn? Or perhaps a few tomatoes? Well, you're
-            out of luck: they're not for sale. But if you want to `learn` about
-            botany, then you've come to the right place. I represent the
-            Botanists' Guild in these parts. Type `guild info` to learn more.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Come for some sweet corn? Or perhaps a few tomatoes? Well, you're out of
+      luck: they're not for sale. But if you want to `learn` about botany, then
+      you've come to the right place. I represent the Botanists' Guild in these
+      parts. Type `guild info` to learn more.
+      """
+  }
 }
 
-def botanyVendor: lib.npc {
-    brief = "Bonnos"
-    pose = "is watering the plants."
-    description = |
-        Bonnos is a man of perhaps thirty years, with perhaps ten years' worth
-        of dirt under his fingernails.
-    sells = []  // FIXME: [lib:botany/copperSickle]
+def entity botanyVendor: lib.npc {
+  brief = "Bonnos"
+  pose = "is watering the plants."
+  description = """
+    Bonnos is a man of perhaps thirty years, with perhaps ten years' worth of
+    dirt under his fingernails.
+    """
+  sells = []  // FIXME: [lib:botany/copperSickle]
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Nice to meet you. Grandmother keeps me quite busy here, so I don't
-            meet many travelers. If you've come to learn about botany, you can
-            `buy` the tools you'll need from me.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Nice to meet you. Grandmother keeps me quite busy here, so I don't meet
+      many travelers. If you've come to learn about botany, you can `buy` the
+      tools you'll need from me.
+      """
+  }
 }
 
-deflocation tidyGarden: location {
-    name = "Tidy Garden"
-    description = |
-        This small plot is filled with rows of carefully-tended vegetables and
-        herbs.
-    domain = 'outdoor
-    surface = 'grass
-    contents = [botanyTrainer, botanyVendor]
-    exits = [narrowPath -> 'south to groveNe]
+def location tidyGarden: location {
+  name = "Tidy Garden"
+  description = """
+    This small plot is filled with rows of carefully-tended vegetables and
+    herbs.
+    """
+  domain = 'outdoor
+  surface = 'grass
+  contents = [botanyTrainer, botanyVendor]
+  exits = [narrowPath -> 'south to groveNe]
 }
 
 // forest gate
 
-defquest findMySon {
-    name = "Find My Son"
-    summary = |
-        Find Miranda's son, who disappeared with his friend while picking
-        berries in Silverwood.
-    level = 2
+def quest findMySon {
+  name = "Find My Son"
+  summary = """
+    Find Miranda's son, who disappeared with his friend while picking berries in
+    Silverwood.
+    """
+  level = 2
 
-    phase active {
-        summary = "Find Miranda's soon in the Silverwood."
-    }
+  phase active {
+    summary = "Find Miranda's soon in the Silverwood."
+  }
 
-    phase done {
-        summary = "Report to Miranda."
-    }
+  phase done {
+    summary = "Report to Miranda."
+  }
 }
 
-def miranda: lib.npc {
-    brief = "Miranda Mathers"
-    description = |
-        Miranda is a stout middle-aged woman. She wears practical clothing that
-        has seen numerous repairs over the years.
-    offersQuests = [findMySon]
+def entity miranda: lib.npc {
+  brief = "Miranda Mathers"
+  description = """
+    Miranda is a stout middle-aged woman. She wears practical clothing that has
+    seen numerous repairs over the years.
+    """
+  offersQuests = [findMySon]
 
-    when talk(actor: .quest(findMySon, available), self, topic) {
-        tell(self, actor) |
-            I know we've never met, but I have nobody else to turn to. My son is
-            missing. Will you help me?
-    }
+  when talk(actor: .quest(findMySon, available), self, topic) {
+    tell(self, actor) """
+      I know we've never met, but I have nobody else to turn to. My son is
+      missing. Will you help me?
+      """
+  }
 
-    after acceptQuest(actor, quest: findMySon, self) {
-        tell(self, actor) |
-            Oh, thank the gods! My son went into the woods west of here to pick
-            some berries with his friend. He has been there dozens of times
-            without any problems, but today he never returned. I'm so worried!
+  after acceptQuest(actor, quest: findMySon, self) {
+    tell(self, actor) """
+      Oh, thank the gods! My son went into the woods west of here to pick some
+      berries with his friend. He has been there dozens of times without any
+      problems, but today he never returned. I'm so worried!
 
-            Please...find my boy. I don't know what I'd do if I lost him.
-    }
+      Please...find my boy. I don't know what I'd do if I lost him.
+      """
+  }
 
-    when talk(actor: .quest(findMySon, active), self, topic) {
-        tell(self, actor) |
-            Have you found my boy? He should be in the forest to the west.
-    }
+  when talk(actor: .quest(findMySon, active), self, topic) {
+    tell(self, actor) """
+      Have you found my boy? He should be in the forest to the west.
+      """
+  }
 
-    when talk(actor: .quest(findMySon, done), self, topic) {
-        tell(self, actor) |
-            Thank the gods you found him! He may be a little rascal, but he's
-            *my* little rascal and I love him to death.
-        completeQuest(actor, findMySon)
-    }
+  when talk(actor: .quest(findMySon, done), self, topic) {
+    tell(self, actor) """
+      Thank the gods you found him! He may be a little rascal, but he's *my*
+      little rascal and I love him to death.
+      """
+    completeQuest(actor, findMySon)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) "A pleasant day to you!"
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) "A pleasant day to you!"
+  }
 }
 
-def rhody: lib.npc {
-    brief = "Rhody Mathers"
-    pose = "fidgets nearby."
-    description = |
-        Rhody is a young boy, perhaps eight years old. Every now and then you
-        catch him glancing westward, toward the forest.
+def entity rhody: lib.npc {
+  brief = "Rhody Mathers"
+  pose = "fidgets nearby."
+  description = """
+    Rhody is a young boy, perhaps eight years old. Every now and then you catch
+    him glancing westward, toward the forest.
+    """
 
-    func visible(observer) {
-        var state = questPhase(observer, findMySon)
-        return state == 'done || state == 'complete
-    }
+  func visible(observer) {
+    var state = questPhase(observer, findMySon)
+    return state == 'done || state == 'complete
+  }
 
-    // FIXME: move this to the Rhody in the forest.
-    when talk(actor: .quest(findMySon, active), self, topic) {
-        tell(self, actor) |
-            Hi! Do I know you? Oh, my mom sent you? I'm sorry she got so
-            worried. I guess I should head back. Nice to meet you!
-        show(avatar) |
-            Rhody wipes his face with his sleeve then heads north, back toward
-            Arwyck.
-        advanceQuest(actor, findMySon)
-    }
+  // FIXME: move this to the Rhody in the forest.
+  when talk(actor: .quest(findMySon, active), self, topic) {
+    tell(self, actor) """
+      Hi! Do I know you? Oh, my mom sent you? I'm sorry she got so worried. I
+      guess I should head back. Nice to meet you!
+      """
+    show(avatar) """
+      Rhody wipes his face with his sleeve then heads north, back toward Arwyck.
+      """
+    advanceQuest(actor, findMySon)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Hello again! Don't tell my mom, but as soon as her back is turned
-            I'm gonna sneak into the forest for more berries!
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Hello again! Don't tell my mom, but as soon as her back is turned I'm
+      gonna sneak into the forest for more berries!
+      """
+  }
 }
 
-def forestGuard: lib.npc {
-    brief = "the gate guard"
-    pose = "keeps an eye on the road."
+def entity forestGuard: lib.npc {
+  brief = "the gate guard"
+  pose = "keeps an eye on the road."
 
-    when talk(actor: .quest(atTheGates, active), self, topic) {
-        tell(self, actor) "Mirabel's son?"
-        show(actor) "The guard spits into the dirt."
-        tell(self, actor) |
-            I know of him. Always a troublemaker. But I haven't seen him in
-            ages, thank the gods.
-        advanceQuest(actor, atTheGates, 'westGate)
-    }
+  when talk(actor: .quest(atTheGates, active), self, topic) {
+    tell(self, actor) "Mirabel's son?"
+    show(actor) "The guard spits into the dirt."
+    tell(self, actor) """
+      I know of him. Always a troublemaker. But I haven't seen him in ages,
+      thank the gods.
+      """
+    advanceQuest(actor, atTheGates, 'westGate)
+  }
 
-    when talk(actor, self, topic) {
-        tell(self, actor) |
-            Be wary in the forest, traveler. Those spiders are no joke.
-    }
+  when talk(actor, self, topic) {
+    tell(self, actor) """
+      Be wary in the forest, traveler. Those spiders are no joke.
+      """
+  }
 }
 
-deflocation forestGate: location {
-    name = "Forest Gate"
-    description = |
-        A stout wooden stockade separates Arwyck from the forest to the west. A
-        narrow gate allows access to the wilderness beyond.
-    domain = 'outdoor
-    surface = 'dirt
-    contents = [miranda, rhody, forestGuard]
-    exits = [dirtRoad -> 'east to forestRoad3, dirtRoad -> 'west to silverwood.roadZ14]
+def location forestGate: location {
+  name = "Forest Gate"
+  description = """
+    A stout wooden stockade separates Arwyck from the forest to the west. A
+    narrow gate allows access to the wilderness beyond.
+    """
+  domain = 'outdoor
+  surface = 'dirt
+  contents = [miranda, rhody, forestGuard]
+  exits = [dirtRoad -> 'east to forestRoad3, dirtRoad -> 'west to silverwood.roadZ14]
 }
