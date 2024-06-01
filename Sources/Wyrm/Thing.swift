@@ -8,7 +8,7 @@ class Thing: Entity, Viewable, Matchable {
     var pose: String?
     var description: String?
     var icon: String?
-    var isObvious = true
+    var implied = false
     var alts = [NounPhrase]()
     var size = Size.huge
     weak var container: Entity?
@@ -19,7 +19,7 @@ class Thing: Entity, Viewable, Matchable {
         pose = other.pose
         description = other.description
         icon = other.icon
-        isObvious = other.isObvious
+        implied = other.implied
         alts = other.alts
         size = other.size
         super.copyProperties(from: other)
@@ -30,7 +30,7 @@ class Thing: Entity, Viewable, Matchable {
         "pose": Accessor(\Thing.pose),
         "description": Accessor(\Thing.description),
         "icon": Accessor(\Thing.icon),
-        "isObvious": Accessor(\Thing.isObvious),  // FIXME: -> implied
+        "implied": Accessor(\Thing.implied),
         "alts": Accessor(\Thing.alts),
         "size": Accessor(\Thing.size),
         "location": Accessor(\Thing.location),
@@ -59,10 +59,6 @@ class Thing: Entity, Viewable, Matchable {
         } else {
             return true
         }
-    }
-
-    func isObvious(to observer: Avatar) -> Bool {
-        return isObvious && isVisible(to: observer)
     }
 
     static let defaultBrief = NounPhrase("an entity")

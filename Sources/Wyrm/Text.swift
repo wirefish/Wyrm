@@ -34,14 +34,3 @@ struct Text {
   }
 }
 
-extension Array where Element: StringProtocol {
-
-  func conjunction(using word: String) -> String {
-    switch count {
-    case 0: return ""
-    case 1: return String(first!)
-    case 2: return "\(first!) \(word) \(last!)"
-    default: return "\(dropLast().joined(separator: ", ")), \(word) \(last!)"
-    }
-  }
-}

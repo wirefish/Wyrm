@@ -56,6 +56,8 @@ class Portal: Thing {
         return max(direction.match(tokens), super.match(tokens))
     }
 
+    // FIXME:
+    #if false
     override func describeFully() -> String {
         if isObvious {
             let leads = pose?.replacingOccurrences(of: "$", with: String(describing: direction))
@@ -65,6 +67,7 @@ class Portal: Thing {
             return super.describeFully()
         }
     }
+    #endif
 }
 
 // MARK: - go command

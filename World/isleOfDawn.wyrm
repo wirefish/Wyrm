@@ -32,7 +32,7 @@ def entity standingStones: fixture {
     You count nine stones, each about 12 feet tall and four feet wide. The faint
     remains of ornate tracery are barely visible upon their weathered surfaces.
     """
-  isObvious = false
+  implied = true
 }
 
 def location hilltop: isleLocation {
@@ -402,7 +402,7 @@ def entity alienTree: fixture {
     The tree is clearly very old. You get a strange sense that it does not
     belong in this world.
     """
-  isObvious = false
+  implied = true
 }
 
 def entity runedBoulder: fixture {
@@ -411,7 +411,7 @@ def entity runedBoulder: fixture {
     Upon closer inspection, you notice that the entire surface of the boulder is
     covered with tiny rune-like markings.
     """
-  isObvious = false
+  implied = true
 }
 
 def location sidheShrine: isleLocation {
@@ -518,7 +518,7 @@ def entity chessboard: fixture {
     garishly-painted rendition of a creature who looks much like the caretaker.
     The pieces are so realistic they seem almost alive.
     """
-  isObvious = false
+  implied = true
 }
 
 def entity goblinCaretaker: lib.npc {
@@ -1452,7 +1452,7 @@ def entity desktopDocuments: fixture {
     You discreetly scan the papers on top of the pile. They appear to be
     schedules, manifests, and other such shipping-related documents.
     """
-  isObvious = false
+  implied = true
 }
 
 def entity wineBottles: fixture {
@@ -1461,7 +1461,7 @@ def entity wineBottles: fixture {
     You may have been dead for hundreds of years, but wine hasn't changed all
     that much; you still recognize the cheap stuff when you see it.
     """
-  isObvious = false
+  implied = true
 }
 
 def location dockmasterShack: isleLocation {
