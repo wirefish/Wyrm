@@ -85,7 +85,7 @@ class Item: PhysicalEntity, Codable {
   }
 
   func isStackable(with stack: Item) -> Bool {
-    return stackLimit > 0 && prototype == stack.prototype
+    return stackLimit > 0 && prototype === stack.prototype
   }
 
   enum CodingKeys: CodingKey { case prototype }
