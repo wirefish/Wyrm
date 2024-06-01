@@ -304,10 +304,9 @@ extension World {
   private func compileEventHandlers(_ handlers: [Definition.Handler],
                                     in module: Module) -> EventHandlers {
     var result = EventHandlers()
-    for (phase, name, params, body) in handlers {
+    for (event, params, body) in handlers {
       let compiler = Compiler()
       if let fn = compiler.compileFunction(parameters: addSelf(params), body: body, in: module) {
-        let event = Event(phase: phase, name: name)
         result[event, default: []].append(fn)
       }
     }

@@ -67,7 +67,7 @@ indirect enum Statement {
 
 enum Definition {
   typealias Member = Expression.Member
-  typealias Handler = (EventPhase, String, [Parameter], Statement)
+  typealias Handler = (Event, [Parameter], Statement)
   typealias Method = (String, [Parameter], Statement)
   typealias QuestPhase = (String, [Member])
 
@@ -257,7 +257,7 @@ class Parser {
   }
 
   private func parseHandler() -> Definition.Handler? {
-    var phase: EventPhase
+    var phase: Event.Phase
     switch consume() {
     case .allow: phase = .allow
     case .before: phase = .before
@@ -302,7 +302,7 @@ class Parser {
       return nil
     }
 
-    return (phase, event, params, block)
+    return (Event(phase: phase, name: event), params, block)
   }
 
   private func parseMethod() -> Definition.Method? {

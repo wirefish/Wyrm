@@ -424,7 +424,7 @@ let lookCommand = Command("look at:target with|using|through:tool") { actor, ver
 
 let talkCommand = Command("talk to:target about:topic") { actor, verb, clauses in
   var candidates = actor.location.contents.filter {
-    $0.isVisible(to: actor) && $0.canRespondTo(phase: .when, name: "talk")
+    $0.isVisible(to: actor) && $0.canRespondTo(Event(phase: .when, name: "talk"))
   }
 
   if case let .tokens(targetPhrase) = clauses[0] {
@@ -524,7 +524,7 @@ let saveCommand = Command("save") {
 
 let useCommand = Command("use target") { actor, verb, clauses in
   var candidates = actor.location.contents.filter {
-    $0.isVisible(to: actor) && $0.canRespondTo(phase: .when, name: "use")
+    $0.isVisible(to: actor) && $0.canRespondTo(Event(phase: .when, name: "use"))
   }
 
   if case let .tokens(target) = clauses[0] {

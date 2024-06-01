@@ -3,12 +3,10 @@
 //  Wyrm
 //
 
-enum EventPhase {
-  case allow, before, when, after
-}
-
 struct Event: Hashable {
-  let phase: EventPhase
+  enum Phase { case allow, before, when, after }
+
+  let phase: Phase
   let name: String
 }
 
@@ -92,35 +90,31 @@ extension Responder {
     return .nil
   }
 
-  func allow(_ name: String, args: [Value]) -> Bool {
+  func allows(_ name: String, args: [Value]) -> Bool {
     return respondTo(Event(phase: .allow, name: name), args: args) != .boolean(false)
   }
 
-  func canRespondTo(phase: EventPhase, name: String) -> Bool {
-    return (handlers[Event(phase: phase, name: name)] != nil ||
-            (delegate?.canRespondTo(phase: phase, name: name) ?? false))
+  func canRespondTo(_ event: Event) -> Bool {
+    return handlers[event] != nil || (delegate?.canRespondTo(event) ?? false)
   }
 }
 
 @discardableResult
-func triggerEvent(_ event: String, in location: Location, participants: [Entity],
+func triggerEvent(_ name: String, in location: Location, participants: [Entity],
                   args: [ValueRepresentable], body: () -> Void) -> Bool {
   let args = args.map { $0.toValue() }
   let observers = participants + ([location] + location.contents + location.exits).filter {
     !participants.contains($0)
   }
 
-  guard observers.allSatisfy({ $0.allow(event, args: args) }) else {
+  guard observers.allSatisfy({ $0.allows(name, args: args) }) else {
     return false
   }
 
-  observers.forEach { $0.respondTo(Event(phase: .before, name: event), args: args) }
-
+  observers.forEach { $0.respondTo(Event(phase: .before, name: name), args: args) }
   body()
-
-  participants.forEach { $0.respondTo(Event(phase: .when, name: event), args: args) }
-
-  observers.forEach { $0.respondTo(Event(phase: .after, name: event), args: args) }
+  participants.forEach { $0.respondTo(Event(phase: .when, name: name), args: args) }
+  observers.forEach { $0.respondTo(Event(phase: .after, name: name), args: args) }
 
   return true
 }
