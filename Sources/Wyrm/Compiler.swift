@@ -279,21 +279,8 @@ class Compiler {
         block.emit(.pushConstant, block.addConstant(.number(n)))
       }
 
-    case let .string(text):
-      if let s = text.asLiteral {
-        block.emit(.pushConstant, block.addConstant(.string(s)))
-      } else {
-        for segment in text.segments {
-          switch segment {
-          case let .string(s):
-            block.emit(.pushConstant, block.addConstant(.string(s)))
-          case let .expr(expr, format):
-            compileExpr(expr, &block)
-            block.emit(.stringify, format.rawValue)
-          }
-        }
-        block.emit(.joinStrings, UInt8(text.segments.count))
-      }
+    case let .string(s):
+      block.emit(.pushConstant, block.addConstant(.string(s)))
 
     case let .symbol(s):
       block.emit(.pushConstant, block.addConstant(.symbol(s)))
@@ -304,6 +291,18 @@ class Compiler {
       } else {
         block.emit(.loadSymbol, block.addConstant(.symbol(s)))
       }
+
+    case let .interpolatedString(s):
+      for segment in s.segments {
+        switch segment {
+        case let .string(s):
+          block.emit(.pushConstant, block.addConstant(.string(s)))
+        case let .expr(expr, format):
+          compileExpr(expr, &block)
+          block.emit(.stringify, format.rawValue)
+        }
+      }
+      block.emit(.joinStrings, UInt8(s.segments.count))
 
     case let .unaryExpr(op, rhs):
       compileExpr(rhs, &block)

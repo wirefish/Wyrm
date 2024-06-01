@@ -9,10 +9,11 @@ indirect enum Expression {
   case `nil`
   case boolean(Bool)
   case number(Double)
-  case string(Text)
+  case string(String)
   case symbol(String)
 
   case identifier(String)
+  case interpolatedString(InterpolatedString)
   case unaryExpr(Token, Expression)
   case binaryExpr(Expression, Token, Expression)
   case conjuction(Expression, Expression)
@@ -674,11 +675,8 @@ class Parser {
     case let .number(n):
       node = .number(n)
       advance()
-    case let .string(s):
-      if let text = parseText(s) {
-        node = .string(text)
-      }
-      advance()
+    case .string:
+      node = parseString()
     case let .symbol(s):
       node = .symbol(s)
       advance()
@@ -834,12 +832,11 @@ class Parser {
     var args = parseSequence(from: .lparen, until: .rparen) { parseExpr() }
 
     // Allow for a trailing string/text literal as the final argument.
-    if case let .string(s) = currentToken {
-      advance()
-      guard let text = parseText(s) else {
+    if case .string = currentToken {
+      guard let trailingString = parseString() else {
         return nil
       }
-      args.append(.string(text))
+      args.append(trailingString)
     }
 
     return .call(lhs, args)
@@ -893,11 +890,20 @@ class Parser {
   }
 
   // Parses a string that may contain interpolation expressions.
-  private func parseText(_ s: String) -> Text? {
+  private func parseString() -> Expression? {
+    guard case let .string(s) = consume() else {
+      error("expected string")
+      return nil
+    }
+
     let parts = s.split(separator: "{", omittingEmptySubsequences: false)
+    if parts.count == 1 {
+      // This is a literal with no interpolation required.
+      return .string(s)
+    }
 
     // The first (possibly empty) part is always a string literal.
-    var segments = [Text.Segment]()
+    var segments = [InterpolatedString.Segment]()
     if !parts.first!.isEmpty {
       segments.append(.string(String(parts.first!)))
     }
@@ -947,7 +953,7 @@ class Parser {
       }
     }
 
-    return Text(segments: segments)
+    return .interpolatedString(InterpolatedString(segments: segments))
   }
 
   // Parses a comma-separated list of items enclosed within the specified start
