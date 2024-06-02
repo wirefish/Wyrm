@@ -5,27 +5,33 @@
 
 let notes = """
 
-All the elements of the client-facing UI state:
+The client UI state comprises the the following components:
 
-top bar: AvatarState: icon, name, race, level, health/energy/mana, auras
+- AvatarState (top bar): icon, name, race, level, health/energy/mana, auras
 
-left side: [NeighborState]: id, icon, label, opt health bar, state (passive/friendly/neutral/unfriendly)
+- [NeighborState] (left side): each has id, icon, label, opt health bar,
+  status (passive/friendly/neutral/unfriendly)
 
-map: region name + [Location]: id, x, y, exits, icon (e.g. boat), markers (e.g. vendor, quest, etc)
+- Map (upper right): region name + [MapCell], each with id, x, y, exits, icon (e.g. boat),
+  markers (e.g. vendor, quest, etc)
 
-main text and chat text: append only, [(fn, args)]
+- main text and chat text: append only, [(fn, args)]
 
-hotbar: [(Icon, Name, Action)] all are strings, action is implied command/skill to use
+- hotbar: [(Icon, Name, Action)] all are strings, action is implied command/skill to use
 
-bottom right pane has several tabs:
+The bottom right pane has several tabs:
 
-- equipment: [Slot:Item] where item has icon, name
+- equipment: [Slot:EquippedItem] where item has icon, name
 
-- inventory: [Item] where item has icon, name, quantity
+- inventory: [InventoryItem] where item has icon, name, quantity, group, and subgroup
+  (for client-side sorting and/or partitioning)
 
-- combat attributes: [String:Double/Int]
+- combat attributes: [String:Int]
 
-- skills: unspent karma + [Skill]: name, rank
+- skills: unspent karma + [Skill]: name, rank, maxRank
+
+- activity status: either a castbar (for non-modal activities) or specific state
+  for each modal activity such as combat or crafting.
 
 The update message can be reduced to an array of (fn, args) that are called in order.
 
@@ -66,7 +72,7 @@ enum ClientValue: Encodable {
   }
 }
 
-// MARK: - neighbors
+// MARK: - Neighbors
 
 struct NeighborProperties: Encodable {
   let key: Int
@@ -106,6 +112,8 @@ extension Avatar {
   }
 }
 
+// MARK: Equipment and inventory
+
 struct ItemProperties: Encodable {
   let brief: String
   let icon: String?
@@ -143,6 +151,8 @@ extension Avatar {
     sendMessage("updateInventory", [update])
   }
 }
+
+// MARK: Avatar
 
 struct AvatarProperties: Encodable {
   var name: String? = nil
