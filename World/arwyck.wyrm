@@ -1231,7 +1231,7 @@ def location eastGate: location {
   domain = 'outdoor
   surface = 'stone
   contents = [eastGuard]
-  exits = [dirtRoad -> 'west to eastRoad3, dirtRoad -> 'east to mistmarsh.muddyPathA12]
+  exits = [dirtRoad -> 'west to eastRoad3] // TODO: dirtRoad -> 'east to mistmarsh.muddyPathA12]
 }
 
 //# muggers' alley
@@ -1339,7 +1339,7 @@ def entity alchemist: lib.npc {
     over his head like smoke.
     """
 
-  offersQuests = [silverwood.mossResults, getSomeVenom]
+  // offersQuests = [silverwood.mossResults, getSomeVenom]
   // FIXME: endsQuests = [@getSomeVenom, @silverwood/analyzeThis]
 
   when talk(actor: .quest(getSomeVenom, available), self, topic) {
@@ -2082,8 +2082,8 @@ def location wallStreet5: wallStreet {
 }
 
 def location wallStreet6: wallStreet {
-  exits = [cobbledRoad -> 'west to wallStreet5, alley -> 'north to muggersAlley3,
-       lib.entryDoorway -> 'east to craftersHall1nw]
+  exits = [cobbledRoad -> 'west to wallStreet5, alley -> 'north to muggersAlley3]
+  // TODO: lib.entryDoorway -> 'east to craftersHall1nw
 }
 
 //# armor emporium
@@ -2669,5 +2669,5 @@ def location forestGate: location {
   domain = 'outdoor
   surface = 'dirt
   contents = [miranda, rhody, forestGuard]
-  exits = [dirtRoad -> 'east to forestRoad3, dirtRoad -> 'west to silverwood.roadZ14]
+  exits = [dirtRoad -> 'east to forestRoad3]  // TODO: dirtRoad -> 'west to silverwood.roadZ14
 }
