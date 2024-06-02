@@ -322,7 +322,7 @@ class Parser {
   }
 
   private func parseMethod() -> Definition.Method? {
-    assert(match(.func))
+    advance()
 
     guard case let .identifier(name) = consume() else {
       error("expected identifier after func")
@@ -440,7 +440,7 @@ class Parser {
   }
 
   private func parseQuestPhase() -> Definition.QuestPhase? {
-    assert(match(.phase))
+    advance()
 
     guard case let .identifier(label) = consume() else {
       error("expected identifier as name of quest phase")
@@ -563,7 +563,7 @@ class Parser {
   }
 
   private func parseVar() -> Statement? {
-    assert(match(.var))
+    advance()
 
     guard case let .identifier(name) = consume() else {
       error("expected variable name")
@@ -583,7 +583,7 @@ class Parser {
   }
 
   private func parseIf() -> Statement? {
-    assert(match(.if))
+    advance()
     guard let pred = parseExpr(), let whenTrue = parseBlock() else {
       return nil
     }
@@ -598,7 +598,7 @@ class Parser {
   }
 
   private func parseWhile() -> Statement? {
-    assert(match(.while))
+    advance()
     guard let pred = parseExpr(), let body = parseBlock() else {
       return nil
     }
@@ -606,7 +606,7 @@ class Parser {
   }
 
   private func parseFor() -> Statement? {
-    assert(match(.for))
+    advance()
     guard case let .identifier(variable) = consume() else {
       error("invalid loop variable")
       return nil
@@ -638,7 +638,7 @@ class Parser {
   }
 
   private func parseAwait() -> Statement? {
-    assert(match(.await))
+    advance()
     guard let rhs = parseExpr() else {
       return nil
     }
@@ -646,12 +646,12 @@ class Parser {
   }
 
   private func parseReturn() -> Statement? {
-    assert(match(.return))
+    advance()
     return .return(lookingAtExpr() ? parseExpr() : nil)
   }
 
   private func parseFallthrough() -> Statement {
-    assert(match(.fallthrough))
+    advance()
     return .fallthrough
   }
 
@@ -731,7 +731,7 @@ class Parser {
   }
 
   private func parseGroup() -> Expression? {
-    assert(match(.lparen))
+    advance()
     if let expr = parseExpr() {
       if match(.rparen) {
         return expr
@@ -743,7 +743,7 @@ class Parser {
   }
 
   private func parseList() -> Expression? {
-    assert(match(.lsquare))
+    advance()
     if match(.rsquare) {
       return .list([])
     }
@@ -795,7 +795,7 @@ class Parser {
   }
 
   private func parseClone(lhs: Expression) -> Expression? {
-    assert(match(.not))
+    advance()
 
     // Parse optional member overrides.
     let members = if currentToken == .lbrace {
@@ -817,7 +817,7 @@ class Parser {
   }
 
   private func parseAnd(lhs: Expression) -> Expression? {
-    assert(match(.and))
+    advance()
     if let rhs = parseExpr(.and.nextHigher()) {
       return .conjuction(lhs, rhs)
     } else {
@@ -826,7 +826,7 @@ class Parser {
   }
 
   private func parseOr(lhs: Expression) -> Expression? {
-    assert(match(.or))
+    advance()
     if let rhs = parseExpr(.or.nextHigher()) {
       return .disjunction(lhs, rhs)
     } else {
@@ -835,7 +835,7 @@ class Parser {
   }
 
   private func parseStack(lhs: Expression) -> Expression? {
-    assert(match(.at))
+    advance()
     if let rhs = parseExpr(.factor.nextHigher()) {
       return .stack(lhs, rhs)
     } else {
@@ -858,7 +858,7 @@ class Parser {
   }
 
   private func parseSubscript(lhs: Expression) -> Expression? {
-    assert(match(.lsquare))
+    advance()
 
     guard let expr = parseExpr() else {
       return nil
@@ -873,7 +873,7 @@ class Parser {
   }
 
   private func parseDot(lhs: Expression) -> Expression? {
-    assert(match(.dot))
+    advance()
 
     guard case let .identifier(name) = consume() else {
       error("expected identifier after .")
@@ -884,7 +884,7 @@ class Parser {
   }
 
   private func parseExit(lhs: Expression) -> Expression? {
-    assert(match(.arrow))
+    advance()
 
     guard let direction = parseExpr() else {
       return nil
