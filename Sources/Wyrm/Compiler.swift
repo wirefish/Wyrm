@@ -299,8 +299,8 @@ class Compiler {
         block.emit(.loadSymbol, block.addConstant(.symbol(s)))
       }
 
-    case let .interpolatedString(s):
-      for segment in s.segments {
+    case let .interpolatedString(segments):
+      for segment in segments {
         switch segment {
         case let .string(s):
           block.emit(.pushConstant, block.addConstant(.string(s)))
@@ -309,7 +309,7 @@ class Compiler {
           block.emit(.stringify, format.rawValue)
         }
       }
-      block.emit(.joinStrings, UInt8(s.segments.count))
+      block.emit(.joinStrings, UInt8(segments.count))
 
     case let .unaryExpr(op, rhs):
       compileExpr(rhs, &block)

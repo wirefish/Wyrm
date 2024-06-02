@@ -3,6 +3,11 @@
 //  Wyrm
 //
 
+enum StringSegment {
+  case string(String)
+  case expr(Expression, Format)
+}
+
 indirect enum Expression {
   typealias Member = (name: String, initializer: Expression)
 
@@ -13,7 +18,7 @@ indirect enum Expression {
   case symbol(String)
 
   case identifier(String)
-  case interpolatedString(InterpolatedString)
+  case interpolatedString([StringSegment])
   case unaryExpr(Token, Expression)
   case binaryExpr(Expression, Token, Expression)
   case conjuction(Expression, Expression)
@@ -913,7 +918,7 @@ class Parser {
     }
 
     // The first (possibly empty) part is always a string literal.
-    var segments = [InterpolatedString.Segment]()
+    var segments = [StringSegment]()
     if !parts.first!.isEmpty {
       segments.append(.string(String(parts.first!)))
     }
@@ -963,7 +968,7 @@ class Parser {
       }
     }
 
-    return .interpolatedString(InterpolatedString(segments: segments))
+    return .interpolatedString(segments)
   }
 
   // Parses a comma-separated list of items enclosed within the specified start
