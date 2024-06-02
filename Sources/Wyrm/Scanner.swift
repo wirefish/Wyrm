@@ -126,6 +126,10 @@ class Scanner {
     return ch
   }
 
+  func reverse() {
+    index = input.index(before: index)
+  }
+
   private func match(_ ch: Character) -> Bool {
     if peek() == ch {
       advance()
@@ -157,8 +161,12 @@ class Scanner {
       advance()
     }
     if match(".") {
-      while peek().isDecimalDigit {
-        advance()
+      if peek().isDecimalDigit {
+        while peek().isDecimalDigit {
+          advance()
+        }
+      } else {
+        reverse()
       }
     }
     return .number(Double(input[start..<index])!)

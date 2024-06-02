@@ -29,6 +29,7 @@ struct ScriptLibrary {
     ("logDebug", logDebug),
     ("offerQuest", wrap(offerQuest)),
     ("oppositeDirection", wrap(oppositeDirection)),
+    ("print", printValues),
     ("questPhase", wrap(questPhase)),
     ("random", wrap(random)),
     ("randomElement", wrap(randomElement)),
@@ -57,6 +58,11 @@ struct ScriptLibrary {
 
   static func len(list: [Value]) -> Int {
     return list.count
+  }
+
+  static func printValues(_ args: [Value]) throws -> Value {
+    print(args.map({ String(describing: $0) }).joined(separator: " "))
+    return .nil
   }
 
   static func logDebug(_ args: [Value]) throws -> Value {

@@ -164,6 +164,15 @@ class Parser {
     return defs
   }
 
+  func parseSingleStatement() -> Statement? {
+    advance()
+    var stmt = parseStatement()
+    if case let .ignoredValue(expr) = stmt {
+      stmt = .return(expr)
+    }
+    return stmt
+  }
+
   private func parseDefinition() -> Definition? {
     guard case let .identifier(type) = consume() else {
       error("expected identifier after def")
