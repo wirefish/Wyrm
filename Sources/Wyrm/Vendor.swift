@@ -30,7 +30,7 @@ let buyCommand = Command("buy item from:vendor", help: buyHelp) { actor, verb, c
     return
   }
   let vendor = vendors[0]
-  let items = vendor.sells!.compactMap { $0.deref()?.asEntity(Item.self) }
+  let items = vendor.sells!
 
   guard case let .tokens(itemTokens) = clauses[0] else {
     let info = items.map {

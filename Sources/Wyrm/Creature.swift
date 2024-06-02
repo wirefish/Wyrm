@@ -120,8 +120,8 @@ class Creature: Thing, Combatant, Questgiver {
   // Questgiver
   var offersQuests = [Quest]()
 
-  var sells: [Ref]?
-  var teaches: [Ref]?
+  var sells: [Item]?
+  var teaches: [Skill]?
 
   override func copyProperties(from other: Entity) {
     let other = other as! Creature

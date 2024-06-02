@@ -5,18 +5,12 @@
 
 // MARK: - Value
 
-enum Ref: Hashable {
-  case absolute(String, String)
-  case relative(String)
-}
-
 enum Value: Equatable {
   case `nil`
   case boolean(Bool)
   case number(Double)
   case string(String)
   case symbol(String)
-  case ref(Ref)
   case range(ClosedRange<Int>)
   case list([Value])
   case entity(Entity)
@@ -60,7 +54,6 @@ enum Value: Equatable {
     case let .number(a): if case let .number(b) = rhs { return a == b }
     case let .string(a): if case let .string(b) = rhs { return a == b }
     case let .symbol(a): if case let .symbol(b) = rhs { return a == b }
-    case let .ref(a): if case let .ref(b) = rhs { return a == b }
     case let .entity(a): if case let .entity(b) = rhs { return a == b }
     case let .quest(a): if case let .quest(b) = rhs { return a === b }
     case let .race(a): if case let .race(b) = rhs { return a === b }
@@ -131,17 +124,6 @@ extension String: ValueRepresentable {
   }
 
   func toValue() -> Value { .string(self) }
-}
-
-extension Ref: ValueRepresentable {
-  static func fromValue(_ value: Value) -> Ref? {
-    guard case let .ref(ref) = value else {
-      return nil
-    }
-    return ref
-  }
-
-  func toValue() -> Value { .ref(self) }
 }
 
 extension ClosedRange<Int>: ValueRepresentable {
@@ -222,34 +204,20 @@ extension ValueRepresentableEnum {
 
 extension Entity: ValueRepresentable {
   static func fromValue(_ value: Value) -> Self? {
-    switch value {
-    case let .entity(entity):
-      return entity as? Self
-    case let .ref(ref):
-      return World.instance.lookup(ref)?.asEntity(Self.self)
-    default:
+    guard case let .entity(entity) = value else {
       return nil
     }
+    return entity as? Self
   }
-
-  func toValue() -> Value {
-    return .entity(self)
-  }
+  func toValue() -> Value { .entity(self) }
 }
 
 extension Quest: ValueRepresentable {
   static func fromValue(_ value: Value) -> Quest? {
-    switch value {
-    case let .quest(quest):
-      return quest
-    case let .ref(ref):
-      guard case let .quest(quest) = World.instance.lookup(ref) else {
-        return nil
-      }
-      return quest
-    default:
+    guard case let .quest(quest) = value else {
       return nil
     }
+    return quest
   }
 
   func toValue() -> Value {
@@ -270,43 +238,30 @@ extension QuestPhase: ValueRepresentable {
 
 extension Race: ValueRepresentable {
   static func fromValue(_ value: Value) -> Race? {
-    switch value {
-    case let .race(race):
-      return race
-    case let .ref(ref):
-      if case let .race(race) = World.instance.lookup(ref) {
-        return race
-      } else {
-        return nil
-      }
-    default:
+    guard case let .race(race) = value else {
       return nil
     }
+    return race
   }
-
-  func toValue() -> Value {
-    return .race(self)
-  }
+  func toValue() -> Value { .race(self) }
 }
 
 extension Skill: ValueRepresentable {
   static func fromValue(_ value: Value) -> Skill? {
-    if case let .skill(skill) = value {
-      skill
-    } else {
-      nil
+    guard case let .skill(skill) = value else {
+      return nil
     }
+    return skill
   }
   func toValue() -> Value { .skill(self) }
 }
 
 extension Region: ValueRepresentable {
   static func fromValue(_ value: Value) -> Region? {
-    if case let .region(region) = value {
-      region
-    } else {
-      nil
+    guard case let .region(region) = value else {
+      return nil
     }
+    return region
   }
   func toValue() -> Value { .region(self) }
 }

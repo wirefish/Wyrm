@@ -7,7 +7,7 @@
 
 class ResourceNode: Thing {
   // The skill required to see and use the node.
-  var requiredSkill: Ref?
+  var requiredSkill: Skill?
 
   // The minimum skill rank required to see and use the node. This rank
   // corresponds to a 50% chance of successfully gathering from the node.
@@ -18,7 +18,7 @@ class ResourceNode: Thing {
   var maxRank = 100
 
   // The type of tool that must be equipped to use the node.
-  var requiredTool: Ref?
+  var requiredTool: Equipment?
 
   // The amount of time it takes to gather at the node.
   var duration = 3.0
@@ -140,14 +140,11 @@ let gatherCommand = Command("gather from:node", help: gatherHelp) { actor, verb,
   let node = candidates[0] as! ResourceNode
 
   // Check rank.
-  guard let skillRef = node.requiredSkill,
-        case let .skill(skill) = World.instance.lookup(skillRef) else {
-    actor.show("\(node.describeBriefly([.definite, .capitalized])) seems broken. Try again later.")
-    return
-  }
-  guard actor.skills[skillRef, default: 0] >= node.minRank else {
-    actor.show("You need to attain rank \(node.minRank) in \(skill.name!) to gather from \(node.describeBriefly([.definite])).")
-    return
+  if let skill = node.requiredSkill {
+    guard actor.skills[skill.ref, default: 0] >= node.minRank else {
+      actor.show("You need to attain rank \(node.minRank) in \(skill.name!) to gather from \(node.describeBriefly([.definite])).")
+      return
+    }
   }
 
   // Check tool.

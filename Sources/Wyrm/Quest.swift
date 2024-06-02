@@ -74,7 +74,7 @@ final class Quest: Scope, CustomDebugStringConvertible, Matchable {
   var name = ""
   var summary = ""
   var level = 1
-  var requiredQuests = [Ref]()
+  var requiredQuests = [Quest]()
 
   var phases = [QuestPhase]()
 
@@ -286,8 +286,8 @@ extension Avatar {
     return completedQuests[quest.ref] != nil
   }
 
-  func didCompleteQuests(_ refs: [Ref]) -> Bool {
-    refs.allSatisfy { completedQuests[$0] != nil }
+  func didCompleteQuests(_ quests: [Quest]) -> Bool {
+    quests.allSatisfy { completedQuests[$0.ref] != nil }
   }
 }
 

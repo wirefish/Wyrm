@@ -46,8 +46,8 @@ final class Skill: Scope, Matchable, CustomDebugStringConvertible {
   var maxRank = 200
   var karmaPrice: Int?
   var currencyPrice: ItemStack?
-  var requiredSkills: [Ref]?
-  var exclusiveSkills: [Ref]?
+  var requiredSkills: [Skill]?
+  var exclusiveSkills: [Skill]?
 
   init(ref: Ref) {
     self.ref = ref

@@ -24,6 +24,11 @@ class Module: Scope {
   }
 }
 
+enum Ref: Hashable {
+  case absolute(String, String)
+  case relative(String)
+}
+
 extension Ref: Codable, CustomStringConvertible {
   init(from decoder: Decoder) throws {
     let c = try decoder.singleValueContainer()
