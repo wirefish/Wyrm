@@ -102,15 +102,6 @@ extension World {
         }
         stack.append(.number(-n))
 
-      case .deref:
-        guard case let .ref(ref) = stack.removeLast() else {
-          throw ExecError.typeMismatch
-        }
-        guard let value = World.instance.lookup(ref, context: context) else {
-          throw ExecError.undefinedReference(ref)
-        }
-        stack.append(value)
-
       case .select:
         switch stack.removeLast() {
         case let .list(list): stack.append(list.randomElement().toValue())

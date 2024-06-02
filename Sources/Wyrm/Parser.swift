@@ -698,7 +698,7 @@ class Parser {
     case let .identifier(s):
       node = .identifier(s)
       advance()
-    case .minus, .not, .star, .query:
+    case .minus, .not, .query:
       node = parseUnary()
     case .lparen:
       node = parseGroup()
