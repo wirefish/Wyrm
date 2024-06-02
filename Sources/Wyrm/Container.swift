@@ -3,7 +3,6 @@
 //  Wyrm
 //
 
-// An Entity that can contain ItemStacks.
 class Container: Thing {
   var contents = ItemCollection()
 

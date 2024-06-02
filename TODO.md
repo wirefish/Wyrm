@@ -19,11 +19,6 @@
   If there's a duration member use a generalized EventActivity, and allow
   startMessage, interruptMessage, finishMessage members.
 
-- Range operators ... and ..<
-
-- Prefix ? operator that picks a random value from the next (range) expr:
-  ?1...10 rolls a 10-sided die.
-
 # Older...
 
 - improve error handling in parsing, eval, exec. not so many Error enum types.
