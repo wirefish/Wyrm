@@ -50,6 +50,10 @@ enum Opcode: UInt8 {
   // Replace the reference on the top of the stack with the value it references.
   case deref
 
+  // Replace the list or range on the top of the stack with a randomly selected
+  // element.
+  case select
+
   // Replace the two numeric values on the top of the stack with the result of
   // a binary operation.
   case add, subtract, multiply, divide, modulus
@@ -313,6 +317,7 @@ class Compiler {
       case .not: block.emit(.not)
       case .minus: block.emit(.negate)
       case .star: block.emit(.deref)
+      case .query: block.emit(.select)
       default:
         break
       }

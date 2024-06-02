@@ -111,6 +111,13 @@ extension World {
       }
       stack.append(value)
 
+    case .select:
+      switch stack.removeLast() {
+      case let .list(list): stack.append(list.randomElement().toValue())
+      case let .range(range): stack.append(range.randomElement().toValue())
+      default: throw ExecError.typeMismatch
+      }
+
     case .add, .subtract, .multiply, .divide, .modulus:
       let rhs = stack.removeLast()
       let lhs = stack.removeLast()
