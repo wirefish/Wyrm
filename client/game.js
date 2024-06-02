@@ -14,47 +14,20 @@ function resize() {
 }
 window.onresize = resize;
 
-//
-// Give the input focus whenever the user hits Return inside the window.
-//
-function keypress(e) {
-    var input = document.getElementById("command");
-    if (document.activeElement != input && String.fromCharCode(e.which) == "\r") {
-        document.getElementById("command").focus();
-        return false;
-    }
-}
-window.onkeypress = keypress;
-
-//
-// Add some useful String methods.
-//
-
-String.prototype.capitalize = function() {
-    return this.charAt(0).toUpperCase() + this.slice(1);
-}
-
-String.prototype.format = function() {
-    var args = arguments;
-    return this.replace(/{(\d+)}/g, function(match, number) {
-        return typeof args[number] != 'undefined' ? args[number] : match;
-    });
-}
-
-function link(s, type) {
-    if (type)
-        return '`{0}:{1}`'.format(type, s);
-    else
-        return '`{0}`'.format(s);
+function link(text, type, command) {
+    return '`{0}:{1}:{2}`'.format(
+        type ? type : "",
+        text,
+        command ? command : "");
 }
 
 function look(s) {
-    return link(s, 'look');
+    return link(s, 'look', 'look at $');
 }
 
-function setIcon(element, icon) {
+function setIcon(element, type, icon) {
     if (icon)
-        element.className = 'icon ' + icon;
+        element.className = '{0}_icons {0}_{1}'.format(type, icon);
 }
 
 //
@@ -72,7 +45,7 @@ function updatePlayerBio(name, icon, level, race) {
         '{0}, level {1} {2}'.format(name, level, race) :
         'level {0} {1}'.format(level, race);
     document.getElementById("player_name").innerHTML = summary;
-    setIcon(document.getElementById("header"), icon);
+    setIcon(document.getElementById("player_icon"), "avatar", icon);
 }
 
 // Appends a block element to a scrollable text pane, removing the oldest block
@@ -86,7 +59,7 @@ function appendBlock(block, containerId = 'main_text') {
 }
 
 // Panes in left-to-right order.
-var panes = ["chat", "inventory", "equipment", "combat", "skills"];
+var panes = ["inventory", "equipment", "combat", "skills", "quests", "chat"];
 
 // An object that encapsulates functions callable based on messages from the
 // server.
@@ -106,8 +79,8 @@ function MessageHandler() {
     // True to show paths, etc. for debugging.
     this.debug = true;
 
-    // Select the social chat pane by default.
-    this.currentPane = 'chat';
+    // Select the inventory pane by default.
+    this.currentPane = 'inventory';
 }
 
 MessageHandler.prototype.showPane = function(button_id) {
@@ -158,7 +131,7 @@ MessageHandler.prototype.showHelp = function(text) {
     this.showText(text, 'help');
 }
 
-MessageHandler.prototype.showMap = function(location_name, region, subregion, radius, rooms) {
+MessageHandler.prototype.showMap = function(location_name, region, subregion, radius, ...rooms) {
     var sep = "\u2002\u00b7\u2002";
 
     document.getElementById("location_name").innerHTML = location_name;
@@ -208,62 +181,127 @@ MessageHandler.prototype.hideAura = function(key) {
     }
 }
 
-MessageHandler.prototype.updateInventory = function(inventory) {
+function findInventoryDivAfter(sort_key, item_divs) {
+    for (const div of item_divs) {
+        if (Number(div.getAttribute("jade_sort_key")) > sort_key)
+            return div;
+    }
+    return null;
+}
+
+MessageHandler.prototype.updateInventory = function(items) {
     var contents_div = document.getElementById('inventory_contents');
 
-    for (var id in inventory) {
+    for (const id in items) {
         var div = document.getElementById('inv_' + id);
-        var item = inventory[id];
-        if (item) {
-            // Add or update item.
-            if (div) {
-                div.innerHTML = item.brief;
-            } else {
-                div = document.createElement('div');
-                div.id = 'inv_' + id;
-                setIcon(div, item.icon);
-                div.innerHTML = item.brief;
-                contents_div.insertBefore(div, null);
-            }
-        } else {
+        const item = items[id];
+        if (item == null) {
             // Remove item.
             if (div)
                 div.parentNode.removeChild(div);
+        } else {
+            // Add or update item.
+            const [icon, brief, sort_key] = item;
+            if (div) {
+                div.children[1].innerHTML = brief;
+            } else {
+                div = document.createElement('div');
+                div.id = 'inv_' + id;
+                div.setAttribute("jade_sort_key", sort_key);
+
+                var icon_div = document.createElement('div');
+                div.appendChild(icon_div);
+                setIcon(icon_div, "inventory", icon);
+
+                var brief_div = document.createElement('div');
+                div.appendChild(brief_div);
+                brief_div.innerHTML = brief;
+
+                contents_div.insertBefore(
+                    div,
+                    findInventoryDivAfter(sort_key, contents_div.children));
+            }
         }
     }
 }
 
 MessageHandler.prototype.updateEquipment = function(equipment) {
-    for (var slot in equipment) {
+    for (const slot in equipment) {
         var div = document.getElementById('equip_' + slot);
-        var item = equipment[slot];
-        if (item) {
-            setIcon(div, item.icon);
-            div.innerHTML = item.brief;
+        if (equipment[slot]) {
+            const [icon, brief] = equipment[slot];
+
+            var icon_div = document.createElement('div');
+            div.appendChild(icon_div);
+            setIcon(icon_div, "inventory", icon);
+
+            var brief_div = document.createElement('div');
+            div.appendChild(brief_div);
+            brief_div.innerHTML = brief;
         } else {
-            div.style.backgroundImage = 'none';
             div.innerHTML = null;
         }
     }
 }
 
-MessageHandler.prototype.updateSkills = function(unspent_karma, skills) {
-    document.getElementById('unspent_karma').innerHTML = unspent_karma.toString();
+function createDiv(id, num_children) {
+    var div = document.createElement('div');
+    div.id = id;
+    for (var i = 0; i < num_children; ++i) {
+        var child = document.createElement('div');
+        div.appendChild(child);
+    }
+    return div;
+}
+
+MessageHandler.prototype.updateCombat = function(attack, defense, speed, damage,
+                                                 traits, damage_types) {
+    document.getElementById('attack').innerHTML = `Attack<br/>${attack}`;
+    document.getElementById('defense').innerHTML = `Defense<br/>${defense}`;
+    document.getElementById('speed').innerHTML = `Speed<br/>${speed}`;
+    document.getElementById('damage').innerHTML = `Damage<br/>${damage}`;
+
+    if (traits) {
+        var parent = document.getElementById('combat_traits');
+        for (const [name, value] of traits) {
+            const div_id = 'trait_' + name;
+            var div = document.getElementById(div_id);
+            if (div) {
+                div.children[1].innerHTML = value;
+            } else {
+                div = createDiv(div_id, 2);
+                div.children[0].innerHTML = name.capitalize();
+                div.children[1].innerHTML = value;
+                parent.appendChild(div);
+            }
+        }
+    }
+
+    if (damage_types) {
+        for (const [key, name, affinity, resistance] of damage_types) {
+        }
+    }
+}
+
+MessageHandler.prototype.updateSkills = function(karma, ...skills) {
+    document.getElementById('unspent_karma').innerHTML = `Unspent karma: ${karma}`;
+
+    if (!skills)
+        return;
 
     var skills_pane = document.getElementById('skills_pane');
-
-    for (var i = 0; i < skills.length; ++i) {
-        var [key, name, rank, max_rank] = skills[i];
+    for (const [key, name, rank, max_rank] of skills) {
         var div_id = 'skill_' + key;
         var div = document.getElementById(div_id);
-        if (rank == null) {
-            // Remove the skill entry.
+
+        if (name === undefined) {
+            // Remove the entry.
             if (div)
                 div.parentNode.removeChild(div);
         } else if (div) {
-            // Update the skill entry.
+            // Update an existing entry.
             if (max_rank > 0)
-                div.children[1].innerHTML = '{0} / {1}'.format(rank, max_rank);
+                div.children[1].innerHTML = `${rank} / ${max_rank}`;
         } else {
             // Find the existing skill entry before which to insert the new one,
             // based on ordering by skill name. Ignore the first child, which is
@@ -277,19 +315,49 @@ MessageHandler.prototype.updateSkills = function(unspent_karma, skills) {
                 }
             }
 
-            // Add a new skill entry.
+            // Create a new entry.
+            div = createDiv(div_id, 3);
+            div.children[0].innerHTML = name;
+            div.children[0].onclick = function () { sendInput(`skill ${name}`); };
+            if (max_rank > 0)
+                div.children[1].innerHTML = `${rank} / ${max_rank}`;
+
+            document.getElementById('skills_pane').insertBefore(div, next_div);
+        }
+    }
+}
+
+MessageHandler.prototype.updateQuests = function(...quests) {
+    if (!quests)
+        return;
+
+    var quests_pane = document.getElementById('quests_pane');
+    for (const [key, name, level, summary] of quests) {
+        const div_id = 'quest_' + key;
+        var div = document.getElementById(div_id);
+
+        if (name === undefined) {
+            // Remove the entry.
+            if (div)
+                div.parentNode.removeChild(div);
+        } else if (div) {
+            // Update an existing entry.
+            div.children[1].innerHTML = summary;
+        } else {
+            // Create a new entry.
             div = document.createElement('div');
             div.id = div_id;
-            div.className = 'skill_rank';
+            div.onclick = function () { sendInput(`quest info ${name}`); };
+
             var name_div = document.createElement('div');
-            name_div.innerHTML = name;
+            name_div.innerHTML = `${name} (level ${level})`;
             div.appendChild(name_div);
-            if (max_rank > 0) {
-                var rank_div = document.createElement('div');
-                rank_div.innerHTML = '{0} / {1}'.format(rank, max_rank);
-                div.appendChild(rank_div);
-            }
-            document.getElementById('skills_pane').insertBefore(div, next_div);
+
+            var summary_div = document.createElement('div');
+            summary_div.innerHTML = summary;
+            div.appendChild(summary_div);
+
+            quests_pane.insertBefore(div, quests_pane.firstChild);
         }
     }
 }
@@ -354,16 +422,16 @@ MessageHandler.prototype.setNeighborProperties = function(item, new_properties) 
     this.neighbors[key] = properties;
 
     if (properties.icon)
-        setIcon(item, properties.icon);
+        setIcon(item.children[0], "neighbor", properties.icon);
 
     if (properties.brief)
-        item.children[0].innerHTML = properties.brief;
+        item.children[1].children[0].innerHTML = properties.brief;
 
     if (properties.health && properties.max_health) {
-        item.children[1].children[0].style.width =
+        item.children[1].children[1].children[0].style.width =
             (100.0 * properties.health / properties.max_health) + "%";
     } else {
-        item.children[1].style.visibility = 'hidden';
+        item.children[1].children[1].style.visibility = 'hidden';
     }
 
     // Set a command to perform when clicking the item. TODO: make it
@@ -376,14 +444,14 @@ MessageHandler.prototype.createNeighbor = function(properties) {
     var neighbors = document.getElementById("neighbors");
     var item = neighbors.children[0].cloneNode(true);
     item.id = getNeighborId(properties.key);
-    item.className = "do_enter";
-    item.style.display = "block";
+    item.className = "neighbor do_enter";
+    item.style.display = "flex";
     this.setNeighborProperties(item, properties);
     neighbors.appendChild(item);
     return item;
 }
 
-MessageHandler.prototype.setNeighbors = function(...new_neighbors) {
+MessageHandler.prototype.setNeighbors = function(new_neighbors) {
     var neighbors = document.getElementById("neighbors");
 
     // Remove all but the first child, which is the invisible prototype used to
@@ -412,10 +480,10 @@ MessageHandler.prototype.removeNeighbor = function(key) {
     item.addEventListener('animationend', function (event) {
         this.parentNode.removeChild(this);
     });
-    item.className = "";
+    item.className = "neighbor";
     window.requestAnimationFrame(function (t) {
         window.requestAnimationFrame(function (t) {
-            item.className = "do_exit";
+            item.className = "neighbor do_exit";
         });
     });
 
@@ -504,11 +572,66 @@ MessageHandler.prototype.showLinks = function(heading, prefix, topics) {
     appendBlock(wrapElements('div', elements, 'help'));
 }
 
-MessageHandler.prototype.showLocation = function(brief, description, exits, contents) {
-    var elements = [makeTextElement('h1', brief)];
-    Array.prototype.push.apply(elements, formatText(description));
+MessageHandler.prototype.showVendorItems = function(heading, vendor, verb, items) {
+    var header = makeTextElement('div', heading);
 
-    if (exits.length) {
+    var entries = [header];
+    for (const [brief, price, icon] of items) {
+
+        var div = document.createElement('div');
+        div.className = "vendor_item";
+
+        var icon_div = document.createElement('div');
+        setIcon(icon_div, "inventory", icon);
+        div.appendChild(icon_div);
+
+        const buy_link = link(brief, 'buy', 'buy $ from {0}'.format(vendor));
+        var label_div = makeTextElement('div', `${buy_link} --- ${price}`);
+        div.appendChild(label_div);
+
+        entries.push(div);
+    }
+
+    appendBlock(wrapElements('div', entries));
+}
+
+MessageHandler.prototype.showTrainerSkills = function(heading, trainer, skills) {
+    var header = makeTextElement('div', heading);
+
+    var entries = [];
+    for (const [name, summary, price, karma, known] of skills) {
+        const learn_link = link(name, 'learn', 'learn $'.format(trainer));
+
+        var s = `${learn_link} --- ${summary}`;
+
+        if (price !== null && (karma > 0))
+            s = s.concat(` Costs ${karma} karma and ${price}.`);
+        else if (price !== null)
+            s = s.concat(` Costs ${price}.`);
+        else if (karma > 0)
+            s = s.concat(` Costs ${karma} karma.`);
+
+        if (known)
+            s = s.concat(' (already known)');
+
+        var div = makeTextElement('li', s);
+        entries.push(div);
+    }
+    var ul = wrapElements('ul', entries);
+
+    appendBlock(wrapElements('div', [header, ul]));
+}
+
+MessageHandler.prototype.showLocation = function(name, description, exits, contents) {
+    var elements = [];
+
+    if (name != null)
+        elements.push(makeTextElement('h1', name));
+
+    if (description != null)
+        elements.push(...formatText(description));
+
+    if (exits != null) {
         var exit_links = [makeTextElement('span', 'Exits:')].concat(
             exits.map(function (dir) {
                 var link = makeTextElement('span', dir, 'link list');
@@ -518,9 +641,11 @@ MessageHandler.prototype.showLocation = function(brief, description, exits, cont
         elements.push(wrapElements('p', exit_links));
     }
 
-    for (var i = 0; i < contents.length; ++i) {
-        var [key, brief, pose] = contents[i];
-        elements.push(this.formatEmote(key, brief, pose));
+    if (contents != null) {
+        for (var i = 0; i < contents.length; ++i) {
+            var [key, brief, pose] = contents[i];
+            elements.push(this.formatEmote(key, brief, pose));
+        }
     }
 
     appendBlock(wrapElements('div', elements));
@@ -652,7 +777,9 @@ function sendInput(s) {
 function onUserInput(event) {
     var obj = document.getElementById("command");
     command_history[command_pos] = obj.value;
-    if (event.key == "Enter") {
+    if (event.key == "Escape") {
+        document.activeElement.blur();
+    } else if (event.key == "Enter") {
         if (obj.value.length > 0)
             sendInput(obj.value);
         obj.value = "";
@@ -666,6 +793,33 @@ function onUserInput(event) {
         }
     } else if (event.shiftKey && (event.key == "PageUp" || event.key == "PageDown")) {
         handler.cyclePane(event.key == "PageUp" ? 1 : -1);
+    }
+}
+
+const keyCommands = {
+    "w": "go north",
+    "a": "go west",
+    "s": "go south",
+    "d": "go east",
+    "r": "go up",
+    "f": "go down",
+    "i": "go in",
+    "o": "go out",
+};
+
+window.onkeydown = function (e) {
+    var input = document.getElementById("command");
+    if (document.activeElement != input) {
+        if (e.key == "Enter") {
+            input.focus();
+            return false;
+        } else {
+            const command = keyCommands[e.key];
+            if (command) {
+                sendInput(command);
+                return false;
+            }
+        }
     }
 }
 

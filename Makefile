@@ -45,10 +45,38 @@ $(IMAGEDIR)/%: client/images/% | $(IMAGEDIR)
 $(IMAGEDIR):
 	@mkdir -p $@
 
-icons: $(IMAGEDIR)/icons.png
-$(IMAGEDIR)/icons.png: tools/make_icons.py client/icons.txt | $(IMAGEDIR)
-	tools/make_icons.py client/icons.txt -o $(IMAGEDIR)
-	mv $(IMAGEDIR)/icons.css $(CLIENTDIR)
+# Icons
+
+.PHONY: ui_icons
+
+icons: $(IMAGEDIR)/neighbor_icons.png $(IMAGEDIR)/inventory_icons.png \
+	$(IMAGEDIR)/avatar_icons.png ui_icons
+
+$(IMAGEDIR)/neighbor_icons.png: tools/make_icons.py client/icons.txt | $(IMAGEDIR)
+	tools/make_icons.py -n neighbor -s 34 -g items -g creatures -g avatars -g other \
+		-o $(IMAGEDIR) client/icons.txt
+	mv $(IMAGEDIR)/neighbor_icons.css $(CLIENTDIR)
+
+$(IMAGEDIR)/inventory_icons.png: tools/make_icons.py client/icons.txt | $(IMAGEDIR)
+	tools/make_icons.py -n inventory -s 24 -g items \
+		-o $(IMAGEDIR) client/icons.txt
+	mv $(IMAGEDIR)/inventory_icons.css $(CLIENTDIR)
+
+$(IMAGEDIR)/avatar_icons.png: tools/make_icons.py client/icons.txt | $(IMAGEDIR)
+	tools/make_icons.py -n avatar -s 60 -g avatars \
+		-o $(IMAGEDIR) client/icons.txt
+	mv $(IMAGEDIR)/avatar_icons.css $(CLIENTDIR)
+
+ICONDIR = $(CLIENTDIR)/icons
+ICONS = $(wildcard client/icons/*.png)
+
+ui_icons: $(ICONS:%=$(BUILDDIR)/%)
+
+$(ICONDIR)/%: client/icons/% | $(ICONDIR)
+	cp $< $@
+
+$(ICONDIR):
+	@mkdir -p $@
 
 # Documentation
 

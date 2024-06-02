@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <title>Atalea</title>
     <link rel="stylesheet" type="text/css" href="game.css"/>
-    <link rel="stylesheet" type="text/css" href="icons.css"/>
+    <link rel="stylesheet" type="text/css" href="avatar_icons.css"/>
+    <link rel="stylesheet" type="text/css" href="neighbor_icons.css"/>
+    <link rel="stylesheet" type="text/css" href="inventory_icons.css"/>
     <script src="map.js"></script>
     <script src="markup.js"></script>
     <script src="game.js"></script>
@@ -12,23 +14,27 @@
 
   <body>
     <div id="container">
+
       <div class="header box" id="header">
-        <div id="player_name_auras">
-          <div id="player_name"></div>
-          <div id="player_auras"></div>
-        </div>
-        <div id="player_bars">
-          <div class="statbar" title="Health" id="player_health">
-            <div class="statvalue health"></div>
-            <div class="statlabel">0 / 0</div>
+        <div id="player_icon"></div>
+        <div id="player_info">
+          <div id="player_name_auras">
+            <div id="player_name"></div>
+            <div id="player_auras"></div>
           </div>
-          <div class="statbar" title="Energy" id="player_energy">
-            <div class="statvalue energy"></div>
-            <div class="statlabel">0 / 0</div>
-          </div>
-          <div class="statbar" title="Experience" id="player_xp">
-            <div class="statvalue xp"></div>
-            <div class="statlabel">0 / 0</div>
+          <div id="player_bars">
+            <div class="statbar" title="Health" id="player_health">
+              <div class="statvalue health"></div>
+              <div class="statlabel">0 / 0</div>
+            </div>
+            <div class="statbar" title="Energy" id="player_energy">
+              <div class="statvalue energy"></div>
+              <div class="statlabel">0 / 0</div>
+            </div>
+            <div class="statbar" title="Experience" id="player_xp">
+              <div class="statvalue xp"></div>
+              <div class="statlabel">0 / 0</div>
+            </div>
           </div>
         </div>
       </div>
@@ -39,10 +45,13 @@
       </div>
 
       <div class="neighbors box" id="neighbors">
-        <div>
-          <div></div>
-          <div class="statbar">
-            <div class="statvalue health"></div>
+        <div class="neighbor">
+          <div class="neighbor_icon"></div>
+          <div class="neighbor_info">
+            <div class="neighbor_brief"></div>
+            <div class="statbar">
+              <div class="statvalue health"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -57,23 +66,20 @@
       </div>
 
       <div class="selector buttonbox">
-        <div class="button toggle_on" id="chat" onclick="handler.showPane('chat');"></div>
-        <div class="button toggle_off" id="inventory" onclick="handler.showPane('inventory');"></div>
+        <div class="button toggle_on" id="inventory" onclick="handler.showPane('inventory');"></div>
         <div class="button toggle_off" id="equipment" onclick="handler.showPane('equipment');"></div>
         <div class="button toggle_off" id="combat" onclick="handler.showPane('combat');"></div>
         <div class="button toggle_off" id="skills" onclick="handler.showPane('skills');"></div>
+        <div class="button toggle_off" id="quests" onclick="handler.showPane('quests');"></div>
+        <div class="button toggle_off" id="chat" onclick="handler.showPane('chat');"></div>
         <div class="spacer"></div>
         <div class="button toggle_on" id="local_map"></div>
         <div class="button toggle_off" id="world_map"></div>
       </div>
 
       <div class="rightbar box scroll">
-        <div id="chat_pane" class="textbox">
-        </div>
-
         <div id="inventory_pane">
-          <div id="inventory_contents">
-          </div>
+          <div id="inventory_contents"></div>
         </div>
 
         <div id="equipment_pane">
@@ -129,43 +135,33 @@
         </div>
 
         <div id="combat_pane">
-          <div class="combat_values">
-            <h3>Primary Attributes</h3>
-            <div class="combat_value"><div>Armor</div><div id="armor">0</div></div>
-            <div class="combat_value"><div>Strength</div><div id="strength">0</div></div>
-            <div class="combat_value"><div>Agility</div><div id="agility">0</div></div>
-            <div class="combat_value"><div>Intellect</div><div id="intellect">0</div></div>
-            <div class="combat_value"><div>Vitality</div><div id="vitality">0</div></div>
-            <div class="combat_value"><div>Toughness</div><div id="toughness">0</div></div>
-            <div class="combat_value"><div>Willpower</div><div id="willpower">0</div></div>
-            <div class="combat_value"><div>Compassion</div><div id="compassion">0</div></div>
-            <div class="combat_value"><div>Precision</div><div id="precision">0</div></div>
-            <div class="combat_value"><div>Ferocity</div><div id="ferocity">0</div></div>
-            <div class="combat_value"><div>Endurance</div><div id="endurance">0</div></div>
-            <div class="combat_value"><div>Insight</div><div id="insight">0</div></div>
+          <div id="attack_defense">
+            <div id="attack"></div>
+            <div id="defense"></div>
+            <div id="speed"></div>
+            <div id="damage"></div>
           </div>
-          <div class="combat_values">
-            <h3>Derived Attributes</h3>
-            <div class="combat_value"><div>Block</div><div id="block">0</div></div>
-            <div class="combat_value"><div>Dodge</div><div id="dodge">0</div></div>
-            <div class="combat_value"><div>Critical Chance</div><div id="critical_chance">0</div></div>
-            <div class="combat_value"><div>Critical Damage</div><div id="critical_damage">0</div></div>
+          <div>
+            <h3>Combat Traits</h3>
+            <div id="combat_traits"></div>
           </div>
-          <div class="combat_values">
-            <h3>Immunities</h3>
-            <div class="combat_value"><div>Crushing</div><div id="crushing">0</div></div>
-            <div class="combat_value"><div>Piercing</div><div id="piercing">0</div></div>
-            <div class="combat_value"><div>Slashing</div><div id="slashing">0</div></div>
-            <div class="combat_value"><div>Fire</div><div id="fire">0</div></div>
-            <div class="combat_value"><div>Cold</div><div id="cold">0</div></div>
-            <div class="combat_value"><div>Electricity</div><div id="electricity">0</div></div>
-            <div class="combat_value"><div>Arcane</div><div id="arcane">0</div></div>
-            <div class="combat_value"><div>Shadow</div><div id="shadow">0</div></div>
+          <div>
+            <h3>Damage Types</h3>
+            <div id="damage_types">
+              <div><div></div><div>Affinity</div><div>Resistance</div></div>
+              <div><div>Crushing</div><div>33</div><div>10</div></div>
+            </div>
           </div>
         </div>
 
         <div id="skills_pane">
-          <div class="karma"><div>Unspent karma:</div><div id="unspent_karma">0</div></div>
+          <div id="unspent_karma"></div>
+        </div>
+
+        <div id="quests_pane">
+        </div>
+
+        <div id="chat_pane" class="textbox">
         </div>
       </div>
 

@@ -8,21 +8,27 @@ $resources    assets/purchased/resource-icons/PNG
 $loot         assets/purchased/loot-icons/PNG
 $unknown      assets/unknown
 
+!! Items
+
 # Weapons
 dagger          $weapons/Knives_03.png
 mace            $weapons/Bluntweapons_05.png
 maul            $weapons/Bluntweapons_03.png
 sword           $weapons/Swords_04.png
+shortsword      $weapons/Swords_01.png
 scimitar        $weapons/Swords_10.png
-greatsword      $weapons/swords_07.png
+greatsword      $weapons/Swords_07.png
 axe             $weapons/Axes_01.png
-battleaxe       $weapons/Axes_04.png
+battle_axe      $weapons/Axes_04.png
 spear           $weapons/Spears_01.png
-# TODO: wand
+wand            $weapons/Staves_01.png
 staff           $weapons/Staves_01.png
 
 # Clothing
 cloth_belt      $armor/Belts_04.png
+shirt           $resources/Common_Clothing.png
+pants           $armor/Mage1_03.png
+shoes           $resources/Shoes.png
 
 # Light armor
 leather_head    $armor/Leather_01.png
@@ -37,37 +43,69 @@ chain_torso     $armor/Chain_02.png
 chain_legs      $armor/Chain_03.png
 chain_hands     $armor/Chain_05.png
 chain_feet      $armor/Chain_06.png
-wooden_shield   $weapons/Shields_01.png
-metal_shield    $weapons/Shields_02.png
 
 # Heavy armor
+
+# Shields
+wooden_shield   $weapons/Shields_01.png
+metal_shield    $weapons/Shields_02.png
 heavy_shield    $weapons/Shields_03.png
 
 # Accessories
 copper_ring     $armor/Rings_01.png
 
 # Containers
-backpack        $inventory/Bag_Small.png
-
-# Mining
-pickaxe         $resources/Pickaxe.png
-copper_ore      $resources/Metal_2_Ore.png
-turquoise       $loot/Turquoise.png
-sapphire_small  $loot/Sapphire_Small.png
+small_pack      $inventory/Bag_Small.png
+medium_pack     $inventory/Bag_Medium.png
+large_pack      $inventory/Bag_Large.png
+pouch           $loot/Pouch.png
 
 # Botany
 sickle          $resources/Sickle.png
 
 # Logging
-axe             $resources/Axe.png
+logging_axe     $resources/Axe.png
+wood_log_1      $resources/Wood_Log_1.png
+wood_log_2      $resources/Wood_Log_2.png
+
+# Mining
+pickaxe         $resources/Pickaxe.png
+iron_ore        $resources/Metal_1_Ore.png
+copper_ore      $resources/Metal_2_Ore.png
+silver_ore      $resources/Metal_3_Ore.png
+gold_ore        $resources/Metal_4_Ore.png
+special_ore     $resources/Metal_5_Ore.png
+turquoise       $loot/Turquoise.png
+sapphire_small  $loot/Sapphire_Small.png
+
+# Skinning
+skinning_knife  $weapons/Knives_07.png
+
+# Smelting
+bellows         $resources/Bellows.png
+iron_ingot      $resources/Metal_1_Ingot.png
+copper_ingot    $resources/Metal_2_Ingot.png
+silver_ingot    $resources/Metal_3_Ingot.png
+gold_ingot      $resources/Metal_4_Ingot.png
+special_ingot   $resources/Metal_5_Ingot.png
 
 # Fishing
 
+# Weaving
+raw_silk        $resources/Silkworm_Cocoon.png
+
 # Smithing
 hammer          $resources/Hammer.png
+iron_plate      $resources/Metal_1_Plate.png
+copper_plate    $resources/Metal_2_Plate.png
+silver_plate    $resources/Metal_3_Plate.png
+gold_plate      $resources/Metal_4_Plate.png
+special_plate   $resources/Metal_5_Plate.png
 
 # Currency
+bronze_coin     $inventory/Bronze_Coin.png
 silver_coin     $inventory/Silver_Coin.png
+gold_coin       $inventory/Gold_Coin.png
 
 # Keys
 gold_key        $loot/Key_Type_1.png
@@ -77,15 +115,31 @@ brass_key       $loot/Key_Type_4.png
 
 # Food
 bread           $resources/Bread.png
-mushroom        $loot/Mushroom_Type_6.png
 
-# Creatures
-kobold          $unknown/kobold.png
-pink_creature   $unknown/smile-creature.png
+# Mushrooms
+mushroom_1      $loot/Mushroom_Type_1.png
+mushroom_2      $loot/Mushroom_Type_2.png
+mushroom_3      $loot/Mushroom_Type_3.png
+mushroom_4      $loot/Mushroom_Type_4.png
+mushroom_5      $loot/Mushroom_Type_5.png
+mushroom_6      $loot/Mushroom_Type_6.png
 
-# Misc
-arched_chest    $loot/Chest_Type_1.png
-flat_chest      $loot/Chest_Type_2.png
+# Misc. items
 sack            $loot/Sack.png
 seashell        $loot/Sea_Shell.png
+
+!! Avatars
+
+human1          $unknown/human1.png
+
+!! Creatures
+
+kobold          $unknown/kobold.png
+ghost           $unknown/ghost.png
+pink_creature   $unknown/smile-creature.png
+
+!! Other
+
+arched_chest    $loot/Chest_Type_1.png
+flat_chest      $loot/Chest_Type_2.png
 tombstone       $unknown/tombstone.png

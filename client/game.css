@@ -159,8 +159,8 @@ a:link {
 
 .textbox > div > ul > li {
     margin-left: 1.5em;
+    margin-top: 5pt;
     margin-bottom: 5pt;
-    line-height: 14pt;
 }
 
 .textbox > pre {
@@ -177,19 +177,23 @@ a:link {
 .header {
     grid-area: header;
     margin: 2px;
-    background-size: contain;
-    background-position: left;
-    background-repeat: no-repeat;
-    padding-left: 65px;
-    padding-right: 5px;
+    display: flex;
 }
 
-.header > div:nth-child(1) {
-    font-size: 12pt;
-    line-height: 20pt;
+#player_icon {
+    width: 60px;
+    height: 60px;
+}
+
+#player_info {
+    flex-grow: 1;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 #player_name_auras {
+    font-size: 12pt;
+    line-height: 20pt;
     display: flex;
     justify-content: space-between;
     flex-flow: row nowrap;
@@ -296,27 +300,32 @@ a:link {
     grid-area: neighbors;
 }
 
-.neighbors > div {
-    position: relative;
-    margin: 4px 2px;
-    height: 34px;
-    background-size: contain;
-    background-position: left;
-    background-repeat: no-repeat;
-    padding-left: 37px;
-    cursor: pointer;
-}
-
-.neighbors > div:nth-child(1) {
+.neighbor {
     display: none;
+    position: relative;
+    cursor: pointer;
+    margin-top: 4px;
 }
 
-.neighbors > div > div:nth-child(1) {
+.neighbor > div:nth-child(1) {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+}
+
+.neighbor_info {
+    margin-left: 4px;
+    margin-right: 4px;
+    height: 34px;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.neighbor_brief {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-size: 9pt;
-    line-height: 18px;
+    line-height: 20px;
 }
 
 .neighbors .statbar {
@@ -373,10 +382,6 @@ a:link {
     grid-area: selector;
 }
 
-#chat {
-    background-image: url('icons/discussion.png');
-}
-
 #inventory {
     background-image: url('icons/knapsack.png');
 }
@@ -391,6 +396,14 @@ a:link {
 
 #skills {
     background-image: url('icons/skills.png');
+}
+
+#quests {
+    background-image: url('icons/quests.png');
+}
+
+#chat {
+    background-image: url('icons/discussion.png');
 }
 
 #local_map {
@@ -411,6 +424,7 @@ a:link {
 /* The chat pane shows messages to/from other players and chat channels. */
 
 #chat_pane {
+    display: none;
 }
 
 /* The equipment pane shows items that the player's avatar has equipped.  */
@@ -441,13 +455,22 @@ a:link {
 
 #equipment_pane > div > div > div:nth-child(even) {
     flex: 0 1 75%;
+    display: flex;
     margin-top: 3px;
+}
+
+#equipment_pane > div > div > div:nth-child(even) > div:nth-child(1) {
+    width: 24px;
     height: 24px;
-    text-indent: 28px;
+}
+
+#equipment_pane > div > div > div:nth-child(even) > div:nth-child(2) {
+    flex-grow: 1;
     line-height: 20px;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    margin-left: 4px;
 }
 
 #equipment_pane > div > hr {
@@ -458,7 +481,6 @@ a:link {
 /* The inventory pane shows items that the player's avatar is carrying. */
 
 #inventory_pane {
-    display: none;
 }
 
 #inventory_contents {
@@ -470,14 +492,24 @@ a:link {
 
 #inventory_contents > div {
     flex: 0 0 50%;
+    display: flex;
     max-width: 50%;
-    height: 24px;
     margin-top: 3px;
-    line-height: 20px;
-    text-indent: 28px;
+}
+
+#inventory_contents > div > div:nth-child(1) {
+    width: 24px;
+    height: 24px;
+}
+
+#inventory_contents > div > div:nth-child(2) {
+    flex-grow: 1;
+    height: 24px;
+    line-height: 24px;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    margin-left: 4px;
 }
 
 /* The combat pane shows resources, attributes that determine combat modifiers,
@@ -498,49 +530,66 @@ a:link {
     text-align: center;
 }
 
-.combat_value {
-    flex: 0 0 40%;
-    line-height: 1.5;
+#attack_defense {
+    display: flex;
+    margin: 8px 0;
 }
 
-.combat_value > div {
-    display: inline-block;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+#attack_defense > div {
+    flex: 0 0 25%;
+    text-align: center;
+    font-size: 12pt;
 }
 
-.combat_value > div:nth-child(1) {
-    width: 75%;
-    text-align: left;
+#combat_traits {
+    width: 100%;
 }
 
-.combat_value > div:nth-child(2) {
-    width: 25%;
+#combat_traits > div {
+    display: flex;
+    margin-top: 3px;
+    padding: 3px;
+}
+
+#combat_traits > div:nth-child(even) {
+    background-color: #353538;
+}
+
+#combat_traits > div > div:nth-child(1) {
+    flex: 0 0 75%;
+}
+
+#combat_traits > div > div:nth-child(2) {
+    flex: 0 0 25%;
     text-align: right;
 }
 
-#block:after, #dodge:after, #critical_chance:after, #critical_damage:after {
-    content: "%"
-}
-
-#resources {
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: space-between;
+#damage_types {
     width: 100%;
 }
 
-#resources .combat_value {
-    font-size: 12pt;
-    flex: 0 0 28%;
+#damage_types > div {
+    display: flex;
+    margin-top: 3px;
+    padding: 3px;
 }
 
-.combat_values {
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: space-between;
-    width: 100%;
+#damage_types > div:nth-child(even) {
+    background-color: #353538;
+}
+
+#damage_types > div > div:nth-child(1) {
+    flex: 0 0 50%;
+}
+
+#damage_types > div > div:nth-child(2) {
+    flex: 0 0 25%;
+    text-align: right;
+}
+
+#damage_types > div > div:nth-child(3) {
+    flex: 0 0 25%;
+    text-align: right;
 }
 
 /* The skills pane shows unspent karma and current/max rank in known skills. */
@@ -552,39 +601,57 @@ a:link {
 #skills_pane > div {
 }
 
-#skills_pane .karma {
-    font-size: 12pt;
+#unspent_karma {
+    text-align: center;
+    margin-top: 5pt;
     margin-bottom: 10px;
-}
-
-#skills_pane .karma > div:nth-child(1) {
-    display: inline-block;
-}
-
-#skills_pane .karma > div:nth-child(2) {
-    display: inline-block;
-    margin-left: 1em;
 }
 
 #skills_pane > div:nth-child(even) {
     background-color: #353538;
 }
 
-.skill_rank {
-    line-height: 1.5;
-    padding: 0 5px;
+#skills_pane > div:nth-child(n + 1) {
+    margin-top: 4px;
+    padding: 4px;
+    cursor: pointer;
 }
 
-.skill_rank > div:nth-child(1) {
+#skills_pane > div:nth-child(n + 1) > div:nth-child(1) {
     display: inline-block;
-    width: 60%;
+    width: 70%;
     text-align: left;
 }
 
-.skill_rank > div:nth-child(2) {
+#skills_pane > div:nth-child(n + 1) > div:nth-child(2) {
     display: inline-block;
-    width: 40%;
+    width: 30%;
     text-align: right;
+}
+
+/* The quests pane lists active quests. */
+
+#quests_pane {
+    display: none;
+}
+
+#quests_pane > div {
+    margin-top: 4px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+#quests_pane > div:nth-child(even) {
+    background-color: #353538;
+}
+
+#quests_pane > div > div:nth-child(1) {
+    color: #ffd898;
+}
+
+#quests_pane > div > div:nth-child(2) {
+    margin-top: 4px;
+    margin-left: 20px;
 }
 
 /* The left buttonbox contains "system" buttons. */
@@ -649,6 +716,27 @@ a:link {
     transition-duration: 1s;
 }
 
+.vendor_item {
+    flex: 0 0 100%;
+    display: flex;
+    margin: 5px 10px;
+}
+
+.vendor_item > div:nth-child(1) {
+    width: 24px;
+    height: 24px;
+}
+
+.vendor_item > div:nth-child(2) {
+    flex-grow: 1;
+    height: 24px;
+    line-height: 24px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+
 /* The right buttonbox allows the player to assign macros to buttons that
    correspond with one-digit commands. */
 
@@ -662,7 +750,7 @@ a:link {
     display: grid;
     height: 100%;
     grid-template-columns: 180px 1fr 35%;
-    grid-template-rows: 60px auto 30px 1fr 40px;
+    grid-template-rows: auto auto 30px 1fr 40px;
     grid-template-areas:
       "header header weather"
       "neighbors main map"

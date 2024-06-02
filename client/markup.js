@@ -24,6 +24,49 @@
 // Text within backticks creates a link that sends input as if typed by the
 // player.
 
+//
+// Add some useful String methods.
+//
+
+String.prototype.capitalize = function() {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+}
+
+String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) {
+        return typeof args[number] != 'undefined' ? args[number] : match;
+    });
+}
+
+//
+// Create a link from `...` syntax.
+//
+
+function escapeForLink(s) {
+    return s.replaceAll("\u2019", "\\'");
+}
+
+function formatLink(full, content) {
+    const template = '<span class="link {0}" onclick="sendInput(\'{1}\')">{2}</span>';
+
+    var [cls, text, command] = content.split(':');
+
+    if (text === undefined) {
+        // The lone part is a class, the input, and the text to display.
+        text = command = cls;
+    } else if (command === undefined) {
+        // The first part is a class and also the verb to prepend to the second
+        // part to form the input. The second part is the text to display.
+        command = [cls, escapeForLink(text)].join(" ");
+    } else {
+        // The last part is a template for the input.
+        command = escapeForLink(command.replace('$', text));
+    }
+
+    return template.format(cls, command, text);
+}
+
 // Given a string that represents a block of text such as a paragraph, returns
 // its formatted HTML representation as a new string.
 function formatBlock(s) {
@@ -39,37 +82,11 @@ function formatBlock(s) {
         .replace(/'/g, "\u2019")
         .replace(/"([^"]*)"/g, "\u201c$1\u201d");
 
-    // This is a major deviation from the spec: the inline code syntax instead
-    // generates links that send input to the server, as if it had been typed by
-    // the player.
-    //
-    // If the value begins with an article, that article is removed from the
-    // resulting input.
-    //
-    // If there is a prefix ending with a colon, it must consist of a
-    // comma-separated series of tokens. These tokens control the link style
-    // and/or the input sent when the link is followed.
-    //
-    // The final token in the list is prepended to the input.
-    //
-    // All tokens in the list are additionally used as styles for the link. The
-    // exception is that, if a token is empty, no subsequent tokens are applied
-    // as styles.
-    s = s.replace(/`(?:([a-z ,]+):)?((?:A|a|An|an|The|the) +)?([^`]*)`/g,
-                  function(full, prefix, article, value) {
-                      var action;
-                      prefix = prefix ? prefix.split(',') : [];
-                      if (prefix.length && prefix[prefix.length - 1])
-                          action = 'sendInput(\'' + prefix[prefix.length - 1] + ' ' + value + '\')';
-                      else
-                          action = 'sendInput(\'' + value + '\')';
-                      var num_styles = prefix.concat(['']).indexOf('');
-                      return '<span class="link ' + prefix.slice(0, num_styles).join(' ') +
-                          '" onclick="' + action + '">' + (article || '') + value + '</span>';
-                  });
+    // Convert `...` to a link that sends input to the server.
+    s = s.replace(/`([^`]*)`/g, formatLink);
 
-    // Another deviation: only inline links are used, and the title attribute isn't supported.
-    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/, '<a href="$2">$1</a>');
+    // Convert [...](...) to a web link.
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 
     return s;
 }

@@ -80,7 +80,7 @@ function createUser(event) {
     // Send a request to submit the proposed new user's information
     request = new XMLHttpRequest();
     request.onload = function(event) { onAuthResponse(event, true); }
-    request.open("GET", "/game/createAccount");
+    request.open("GET", "/game/create");
     request.setRequestHeader("Authorization", "Basic " + btoa(user + ':' + pass1));
     request.send();
 }
