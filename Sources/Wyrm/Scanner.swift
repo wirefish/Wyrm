@@ -5,7 +5,7 @@
 
 enum Token: Hashable {
   case lparen, rparen, lsquare, rsquare, lbrace, rbrace
-  case colon, comma, dot, at
+  case colon, comma, dot, range, at
 
   case minus, minusEqual, plus, plusEqual
   case slash, slashEqual, star, starEqual
@@ -81,7 +81,7 @@ class Scanner {
       case "}": return .rbrace
       case ":": return .colon
       case ",": return .comma
-      case ".": return .dot
+      case ".": return match(".") ? .range : .dot
       case "@": return .at
       case "'": return scanSymbol()
       case "-": return match("=") ? .minusEqual : match(">") ? .arrow : .minus

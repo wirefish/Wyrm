@@ -110,6 +110,7 @@ class Parser {
     .lsquare: (method: parseSubscript, prec: .call),
     .arrow: (method: parseExit, prec: .factor),
     .dot: (method: parseDot, prec: .call),
+    .range: (method: parseBinary, prec: .comparison),
     .at: (method: parseStack, prec: .factor),
     .minus: (method: parseBinary, prec: .term),
     .plus: (method: parseBinary, prec: .term),

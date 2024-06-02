@@ -94,6 +94,9 @@ enum Opcode: UInt8 {
   // a single value representing a list of the removed values.
   case endList
 
+  // Create a range from the two values on top of the stack.
+  case makeRange
+
   // The top of the stack is a list. Pop it and create an iterator over the
   // list.
   case makeIterator
@@ -323,6 +326,7 @@ class Compiler {
       case .star: block.emit(.multiply)
       case .slash: block.emit(.divide)
       case .percent: block.emit(.modulus)
+      case .range: block.emit(.makeRange)
       case .less: block.emit(.less)
       case .lessEqual: block.emit(.lessEqual)
       case .greater: block.emit(.greater)

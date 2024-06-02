@@ -231,6 +231,15 @@ extension World {
       stack.removeSubrange(start...)
       stack.append(.list(values))
 
+    case .makeRange:
+      guard let upperBound = Int.fromValue(stack.removeLast()) else {
+        throw ExecError.typeMismatch
+      }
+      guard let lowerBound = Int.fromValue(stack.removeLast()) else {
+        throw ExecError.typeMismatch
+      }
+      stack.append(.range(lowerBound...upperBound))
+
     case .makeIterator:
       guard iter == nil else {
         throw ExecError.nestedIterationNotSupported

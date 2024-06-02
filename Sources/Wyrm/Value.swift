@@ -19,6 +19,7 @@ enum Value: Equatable {
   case string(String)
   case symbol(String)
   case ref(Ref)
+  case range(ClosedRange<Int>)
   case list([Value])
   case entity(Entity)
   case stack(ItemStack)
@@ -108,9 +109,7 @@ extension Int: ValueRepresentable {
     return Int(exactly: n)
   }
 
-  func toValue() -> Value {
-    return .number(Double(self))
-  }
+  func toValue() -> Value { .number(Double(self)) }
 }
 
 extension Double: ValueRepresentable {
@@ -121,9 +120,7 @@ extension Double: ValueRepresentable {
     return n
   }
 
-  func toValue() -> Value {
-    return .number(self)
-  }
+  func toValue() -> Value { .number(self) }
 }
 
 extension String: ValueRepresentable {
@@ -135,9 +132,7 @@ extension String: ValueRepresentable {
     }
   }
 
-  func toValue() -> Value {
-    return .string(self)
-  }
+  func toValue() -> Value { .string(self) }
 }
 
 extension Ref: ValueRepresentable {
@@ -149,6 +144,17 @@ extension Ref: ValueRepresentable {
   }
 
   func toValue() -> Value { .ref(self) }
+}
+
+extension ClosedRange<Int>: ValueRepresentable {
+  static func fromValue(_ value: Value) -> ClosedRange<Int>? {
+    guard case let .range(range) = value else {
+      return nil
+    }
+    return range
+  }
+
+  func toValue() -> Value { .range(self) }
 }
 
 extension NounPhrase: ValueRepresentable {
