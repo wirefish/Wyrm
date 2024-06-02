@@ -63,10 +63,10 @@ extension Responder {
   @discardableResult
   func respondTo(_ event: Event, args: [Value]) -> Value {
     let args = [toValue()] + args
-    var observer: Responder! = self
-    while observer != nil {
-      if let fns = observer.handlers[event] {
-        let context: [Scope] = [observer]
+    let context: [Scope] = [self]
+    var responder: Responder! = self
+    while responder != nil {
+      if let fns = responder.handlers[event] {
         for fn in fns {
           if fn.appliesTo(args: args) {
             do {
@@ -85,7 +85,7 @@ extension Responder {
           }
         }
       }
-      observer = observer.delegate
+      responder = responder.delegate
     }
     return .nil
   }
