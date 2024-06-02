@@ -3,7 +3,7 @@ host = "localhost"
 port = 8000
 
 [world]
-root_path = "/Users/craig/Projects/Wyrm/World"
+root_path = "World"
 database_path = "/var/wyrm/wyrm.db"
 avatar_prototype = "lib.avatar"
 start_location = "isleOfDawn.hilltop"
