@@ -14,10 +14,6 @@ class Map {
 
   init(at startLocation: Location, radius: Int = 3) {
     self.radius = radius
-    guard case let .absolute(moduleName, _) = startLocation.ref,
-          let module = World.instance.modules[moduleName] else {
-      fatalError("cannot get module from location ref")
-    }
     cells = [Cell(location: startLocation, offset: (0, 0))]
     var seen: Set<Location> = [startLocation]
     var nextOpen = 0
@@ -27,9 +23,7 @@ class Map {
         continue
       }
       for portal in cell.location.exits {
-        guard let destinationRef = portal.destination,
-              let destination = World.instance.lookup(
-                destinationRef, context: module)?.asEntity(Location.self) else {
+        guard let destination = portal.destination else {
           continue
         }
         if seen.insert(destination).inserted {

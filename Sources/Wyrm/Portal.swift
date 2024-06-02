@@ -17,12 +17,12 @@ enum PortalState: ValueRepresentableEnum {
 
 class Portal: Thing {
   var direction: Direction = .in
-  var destination: Ref?
+  weak var destination: Location?
+  weak var twin: Portal?
   var isCloseable = false
   var key: Item?
   var state = PortalState.open
   var exitMessage: String?
-  weak var twin: Portal?
 
   override func copyProperties(from other: Entity) {
     let other = other as! Portal
@@ -137,9 +137,7 @@ extension Thing {
       return false
     }
 
-    guard let destinationRef = portal.destination,
-          let destination = World.instance.lookup(destinationRef, context: location.ref!)?
-      .asEntity(Location.self) else {
+    guard let destination = portal.destination else {
       avatar?.show("A strange force prevents you from going that way.")
       return false
     }

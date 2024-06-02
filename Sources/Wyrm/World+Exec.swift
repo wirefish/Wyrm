@@ -285,22 +285,14 @@ extension World {
         }
 
       case .makePortal:
-        let destValue = stack.removeLast()
-        let destRef = if case let .ref(ref) = destValue {
-          ref
-        } else {
-          destValue.asEntity(Location.self)?.ref
-        }
-        if (destRef == nil) {
-          throw ExecError.referenceRequired
-        }
-        guard let direction = Direction.fromValue(stack.removeLast()),
+        guard let dest = stack.removeLast().asEntity(Location.self),
+              let dir = Direction.fromValue(stack.removeLast()),
               let proto = stack.removeLast().asEntity(Portal.self) else {
           throw ExecError.typeMismatch
         }
         let portal = proto.clone()
-        portal.direction = direction
-        portal.destination = destRef
+        portal.direction = dir
+        portal.destination = dest
         stack.append(.entity(portal))
 
       case .clone:

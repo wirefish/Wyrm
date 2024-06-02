@@ -440,12 +440,8 @@ extension World {
         guard portal.twin == nil else {
           continue
         }
-        guard let destinationRef = portal.destination else {
+        guard let destination = portal.destination else {
           logger.warning("portal \(portal.direction) from \(location.ref!) has no destination")
-          continue
-        }
-        guard let destination = lookup(destinationRef, context: location.ref!)?.asEntity(Location.self) else {
-          logger.warning("portal \(portal.direction) from \(location.ref!) has invalid destination \(destinationRef)")
           continue
         }
         guard let twin = destination.findExit(portal.direction.opposite) else {
@@ -456,8 +452,8 @@ extension World {
           logger.warning("twin of portal \(portal.direction) from \(location.ref!) has no destination")
           continue
         }
-        guard lookup(twin.destination!, context: destination.ref!)?.asEntity(Location.self) == location else {
-          logger.warning("twin of portal \(portal.direction) from \(location.ref!) has mismatched destination \(twin.destination!)")
+        guard twin.destination! === location else {
+          logger.warning("twin of portal \(portal.direction) from \(location.ref!) has mismatched destination \(twin.destination!.ref!)")
           continue
         }
         portal.twin = twin

@@ -8,7 +8,7 @@ def entity routeFollower: location {
     var entries = [exit -> oppositeDirection(exit.direction) to self for exit in route]
     while true {
       // Arrive at the destination.
-      var dest = *route[pos].destination
+      var dest = route[pos].destination
       addExit(entries[pos], dest)
       addExit(route[pos], self)
       announce(dest, 3, "{self.name} arrives at {dest.name}.")
@@ -17,7 +17,7 @@ def entity routeFollower: location {
 
       // Announce departure to the next destination.
       var nextPos = (pos + 1) % len(route)
-      var nextDest = *route[nextPos].destination
+      var nextDest = route[nextPos].destination
       announce(dest, 3, "{self.name} will depart soon for {nextDest.name}. All aboard!")
       await sleep(7)
 
