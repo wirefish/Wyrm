@@ -15,6 +15,24 @@ enum ExecError: Error {
   case nestedIterationNotSupported
 }
 
+enum ValueIterator {
+  case range(ClosedRange<Int>.Iterator)
+  case array(Array<Value>.Iterator)
+
+  mutating func next() -> Value? {
+    switch self {
+    case var .range(it):
+      let value = it.next()?.toValue()
+      self = .range(it)
+      return value
+    case var .array(it):
+      let value = it.next()
+      self = .array(it)
+      return value
+    }
+  }
+}
+
 extension World {
   func exec(_ code: ScriptFunction, args: [Value], context: [Scope]) throws -> CallableResult {
     // The arguments are always the first locals, and self is always the first argument.
@@ -28,7 +46,7 @@ extension World {
               _ stack: inout [Value], _ ip: Int) throws -> CallableResult {
     var lists = [Int]()
     var ip = ip
-    var iter: Array<Value>.Iterator?
+    var iter: ValueIterator?
 
   loop: while ip < code.bytecode.count {
     let op = Opcode(rawValue: code.bytecode[ip])!
@@ -244,14 +262,15 @@ extension World {
       guard iter == nil else {
         throw ExecError.nestedIterationNotSupported
       }
-      guard case let .list(list) = stack.removeLast() else {
-        throw ExecError.typeMismatch
+      switch stack.removeLast() {
+      case let .list(list): iter = .array(list.makeIterator())
+      case let .range(range): iter = .range(range.makeIterator())
+      default: throw ExecError.typeMismatch
       }
-      iter = list.makeIterator()
 
     case .advanceOrJump:
       if let value = iter?.next() {
-        stack.append(value)
+        stack.append(value.toValue())
         ip += 2
       } else {
         iter = nil

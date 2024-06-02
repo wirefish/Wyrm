@@ -97,8 +97,8 @@ enum Opcode: UInt8 {
   // Create a range from the two values on top of the stack.
   case makeRange
 
-  // The top of the stack is a list. Pop it and create an iterator over the
-  // list.
+  // The top of the stack is a list or range. Pop it and create an iterator over
+  // its elements.
   case makeIterator
 
   // If the current iterator has a next value, push it onto the stack.
