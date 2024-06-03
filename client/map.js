@@ -182,7 +182,7 @@ Map.prototype.render = function()
   var room_size = cell_size - inset * 2;
 
   for (var j = 0; j < this.rooms.length; ++j) {
-    var [x, y, name, icon, surface, surround, domain, state] = this.rooms[j];
+    var [id, x, y, name, icon, state, surface, surround, domain] = this.rooms[j];
 
     var left = center_left + x * cell_size, top = center_top + y * cell_size;
 
