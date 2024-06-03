@@ -47,10 +47,8 @@ extension Ref: Codable, CustomStringConvertible {
 
   var description: String {
     switch self {
-    case let .absolute(module, name):
-      return "\(module).\(name)"
-    case let .relative(name):
-      return name
+    case let .absolute(module, name): "\(module).\(name)"
+    case let .relative(name): name
     }
   }
 
