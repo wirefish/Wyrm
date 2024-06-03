@@ -568,7 +568,6 @@ MessageHandler.prototype.showVendorItems = function(heading, vendor, verb, items
 
   var entries = [header];
   for (const [brief, price, icon] of items) {
-
     var div = document.createElement('div');
     div.className = "vendor_item";
 
