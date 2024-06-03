@@ -3,6 +3,8 @@
 //  Wyrm
 //
 
+// MARK: Region
+
 final class Region: Scope {
   var name: String?
   var description: String?
@@ -22,6 +24,8 @@ final class Region: Scope {
     try setMember(member, to: value, Self.accessors)
   }
 }
+
+// MARK: Location
 
 final class Location: Entity {
   var name = ""

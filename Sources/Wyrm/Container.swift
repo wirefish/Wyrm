@@ -6,12 +6,13 @@
 class Container: Thing {
   var contents = ItemCollection()
 
-  var scriptContents: [ItemStack] {
-    return []  // FIXME:
-  }
+  var contentsPreposition = "in"
+
+  var scriptContents: [ItemStack] { contents.stacks() }
 
   private static let accessors = [
-    "capacity": Accessor(\Container.contents.capacity),
+    "capacity": Accessor(readOnly: \Container.contents.capacity),
+    "count": Accessor(readOnly: \Container.contents.count),
     "contents": Accessor(readOnly: \Container.scriptContents)
   ]
 

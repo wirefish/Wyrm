@@ -3,7 +3,6 @@
 //  Wyrm
 //
 
-// FIXME:
 enum CodingError: Error {
   case badPrototype
 }
@@ -11,19 +10,25 @@ enum CodingError: Error {
 // MARK: Item
 
 class Item: Thing, Codable {
-  // If zero, this item cannot stack with other items inside a container and
-  // the container can contain more than one item with the same prototype. If
-  // positive, the item can stack with other items with the same prototype and
-  // a container can contain at most one such stack.
+  // If zero, this item cannot stack with other items inside an ItemCollection, and
+  // the ItemCollection can contain more than one stack with the same prototype
+  // (unless `unique` is true). If positive, the item can stack with other items with
+  // the same prototype and an ItemCollection can contain at most one such stack.
   var stackLimit = 0
 
   var stackable: Bool { stackLimit >= 1 }
 
+  // Limits an ItemCollection to contain at most one of this (unstackable) item.
   var unique = false
 
   var level = 0
   var useVerbs = [String]()
+
+  // An item may be associated with a quest, in which case it is only available when
+  // that quest is active and is discarded once the quest ends.
   var quest: Quest?
+
+  // The price for which vendors sell this item.
   var price: ItemStack?
 
   override func copyProperties(from other: Entity) {
@@ -82,10 +87,6 @@ class Item: Thing, Codable {
     } else {
       return "\(base) (\(notes.joined(separator: " ")))"
     }
-  }
-
-  func isStackable(with stack: Item) -> Bool {
-    return stackLimit > 0 && prototype === stack.prototype
   }
 
   enum CodingKeys: CodingKey { case prototype }
@@ -188,6 +189,7 @@ struct ItemCollection: Codable {
   var items = [Item:Int]()
 
   var isEmpty: Bool { items.isEmpty }
+  var count: Int { items.count }
 
   private func containsItemWithPrototype(_ prototype: Entity) -> Bool {
     return items.keys.contains { $0.prototype === prototype }
@@ -277,6 +279,10 @@ struct ItemCollection: Codable {
     }
   }
 
+  func stacks() -> [ItemStack] {
+    items.map { ItemStack(item: $0.key, count: $0.value) }
+  }
+
   func select(where pred: (Item) -> Bool) -> [ItemStack] {
     items.compactMap { pred($0.key) ? ItemStack(item: $0.key, count: $0.value) : nil }
   }
@@ -287,7 +293,5 @@ struct ItemCollection: Codable {
     }
   }
 
-  func describe() -> String {
-    items.map({ ItemStack(item: $0.key, count: $0.value) }).describe()
-  }
+  func describe() -> String { stacks().describe() }
 }
