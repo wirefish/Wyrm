@@ -20,24 +20,21 @@ struct TokenSequence: Sequence, IteratorProtocol {
     return input[start..<end]
   }
 
+  mutating func next() -> Substring? {
+    guard let token = peek() else {
+      return nil
+    }
+    input.removeSubrange(..<token.endIndex)
+    return token
+  }
+
   @discardableResult
   mutating func consume() -> Bool {
     next() != nil
   }
 
-  mutating func next() -> Substring? {
-    guard let start = input.firstIndex(where: { !$0.isWhitespace }) else {
-      return nil
-    }
-    input.removeSubrange(..<start)
-    let end = input.firstIndex(where: { $0.isWhitespace }) ?? input.endIndex
-    let token = input[..<end]
-    input.removeSubrange(..<end)
-    return token
-  }
-
   mutating func rest() -> String? {
-    return peek() != nil ? joined(separator: " ") : nil
+    peek() != nil ? joined(separator: " ") : nil
   }
 }
 
