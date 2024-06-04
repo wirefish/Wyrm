@@ -51,7 +51,7 @@ final class Location: Entity {
     super.copyProperties(from: other)
   }
 
-  static let accessors = [
+  private static let accessors = [
     "name": Accessor(\Location.name),
     "description": Accessor(\Location.description),
     "contents": Accessor(\Location.contents),
