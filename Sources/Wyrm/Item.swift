@@ -34,9 +34,11 @@ class Item: Thing, Codable {
   override func copyProperties(from other: Entity) {
     let other = other as! Item
     stackLimit = other.stackLimit
+    unique = other.unique
     level = other.level
     useVerbs = other.useVerbs
     quest = other.quest
+    price = other.price
     super.copyProperties(from: other)
   }
 
