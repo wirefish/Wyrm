@@ -41,6 +41,18 @@ struct Accessor {
     get = { ($0 as! T)[keyPath: keyPath].toValue() }
     set = { (_, _) in throw AccessError.readOnlyMember }
   }
+
+  // Create a write-only accessor for a type that can be constructed from a Value
+  // but not represented by one.
+  init<T: Scope, V: ValueConstructible>(writeOnly keyPath: ReferenceWritableKeyPath<T, V>) {
+    get = { (_) -> Value in return .nil }
+    set = {
+      guard let value = V.fromValue($1) else {
+        throw AccessError.expected(String(describing: V.self))
+      }
+      ($0 as! T)[keyPath: keyPath] = value
+    }
+  }
 }
 
 extension Scope {

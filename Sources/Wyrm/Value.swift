@@ -63,7 +63,40 @@ enum Value: Equatable {
   }
 }
 
-// MARK: - representing value types
+// MARK: ValueConstructible
+
+// ValueConstructible is a protocol adopted by types that can be constructed
+// from a Value, but not necessarily represented by a Value.
+
+protocol ValueConstructible {
+  static func fromValue(_ value: Value) -> Self?
+}
+
+extension Optional: ValueConstructible where Wrapped: ValueConstructible {
+  static func fromValue(_ value: Value) -> Self? {
+    if value == .nil {
+      return .some(.none)
+    } else if let wrapped = Wrapped.fromValue(value) {
+      return .some(wrapped)
+    } else {
+      return .none
+    }
+  }
+}
+
+extension Array: ValueConstructible where Element: ValueConstructible {
+  static func fromValue(_ value: Value) -> Self? {
+    guard case let .list(list) = value else {
+      return nil
+    }
+    return list.compactMap { Element.fromValue($0) }
+  }
+}
+
+// MARK: ValueRepresentable
+
+// ValueRepresentable is a protocol adopted by those types that can be represented
+// by a Value.
 
 protocol ValueRepresentable {
   static func fromValue(_ value: Value) -> Self?
@@ -137,20 +170,6 @@ extension ClosedRange<Int>: ValueRepresentable {
   func toValue() -> Value { .range(self) }
 }
 
-extension NounPhrase: ValueRepresentable {
-  static func fromValue(_ value: Value) -> NounPhrase? {
-    guard case let .string(s) = value else {
-      return nil
-    }
-    return NounPhrase(s)
-  }
-
-  func toValue() -> Value {
-    // FIXME: This isn't right but it really doesn't matter.
-    return .string(singular)
-  }
-}
-
 extension Array: ValueRepresentable where Element: ValueRepresentable {
   static func fromValue(_ value: Value) -> Self? {
     guard case let .list(list) = value else {
@@ -181,27 +200,6 @@ extension Optional: ValueRepresentable where Wrapped: ValueRepresentable {
   }
 }
 
-// MARK: - representing enums
-
-protocol ValueRepresentableEnum: CaseIterable, ValueRepresentable {
-  static var names: [String:Self] { get }
-}
-
-extension ValueRepresentableEnum {
-  static func fromValue(_ value: Value) -> Self? {
-    guard case let .symbol(name) = value else {
-      return nil
-    }
-    return Self.names[name]
-  }
-
-  func toValue() -> Value {
-    return .symbol(String(describing: self))
-  }
-}
-
-// MARK: - representing referenced objects
-
 extension Entity: ValueRepresentable {
   static func fromValue(_ value: Value) -> Self? {
     guard case let .entity(entity) = value else {
@@ -227,11 +225,10 @@ extension Quest: ValueRepresentable {
 
 extension QuestPhase: ValueRepresentable {
   static func fromValue(_ value: Value) -> QuestPhase? {
-    if case let .phase(phase) = value {
-      phase
-    } else {
-      nil
+    guard case let .phase(phase) = value else {
+      return nil
     }
+    return phase
   }
   func toValue() -> Value { .phase(self) }
 }
@@ -264,4 +261,25 @@ extension Region: ValueRepresentable {
     return region
   }
   func toValue() -> Value { .region(self) }
+}
+
+// MARK: ValueRepresentableEnum
+
+// ValueRepresentableEnum allows an enum to be represented by a symbol Value.
+
+protocol ValueRepresentableEnum: CaseIterable, ValueRepresentable {
+  static var names: [String:Self] { get }
+}
+
+extension ValueRepresentableEnum {
+  static func fromValue(_ value: Value) -> Self? {
+    guard case let .symbol(name) = value else {
+      return nil
+    }
+    return Self.names[name]
+  }
+
+  func toValue() -> Value {
+    return .symbol(String(describing: self))
+  }
 }

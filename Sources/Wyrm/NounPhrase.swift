@@ -107,3 +107,12 @@ struct NounPhrase: Codable {
     }
   }
 }
+
+extension NounPhrase: ValueConstructible {
+  static func fromValue(_ value: Value) -> NounPhrase? {
+    guard case let .string(s) = value else {
+      return nil
+    }
+    return NounPhrase(s)
+  }
+}

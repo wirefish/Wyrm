@@ -26,12 +26,12 @@ class Thing: Entity, Viewable, Matchable {
   }
 
   private static let accessors = [
-    "brief": Accessor(\Thing.brief),
+    "brief": Accessor(writeOnly: \Thing.brief),
     "pose": Accessor(\Thing.pose),
     "description": Accessor(\Thing.description),
     "icon": Accessor(\Thing.icon),
     "implicit": Accessor(\Thing.implicit),
-    "alts": Accessor(\Thing.alts),
+    "alts": Accessor(writeOnly: \Thing.alts),
     "size": Accessor(\Thing.size),
     "location": Accessor(\Thing.location),
   ]

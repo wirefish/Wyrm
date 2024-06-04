@@ -17,7 +17,7 @@ final class Race: Scope, CustomDebugStringConvertible {
   }
 
   static let accessors = [
-    "brief": Accessor(\Race.brief),
+    "brief": Accessor(writeOnly: \Race.brief),
     "description": Accessor(\Race.description),
   ]
 
