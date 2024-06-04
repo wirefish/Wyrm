@@ -46,23 +46,24 @@ class Entity: Scope, Responder {
     "id": Accessor(readOnly: \Entity.id),
   ]
 
+  func getScriptMember(_ member: String) -> Value? {
+    return members[member] ?? prototype?.getScriptMember(member)
+  }
+
+  func getScriptMember<T: ValueRepresentable>(_ member: String) -> T? {
+    T.fromValue(getScriptMember(member))
+  }
+
+  func setScriptMember<T: ValueRepresentable>(_ member: String, to value: T?) {
+    members[member] = value.toValue()
+  }
+  
   func get(_ member: String) -> Value? {
-    if let value = getMember(member, Self.accessors) {
-      return value
-    } else {
-      var entity: Entity! = self
-      while entity != nil {
-        if let value = entity.members[member] {
-          return value
-        }
-        entity = entity.prototype
-      }
-      return nil
-    }
+    getMember(member, Self.accessors) ?? getScriptMember(member)
   }
 
   func set(_ member: String, to value: Value) throws {
-    try setMember(member, to: value, Self.accessors) { members[member] = value }
+    try setMember(member, to: value, Self.accessors) { setScriptMember(member, to: value) }
   }
 }
 
@@ -87,3 +88,9 @@ extension Entity: CustomDebugStringConvertible {
     }
   }
 }
+
+@attached(accessor)
+macro scriptValue() = #externalMacro(module: "WyrmMacros", type: "ScriptValueMacro")
+
+@attached(accessor)
+macro scriptValue<T>(default value: T) = #externalMacro(module: "WyrmMacros", type: "ScriptValueMacro")

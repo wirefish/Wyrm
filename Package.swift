@@ -19,7 +19,7 @@ let package = Package(
         // in this package, and on products in packages this package depends on.
         .executableTarget(
             name: "Wyrm",
-            dependencies: ["TOMLDecoder", "WyrmLib"]),
+            dependencies: ["TOMLDecoder", "WyrmMacros"]),
         .testTarget(
             name: "WyrmTests",
             dependencies: ["Wyrm"]),
@@ -29,6 +29,5 @@ let package = Package(
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
             ]),
-        .target(name: "WyrmLib", dependencies: ["WyrmMacros"]),
     ]
 )

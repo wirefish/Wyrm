@@ -14,10 +14,10 @@ public struct ScriptValueMacro: AccessorMacro {
       return []
     }
 
-    if let wrappedType = identifierType.as(OptionalTypeSyntax.self)?.wrappedType {
+    if let _ = identifierType.as(OptionalTypeSyntax.self)?.wrappedType {
       return [
-        "get { \(raw: wrappedType).fromValue(self.get(\"\(raw: identifier)\")) }",
-        "set { try! self.set(\"\(raw: identifier)\", to: newValue.toValue()) }"
+        "get { getScriptMember(\"\(raw: identifier)\") }",
+        "set { setScriptMember(\"\(raw: identifier)\", to: newValue) }"
       ]
     } else {
       guard case let .argumentList(arguments) = node.arguments,
@@ -25,8 +25,8 @@ public struct ScriptValueMacro: AccessorMacro {
         return []
       }
       return [
-        "get { \(raw: identifierType).fromValue(self.get(\"\(raw: identifier)\")) ?? \(defaultValue.expression) }",
-        "set { try! self.set(\"\(raw: identifier)\", to: newValue.toValue()) }"
+        "get { getScriptMember(\"\(raw: identifier)\") ?? \(defaultValue.expression) }",
+        "set { setScriptMember(\"\(raw: identifier)\", to: newValue) }"
       ]
     }
   }

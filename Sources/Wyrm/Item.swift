@@ -14,14 +14,19 @@ class Item: Thing, Codable {
   // the ItemCollection can contain more than one stack with the same prototype
   // (unless `unique` is true). If positive, the item can stack with other items with
   // the same prototype and an ItemCollection can contain at most one such stack.
-  var stackLimit = 0
+  @scriptValue(default: 0)
+  var stackLimit: Int
 
   var stackable: Bool { stackLimit >= 1 }
 
   // Limits an ItemCollection to contain at most one of this (unstackable) item.
-  var unique = false
+  @scriptValue(default: false)
+  var unique: Bool
 
-  var level = 0
+  // The item level determines the overall power of the item and the level required to use it.
+  @scriptValue(default: 0)
+  var level: Int
+
   var useVerbs = [String]()
 
   // An item may be associated with a quest, in which case it is only available when
