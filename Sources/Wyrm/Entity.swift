@@ -42,12 +42,27 @@ class Entity: Scope, Responder {
     return ref == self.ref || (prototype?.isa(ref) ?? false)
   }
 
+  private static let accessors = [
+    "id": Accessor(readOnly: \Entity.id),
+  ]
+
   func get(_ member: String) -> Value? {
-    return members[member] ?? prototype?.get(member)
+    if let value = getMember(member, Self.accessors) {
+      return value
+    } else {
+      var entity: Entity! = self
+      while entity != nil {
+        if let value = entity.members[member] {
+          return value
+        }
+        entity = entity.prototype
+      }
+      return nil
+    }
   }
 
   func set(_ member: String, to value: Value) throws {
-    members[member] = value
+    try setMember(member, to: value, Self.accessors) { members[member] = value }
   }
 }
 
