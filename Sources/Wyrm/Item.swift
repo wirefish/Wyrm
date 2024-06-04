@@ -27,42 +27,18 @@ class Item: Thing, Codable {
   @scriptValue(default: 0)
   var level: Int
 
-  var useVerbs = [String]()
+  // Verbs that identify commands that can be used with this item as the "direct object".
+  @scriptValue
+  var verbs: [String]?
 
   // An item may be associated with a quest, in which case it is only available when
   // that quest is active and is discarded once the quest ends.
+  @scriptValue
   var quest: Quest?
 
   // The price for which vendors sell this item.
+  @scriptValue
   var price: ItemStack?
-
-  override func copyProperties(from other: Entity) {
-    let other = other as! Item
-    stackLimit = other.stackLimit
-    unique = other.unique
-    level = other.level
-    useVerbs = other.useVerbs
-    quest = other.quest
-    price = other.price
-    super.copyProperties(from: other)
-  }
-
-  private static let accessors = [
-    "stackLimit": Accessor(\Item.stackLimit),
-    "unique": Accessor(\Item.unique),
-    "level": Accessor(\Item.level),
-    "useVerbs": Accessor(\Item.useVerbs),
-    "quest": Accessor(\Item.quest),
-    "price": Accessor(\Item.price),
-  ]
-
-  override func get(_ member: String) -> Value? {
-    getMember(member, Self.accessors) ?? super.get(member)
-  }
-
-  override func set(_ member: String, to value: Value) throws {
-    try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
-  }
 
   override func isVisible(to observer: Avatar) -> Bool {
     if let quest = quest, observer.activeQuests[quest.ref] == nil {

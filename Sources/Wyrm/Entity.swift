@@ -9,10 +9,9 @@ class Entity: Scope, Responder {
   let id = idIterator.next()!
   var ref: Ref?
   let prototype: Entity?
-
   var members = [String:Value]()
-
   var handlers = EventHandlers()
+  
   var delegate: Responder? { prototype }
 
   required init(prototype: Entity? = nil) {
@@ -42,10 +41,6 @@ class Entity: Scope, Responder {
     return ref == self.ref || (prototype?.isa(ref) ?? false)
   }
 
-  private static let accessors = [
-    "id": Accessor(readOnly: \Entity.id),
-  ]
-
   func getScriptMember(_ member: String) -> Value? {
     return members[member] ?? prototype?.getScriptMember(member)
   }
@@ -58,6 +53,11 @@ class Entity: Scope, Responder {
     members[member] = value.toValue()
   }
   
+  private static let accessors = [
+    "id": Accessor(readOnly: \Entity.id),
+    "prototype": Accessor(readOnly: \Entity.prototype),
+  ]
+
   func get(_ member: String) -> Value? {
     getMember(member, Self.accessors) ?? getScriptMember(member)
   }
@@ -88,6 +88,9 @@ extension Entity: CustomDebugStringConvertible {
     }
   }
 }
+
+// Macros used to decorate computed properties to specify that they are stored as
+// Values in the members property of an Entity (or an Entity in its prototype chain).
 
 @attached(accessor)
 macro scriptValue() = #externalMacro(module: "WyrmMacros", type: "ScriptValueMacro")
