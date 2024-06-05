@@ -6,8 +6,7 @@
 // MARK: - Opcode
 
 // Bytecode operations. Each operation is one byte followed by 0, 1, or 2 bytes
-// describing an optional argument. Two-byte arguments are stored in
-// little-endian order.
+// describing an argument. Two-byte arguments are stored in little-endian order.
 enum Opcode: UInt8 {
   // Push nil onto the stack.
   case pushNil = 1
@@ -15,7 +14,7 @@ enum Opcode: UInt8 {
   // Push a boolean constant onto the stack.
   case pushTrue, pushFalse
 
-  // The next byte is an integer in the range -128...127. Push it into the stack.
+  // The next byte is an integer in the range -128...127. Push it onto the stack.
   case pushSmallInt
 
   // The next two bytes are an index into the constants table. Push the constant
@@ -28,7 +27,7 @@ enum Opcode: UInt8 {
   // Duplicate the value on top of the stack.
   case dup
 
-  // Pop the top of the stack and create a new local variable.
+  // Pop the top of the stack and use it to initialize a new local variable.
   case createLocal
 
   // The next byte is an unsigned integer. Remove that many locals.
@@ -103,7 +102,7 @@ enum Opcode: UInt8 {
   case makeIterator
 
   // If the current iterator has a next value, push it onto the stack.
-  // Otherwise, branch using the offset in the next two bytes.
+  // Otherwise, jump using the offset in the next two bytes.
   case advanceOrJump
 
   // Create a Portal from the three values on the top of the stack.
