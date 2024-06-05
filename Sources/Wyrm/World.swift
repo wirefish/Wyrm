@@ -30,14 +30,17 @@ enum Ref: Hashable {
 }
 
 extension Ref: Codable, CustomStringConvertible {
-  init(from decoder: Decoder) throws {
-    let c = try decoder.singleValueContainer()
-    let s = try c.decode(String.self)
+  init(from s: String) {
     if let sep = s.firstIndex(of: ".") {
       self = .absolute(String(s.prefix(upTo: sep)), String(s.suffix(after: sep)))
     } else {
       self = .relative(s)
     }
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.singleValueContainer()
+    self.init(from: try c.decode(String.self))
   }
 
   func encode(to encoder: Encoder) throws {

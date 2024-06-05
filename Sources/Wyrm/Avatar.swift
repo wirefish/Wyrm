@@ -108,22 +108,35 @@ final class Avatar: Thing {
   // A mapping from identifiers of active quests to their current state.
   var activeQuests = [Ref:QuestState]()
 
-  // A mapping from identifiers of completed quests to the time of completion.
-  var completedQuests = [Ref:Int]()
-
   // Karma available to learn skills.
   var karma = 0
 
   // Current rank in all known skills.
   var skills = [Ref:Int]()
 
-  // Tutorials.
+  // Show tutorials?
   var tutorialsOn = true
-  var tutorialsSeen = Set<String>()
 
-  // Properties below this point are not encoded/decoded.
+  //
+  // Properties in this section are persisted separately. Since they tend to grow
+  // without bound over time, only updated values are written to the database when
+  // saving the avatar.
+  //
+
+  // Refs of tutorials that have been seen.
+  var tutorialsSeen = Set<String>()
+  var dirtyTutorials = [String]()
+
+  // A mapping from identifiers of completed quests to the time of completion.
+  var completedQuests = [Ref:Int]()
+  var dirtyQuests = [(Ref, Int)]()
+
+  //
+  // Properties below this point are not persisted.
+  //
 
   var accountID: AccountID!
+  var avatarID: AvatarID!
 
   // Pending offer, if any.
   var offer: Offer?
@@ -191,7 +204,7 @@ final class Avatar: Thing {
 extension Avatar: Codable {
   enum CodingKeys: CodingKey {
     case location, level, xp, race, gender, name, inventory, equipped
-    case activeQuests, completedQuests, karma, skills, tutorialsOn, tutorialsSeen
+    case activeQuests, karma, skills, tutorialsOn
   }
 
   convenience init(from decoder: Decoder) throws {
@@ -226,14 +239,9 @@ extension Avatar: Codable {
     inventory = try c.decode(ItemCollection.self, forKey: .inventory)
     equipped = try c.decode([EquipmentSlot:Equipment].self, forKey: .equipped)
     activeQuests = try c.decode([Ref:QuestState].self, forKey: .activeQuests)
-    completedQuests = try c.decode([Ref:Int].self, forKey: .completedQuests)
-    if let karma = try? c.decodeIfPresent(Int.self, forKey: .karma) {
-      self.karma = karma
-    }
+    self.karma = try c.decode(Int.self, forKey: .karma)
     skills = try c.decode([Ref:Int].self, forKey: .skills)
-
     tutorialsOn = try c.decode(Bool.self, forKey: .tutorialsOn)
-    tutorialsSeen = try c.decode(Set<String>.self, forKey: .tutorialsSeen)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -249,11 +257,9 @@ extension Avatar: Codable {
     try c.encode(inventory, forKey: .inventory)
     try c.encode(equipped, forKey: .equipped)
     try c.encode(activeQuests, forKey: .activeQuests)
-    try c.encode(completedQuests, forKey: .completedQuests)
     try c.encode(karma, forKey: .karma)
     try c.encode(skills, forKey: .skills)
     try c.encode(tutorialsOn, forKey: .tutorialsOn)
-    try c.encode(tutorialsSeen, forKey: .tutorialsSeen)
   }
 
   static let saveInterval = 60.0
