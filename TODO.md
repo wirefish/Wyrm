@@ -34,6 +34,9 @@
 
 # TODO...
 
+- Add support for uncountable nouns via a special article \_. Proper nouns are already
+  treated as uncountable.
+  
 - Collect client updates and send them at the end of a "frame". Maybe add an Update
   object to Avatar that collects them.
 
