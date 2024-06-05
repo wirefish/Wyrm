@@ -369,6 +369,7 @@ extension Avatar {
 
   func showTutorial(_ key: String, _ message: String) {
     if tutorialsOn && tutorialsSeen.insert(key).inserted {
+      dirtyTutorials.append(key)
       sendMessage("showTutorial", .string(message))
     }
   }

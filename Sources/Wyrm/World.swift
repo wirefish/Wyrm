@@ -3,7 +3,7 @@
 //  Wyrm
 //
 
-import CoreFoundation
+import Foundation
 import Dispatch
 
 class Module: Scope {
@@ -207,7 +207,7 @@ extension World {
 extension World {
   func load() throws {
     logger.info("loading world from \(rootPath)")
-    let startTime = CFAbsoluteTimeGetCurrent()
+    let startTime = Date.now
 
     for relativePath in try readModulesFile() {
       let moduleName = moduleName(for: relativePath)
@@ -228,7 +228,8 @@ extension World {
 
     twinPortals()
 
-    logger.info(String(format: "loaded world in %.3f seconds", CFAbsoluteTimeGetCurrent() - startTime))
+    logger.info(String(format: "loaded world in %.3f seconds",
+                       Date.now.timeIntervalSince(startTime)))
   }
 
   private func readModulesFile() throws -> [String] {

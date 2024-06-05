@@ -5,7 +5,7 @@
 //  Created by Craig Becker on 6/28/22.
 //
 
-import CoreFoundation
+import Foundation  // for Date
 
 struct QuestState: Codable {
   enum State: ValueRepresentable, Codable {
@@ -270,7 +270,9 @@ extension Avatar {
 
   func completeQuest(_ quest: Quest) {
     activeQuests[quest.ref] = nil
-    completedQuests[quest.ref] = Int(CFAbsoluteTimeGetCurrent() / 60)
+    let now = Int(Date.timeIntervalSinceReferenceDate / 60)
+    completedQuests[quest.ref] = now
+    dirtyQuests.append((quest.ref, now))
     showNotice("You have completed the quest \"\(quest.name)\"!")
 
     // Clean up forgotten quest items.
