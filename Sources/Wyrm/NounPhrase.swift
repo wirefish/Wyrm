@@ -1,5 +1,5 @@
 //
-//  Phrase.swift
+//  NounPhrase.swift
 //  Wyrm
 //
 
@@ -67,7 +67,7 @@ enum Article {
   case none, indefinite, definite
 }
 
-struct NounPhrase: Codable {
+struct NounPhrase {
   let article: String?
   let singular: String
   let plural: String

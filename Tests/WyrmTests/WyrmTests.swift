@@ -20,4 +20,20 @@ final class NounPhraseTests: XCTestCase {
       XCTAssertEqual(noun.plural, plural)
     }
   }
+
+  func testFormat() throws {
+    for (phrase, article, singular, plural) in Self.examples {
+      let noun = NounPhrase(phrase)
+      XCTAssertEqual(noun.format([]), singular)
+      XCTAssertEqual(noun.format([.indefinite]),
+                     article != nil ? "\(article!) \(singular)" : singular)
+      XCTAssertEqual(noun.format([.definite]),
+                     article != nil ? "the \(singular)" : singular)
+      XCTAssertEqual(noun.format([.noQuantity], count: 33), plural)
+      XCTAssertEqual(noun.format([.plural, .noQuantity]), plural)
+      XCTAssertEqual(noun.format([.plural, .capitalized]), plural.capitalized())
+      XCTAssertEqual(noun.format([.indefinite, .capitalized]),
+                     article != nil ? "\(article!.capitalized()) \(singular)" : singular.capitalized())
+    }
+  }
 }
