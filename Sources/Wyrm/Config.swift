@@ -1,6 +1,6 @@
 //
-//  File.swift
-//
+//  Config.swift
+//  Wyrm
 //
 
 import TOMLDecoder
