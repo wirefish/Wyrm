@@ -9,7 +9,8 @@ final class NounPhraseTests: XCTestCase {
     ("box[es] of dirt", "a", "box of dirt", "boxes of dirt"),
     ("sarcophag[us|i]", "a", "sarcophagus", "sarcophagi"),
     ("t[oo|ee]th", "a", "tooth", "teeth"),
-    ("Bob", nil, "Bob", "Bob")
+    ("Bob", nil, "Bob", "Bob"),
+    ("_ air", nil, "air", "air")
   ]
 
   func testInit() throws {
