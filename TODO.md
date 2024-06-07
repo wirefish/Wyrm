@@ -34,9 +34,6 @@
 
 # TODO...
 
-- Add support for uncountable nouns via a special article \_. Proper nouns are already
-  treated as uncountable.
-  
 - Collect client updates and send them at the end of a "frame". Maybe add an Update
   object to Avatar that collects them.
 
@@ -46,7 +43,20 @@
   anyhow.
 
 - Location.contents is a [Entity]; Container is an Entity; Container.contents is
-  an ItemCollection.
+  an ItemCollection. An Item is an Entity.
+  
+- When an actor drops an Item it goes into the pile of items. When a special
+  item spawns (e.g. a quest item like a white tulip), it spawns as an Item directly
+  in the location.
+  
+- Saving items needs to save more than just the prototype and quantity in the case
+  of customizable items such as equipment, and maybe other things (a journal?) Make
+  the base Item class by the uncustomizable/immutable/stackable thing. Make a new class
+  MutableItem that can have affixes/slots, charges, notes, durability, etc. that can change
+  and must be persisted. Have a separate StackableItem subclass of Item, so that every
+  item is either StackableItem or MutableItem? This could make it a bit safer to
+  implement ItemStacks, inventory, etc without making mistakes based on stackLimit.
+  Is Item best modeled as a protocol?
 
 - add `def command` for commands that have no interaction with the engine, e.g.
   meditate. It basically just triggers an event with the same name. The command
@@ -67,8 +77,6 @@
 # Older...
 
 - improve error handling in parsing, eval, exec. not so many Error enum types.
-
-- fix crash in release?
 
 - add generic verbs that are implied commands. parses rest of input and matches
   against contents of location. optional ignored prep. if matched entity defines
