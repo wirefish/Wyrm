@@ -48,6 +48,39 @@ extension Avatar {
   static let vendorBit = 1 << 15
   static let trainerBit = 1 << 16
 
+  func mapUpdate() -> ClientUpdate {
+    let map = Map(at: location)
+
+    let cells = map.cells.map { cell -> ClientUpdate.MapCell in
+      var flags = 0
+      for portal in cell.location.exits {
+        flags |= (1 << portal.direction.rawValue)
+      }
+      for entity in cell.location.contents {
+        // TODO: quest state
+        if let creature = entity as? Creature {
+          if creature.sells != nil { flags |= ClientUpdate.MapCell.vendor }
+          if creature.teaches != nil { flags |= ClientUpdate.MapCell.trainer }
+        }
+      }
+      return ClientUpdate.MapCell(
+        key: cell.location.id,
+        x: cell.offset.x,
+        y: cell.offset.y,
+        icon: nil,  // FIXME: add icon
+        flags: flags
+        // FIXME: add surface, surround, domain
+      )
+    }
+
+    return .setMap(
+      region: location.region?.name ?? "",
+      subregion: location.subregion,
+      location: location.name,
+      radius: map.radius,
+      cells: cells)
+  }
+
   func showMap() {
     let map = Map(at: location)
     sendMessage("showMap",

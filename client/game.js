@@ -8,6 +8,7 @@ var command_pos = 0;
 var ws = null;
 var map = null;
 var handler = null;
+var client = null;
 
 function resize() {
   map.resize();
@@ -56,7 +57,14 @@ function appendBlock(block, containerId = 'main_text') {
 }
 
 // Panes in left-to-right order.
-var panes = ["inventory", "equipment", "combat", "skills", "quests", "chat"];
+const panes = ["inventory", "equipment", "combat", "skills", "quests", "chat"];
+
+class GameClient {
+  currentPane = "inventory"
+  
+  setNeighbors({_0: neighbors}) {
+  }
+}
 
 // An object that encapsulates functions callable based on messages from the
 // server.
@@ -755,6 +763,32 @@ MessageHandler.prototype.echoCommand = function(msg) {
   this.showText('&raquo; ' + msg, 'cmd');
 }
 
+//// New message handling.
+
+MessageHandler.prototype.set_neighbors = ({_0: neighbors}) => {
+  console.log("in set_neighbors")
+  console.log(neighbors)
+  for (let {max_health} of neighbors) {
+    console.log(`max_health is ${max_health}!`)
+  }
+}
+
+MessageHandler.prototype.update = function(...updates) {
+  for (const update of updates) {
+    // The update is a dict with one key, which is the name of the method to call
+    // with the value as the single argument.
+    const key = Object.keys(update)[0]
+    const arg = update[key]
+    const fn = handler[key]
+    if (fn)
+      fn.call(handler, arg)
+    else
+      console.log(`ignoring update with unknown type: ${key}`)
+  }
+}
+
+////
+
 function sendInput(s) {
   s = s.trim();
   if (s.length) {
@@ -836,6 +870,8 @@ function start() {
   map.resize();
 
   handler = new MessageHandler();
+  
+  client = new GameClient();
 
   ws = new WebSocket('ws://' + location.host + '/game/session')
   ws.onopen = openSession;

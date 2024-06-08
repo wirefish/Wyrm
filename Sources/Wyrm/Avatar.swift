@@ -91,14 +91,24 @@ enum Gender: Codable, ValueRepresentableEnum {
 // MARK: - Avatar
 
 final class Avatar: Thing {
-  var level = 1
+  var level = 1 {
+    didSet { updateClient(.level(level)) }
+  }
 
   // Experience gained toward next level.
-  var xp = 0
+  var xp = 0 {
+    didSet { updateClient(.xp(current: xp, max: xpRequiredForNextLevel())) }
+  }
 
-  var race: Race?
+  var race: Race? {
+    didSet { updateClient(.race(race!.describeBriefly([]))) }
+  }
+  
+  var name: String? {
+    didSet { updateClient(.name(name!)) }
+  }
+
   var gender: Gender?
-  var name: String?
 
   var inventory = ItemCollection()
 
@@ -109,7 +119,9 @@ final class Avatar: Thing {
   var activeQuests = [Ref:QuestState]()
 
   // Karma available to learn skills.
-  var karma = 0
+  var karma = 0 {
+    didSet { updateClient(.karma(karma)) }
+  }
 
   // Current rank in all known skills.
   var skills = [Ref:Int]()
@@ -149,7 +161,10 @@ final class Avatar: Thing {
 
   // Open WebSocket used to communicate with the client.
   var handler: WebSocketHandler?
-
+  
+  // Updates that need to be sent to the client.
+  var clientUpdates = [ClientUpdate]()
+  
   private static let accessors = [
     "level": Accessor(readOnly: \Avatar.level),
     "xp": Accessor(readOnly: \Avatar.xp),
@@ -305,6 +320,9 @@ extension Avatar: WebSocketDelegate {
     update.xp = xp
     update.maxXP = xpRequiredForNextLevel()
     updateSelf(update)
+    
+    // TEST:
+    updateClient(.level(level), .xp(current: xp, max: xpRequiredForNextLevel()))
   }
 
   func onClose(_ handler: WebSocketHandler) {
@@ -365,6 +383,9 @@ extension Avatar {
     if let tutorial = location.tutorial, let key = location.ref?.description {
       showTutorial(key, tutorial)
     }
+    
+    // TEST:
+    updateForLocation()
   }
 
   func showTutorial(_ key: String, _ message: String) {
@@ -372,6 +393,17 @@ extension Avatar {
       dirtyTutorials.append(key)
       sendMessage("showTutorial", .string(message))
     }
+  }
+  
+  func locationUpdate() -> ClientUpdate {
+    let exits = location.exits.compactMap {
+      (!$0.implicit && $0.isVisible(to: self)) ? String(describing: $0.direction) : nil
+    }
+    let contents = location.contents.compactMap {
+      ($0 != self && !$0.implicit && $0.isVisible(to: self)) ? ClientUpdate.LocationContent($0) : nil
+    }
+    return .location(name: location.name, description: location.description,
+                     exits: exits, contents: contents)
   }
 
   func describeLocation() {
