@@ -72,3 +72,15 @@ extension RandomAccessCollection where Element: Comparable {
     return index
   }
 }
+
+// The ??= assignment operator performs assignment only if the rhs is non-nil.
+
+precedencegroup OptionalAssignment { associativity: right }
+
+infix operator ??= : OptionalAssignment
+
+public func ??= <T>(variable: inout T, value: T?) {
+  if let value = value {
+    variable = value
+  }
+}
