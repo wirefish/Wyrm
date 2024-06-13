@@ -274,6 +274,9 @@ extension World {
     }
     for def in defs {
       switch def {
+      case let .function(fn):
+        loadFunction(fn, into: module)
+
       case .entity:
         loadEntity(def, into: module)
 
@@ -320,7 +323,7 @@ extension World {
     return result
   }
 
-  private func compileMethods(_ methods: [Definition.Method], in module: Module) -> [String:Value] {
+  private func compileMethods(_ methods: [Definition.Function], in module: Module) -> [String:Value] {
     var members = [String:Value]()
     for (name, params, body) in methods {
       let compiler = Compiler()
@@ -329,6 +332,14 @@ extension World {
       }
     }
     return members
+  }
+
+  private func loadFunction(_ def: Definition.Function, into module: Module) {
+    let (name, params, body) = def
+    let compiler = Compiler()
+    if let fn = compiler.compileFunction(parameters: params, body: body, in: module) {
+      module.bindings[name] = .function(fn)
+    }
   }
 
   private func loadEntity(_ node: Definition, into module: Module) {

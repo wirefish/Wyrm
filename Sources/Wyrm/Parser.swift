@@ -74,16 +74,17 @@ indirect enum Statement {
 enum Definition {
   typealias Member = Expression.Member
   typealias Handler = (Event, [Parameter], Statement)
-  typealias Method = (String, [Parameter], Statement)
+  typealias Function = (String, [Parameter], Statement)
   typealias QuestPhase = (String, [Member])
 
+  case function(Function)
   case entity(name: String, prototype: Ref, members: [Member],
-              handlers: [Handler], methods: [Method], isLocation: Bool)
+              handlers: [Handler], methods: [Function], isLocation: Bool)
   case quest(name: String, members: [Member], phases: [QuestPhase])
   case race(name: String, members: [Member])
   case skill(name: String, members: [Member])
   case region(members: [Member])
-  case `extension`(ref: Ref, handlers: [Handler], methods: [Method])
+  case `extension`(ref: Ref, handlers: [Handler], methods: [Function])
 }
 
 enum Precedence: Int, Comparable {
@@ -148,6 +149,10 @@ class Parser {
     while currentToken != .endOfInput {
       let token = consume()
       switch token {
+      case .func:
+        if let fn = parseFunction() {
+          defs.append(.function(fn))
+        }
       case .def:
         if let def = parseDefinition() {
           defs.append(def)
@@ -227,7 +232,7 @@ class Parser {
 
     var members = [Definition.Member]()
     var handlers = [Definition.Handler]()
-    var methods = [Definition.Method]()
+    var methods = [Definition.Function]()
     while !match(.rbrace) {
       switch currentToken {
       case .identifier:
@@ -239,7 +244,8 @@ class Parser {
           handlers.append(handler)
         }
       case .func:
-        if let method = parseMethod() {
+        advance()
+        if let method = parseFunction() {
           methods.append(method)
         }
       default:
@@ -321,9 +327,7 @@ class Parser {
     return (Event(phase: phase, name: event), params, block)
   }
 
-  private func parseMethod() -> Definition.Method? {
-    advance()
-
+  private func parseFunction() -> Definition.Function? {
     guard case let .identifier(name) = consume() else {
       error("expected identifier after func")
       return nil
@@ -515,7 +519,7 @@ class Parser {
     }
 
     var handlers = [Definition.Handler]()
-    var methods = [Definition.Method]()
+    var methods = [Definition.Function]()
     while !match(.rbrace) {
       switch currentToken {
       case .allow, .before, .when, .after:
@@ -523,7 +527,8 @@ class Parser {
           handlers.append(handler)
         }
       case .func:
-        if let method = parseMethod() {
+        advance()
+        if let method = parseFunction() {
           methods.append(method)
         }
       default:
