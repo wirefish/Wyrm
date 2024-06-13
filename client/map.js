@@ -44,36 +44,33 @@ var domain_styles = {
 
 // Loads a set of images and runs a callback after each one.
 
-function ImageLoader(image_urls)
-{
-  this.image_urls = image_urls;
-  this.images = {};
-  this.finish_callback = undefined;
-}
+class ImageLoader {
+  image_urls;
+  callback;
+  images = {};
 
-ImageLoader.prototype.loadImages = function(callback)
-{
-  this.callback = callback;
+  loadImages(image_urls, callback) {
+    this.image_urls = image_urls;
+    this.callback = callback;
 
-  for (var key in this.image_urls) {
-    var url = this.image_urls[key];
-    (function (key, url, loader) {
-      var image = new Image();
-      image.onload = function() { loader.onLoadImage(key, this); }
-      image.src = url;
-    })(key, url, this);
+    for (var key in this.image_urls) {
+      var url = this.image_urls[key];
+      (function (key, url, loader) {
+        var image = new Image();
+        image.onload = function() { loader.onLoadImage(key, this); }
+        image.src = url;
+      })(key, url, this);
+    }
   }
-}
 
-ImageLoader.prototype.onLoadImage = function(key, image)
-{
-  this.images[key] = image;
-  this.callback(this);
-}
+  onLoadImage(key, image) {
+    this.images[key] = image;
+    this.callback(this);
+  }
 
-ImageLoader.prototype.finishedLoading = function()
-{
-  return Object.keys(this.images).length == Object.keys(this.image_urls).length;
+  finishedLoading() {
+    return Object.keys(this.images).length == Object.keys(this.image_urls).length;
+  }
 }
 
 // Renders a representation of the rooms around the player.
@@ -87,8 +84,8 @@ function Map(canvas)
   var self = this;
 
   this.icons = undefined;
-  var icon_loader = new ImageLoader(map_icon_urls);
-  icon_loader.loadImages(function(loader) { self.onLoadIcon(loader); });
+  var icon_loader = new ImageLoader();
+  icon_loader.loadImages(map_icon_urls, (loader) => { self.onLoadIcon(loader); });
 }
 
 Map.prototype.onLoadIcon = function(loader)
