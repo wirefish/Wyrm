@@ -60,7 +60,16 @@ enum ClientUpdate: Encodable {
     let name: String
     let rank, maxRank: Int
   }
-  
+
+  struct Quest: Encodable {
+    let key: String
+    let name: String
+    let level: Int
+    let summary: String
+    let progress: Int?
+    let required: Int?
+  }
+
   struct Attribute: Encodable {
     let name: String
     let value: Int
@@ -136,6 +145,11 @@ enum ClientUpdate: Encodable {
   // Attributes
   case setAttributes([Attribute])
   case updateAttribute(Attribute)
+
+  // Quests
+  case setQuests([Quest])
+  case updateQuest(Quest)
+  case removeQuest(key: String)
 
   // Messages
   case showRaw(String)
