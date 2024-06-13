@@ -92,20 +92,20 @@ enum Gender: Codable, ValueRepresentableEnum {
 
 final class Avatar: Thing {
   var level = 1 {
-    didSet { updateClient(.level(level)) }
+    didSet { updateClient(.setAvatarLevel(level)) }
   }
 
   // Experience gained toward next level.
   var xp = 0 {
-    didSet { updateClient(.xp(current: xp, max: xpRequiredForNextLevel())) }
+    didSet { updateClient(.setAvatarXP(current: xp, max: xpRequiredForNextLevel())) }
   }
 
   var race: Race? {
-    didSet { updateClient(.race(race!.describeBriefly([]))) }
+    didSet { updateClient(.setAvatarRace(race!.describeBriefly([]))) }
   }
   
   var name: String? {
-    didSet { updateClient(.name(name!)) }
+    didSet { updateClient(.setAvatarName(name!)) }
   }
 
   var gender: Gender?
@@ -120,7 +120,7 @@ final class Avatar: Thing {
 
   // Karma available to learn skills.
   var karma = 0 {
-    didSet { updateClient(.karma(karma)) }
+    didSet { updateClient(.setKarma(karma)) }
   }
 
   // Current rank in all known skills.
@@ -322,7 +322,8 @@ extension Avatar: WebSocketDelegate {
     updateSelf(update)
     
     // TEST:
-    updateClient(.level(level), .xp(current: xp, max: xpRequiredForNextLevel()))
+    updateClient(.setAvatarLevel(level),
+                 .setAvatarXP(current: xp, max: xpRequiredForNextLevel()))
   }
 
   func onClose(_ handler: WebSocketHandler) {
@@ -360,77 +361,8 @@ extension Avatar {
     }
   }
 
-  func show(_ message: String) {
-    sendMessage("showText", .string(message))
-  }
-
-  func showNotice(_ message: String) {
-    sendMessage("showNotice", .string(message))
-  }
-
-  func showSay(_ actor: Thing, _ verb: String, _ message: String, _ isChat: Bool) {
-    sendMessage("showSay",
-                .string(actor.describeBriefly([.capitalized, .definite])),
-                .string(verb),
-                .string(message),
-                .boolean(isChat))
-  }
-
   func locationChanged() {
-    showMap()
-    setNeighbors()
-    describeLocation()
-    if let tutorial = location.tutorial, let key = location.ref?.description {
-      showTutorial(key, tutorial)
-    }
-    
-    // TEST:
     updateForLocation()
-  }
-
-  func showTutorial(_ key: String, _ message: String) {
-    if tutorialsOn && tutorialsSeen.insert(key).inserted {
-      dirtyTutorials.append(key)
-      sendMessage("showTutorial", .string(message))
-    }
-  }
-  
-  func locationUpdate() -> ClientUpdate {
-    let exits = location.exits.compactMap {
-      (!$0.implicit && $0.isVisible(to: self)) ? String(describing: $0.direction) : nil
-    }
-    let contents = location.contents.compactMap {
-      ($0 != self && !$0.implicit && $0.isVisible(to: self)) ? ClientUpdate.LocationContent($0) : nil
-    }
-    return .location(name: location.name, description: location.description,
-                     exits: exits, contents: contents)
-  }
-
-  func describeLocation() {
-    let exits = location.exits.filter{ !$0.implicit && $0.isVisible(to: self) }
-      .map { ClientValue.string(String(describing: $0.direction)) }
-
-    let contents = location.contents.filter { $0 != self && !$0.implicit && $0.isVisible(to: self) }
-      .map {
-        ClientValue.list([.integer($0.id),
-                          .string($0.describeBriefly([.capitalized, .indefinite])),
-                          .string($0.describePose())])
-      }
-
-    sendMessage("showLocation",
-                .string(location.name),
-                .string(location.description),
-                .list(exits),
-                .list(contents))
-  }
-
-  func showLinks(_ heading: String, _ prefix: String, _ links: [String]) {
-    sendMessage("showLinks", .string(heading), .string(prefix),
-                .list(links.map { ClientValue.string($0) }))
-  }
-
-  func showList(_ heading: String, _ items: [String]) {
-    sendMessage("showList", .string(heading), .list(items.map { ClientValue.string($0) }))
   }
 }
 

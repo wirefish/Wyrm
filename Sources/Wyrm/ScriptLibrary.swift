@@ -125,7 +125,7 @@ struct ScriptLibrary {
   static func updateMap(location: Location) {
     let map = Map(at: location)
     for cell in map.cells {
-      cell.location.updateAll { $0.showMap() }
+      cell.location.updateAll { $0.redrawMap() }
     }
   }
 

@@ -40,36 +40,40 @@ class Map {
 }
 
 extension Avatar {
-  // Bits in the location state sent to the client. Lower bits are derived from
-  // the raw values of the exit directions.
-  static let questAvailableBit = 1 << 12
-  static let questAdvanceableBit = 1 << 13
-  static let questCompletableBit = 1 << 14
-  static let vendorBit = 1 << 15
-  static let trainerBit = 1 << 16
-
   func mapUpdate() -> ClientUpdate {
     let map = Map(at: location)
+    self.map = map
 
     let cells = map.cells.map { cell -> ClientUpdate.MapCell in
-      var flags = 0
+      var state = 0
       for portal in cell.location.exits {
-        flags |= (1 << portal.direction.rawValue)
+        state |= (1 << portal.direction.rawValue)
       }
       for entity in cell.location.contents {
-        // TODO: quest state
+        if let entity = entity as? Questgiver {
+          if entity.completesQuestFor(self) {
+            state |= ClientUpdate.MapCell.questCompletable
+          } else if entity.advancesQuestFor(self) {
+            state |= ClientUpdate.MapCell.questAdvanceable
+          } else if entity.offersQuestFor(self) {
+            state |= ClientUpdate.MapCell.questAvailable
+          }
+        }
         if let creature = entity as? Creature {
-          if creature.sells != nil { flags |= ClientUpdate.MapCell.vendor }
-          if creature.teaches != nil { flags |= ClientUpdate.MapCell.trainer }
+          if creature.sells != nil { state |= ClientUpdate.MapCell.vendor }
+          if creature.teaches != nil { state |= ClientUpdate.MapCell.trainer }
         }
       }
       return ClientUpdate.MapCell(
         key: cell.location.id,
         x: cell.offset.x,
         y: cell.offset.y,
+        name: cell.location.name,
+        state: state,
         icon: nil,  // FIXME: add icon
-        flags: flags
-        // FIXME: add surface, surround, domain
+        domain: cell.location.domain,
+        surface: cell.location.surface,
+        surround: nil  // FIXME: add surround
       )
     }
 
@@ -81,50 +85,7 @@ extension Avatar {
       cells: cells)
   }
 
-  func showMap() {
-    let map = Map(at: location)
-    sendMessage("showMap",
-                .string(location.name),
-                .string(location.region?.name ?? ""),
-                .string(location.subregion),
-                .integer(map.radius),
-                .list(map.cells.map { cell -> ClientValue in
-
-                  var state = 0
-                  for portal in cell.location.exits {
-                    state |= (1 << portal.direction.rawValue)
-                  }
-
-                  for entity in cell.location.contents {
-                    if let entity = entity as? Questgiver {
-                      if entity.completesQuestFor(self) {
-                        state |= Self.questCompletableBit
-                      } else if entity.advancesQuestFor(self) {
-                        state |= Self.questAdvanceableBit
-                      } else if entity.offersQuestFor(self) {
-                        state |= Self.questAvailableBit
-                      }
-                    }
-                    if let creature = entity as? Creature {
-                      if creature.sells != nil {
-                        state |= Self.vendorBit
-                      }
-                      if creature.teaches != nil {
-                        state |= Self.trainerBit
-                      }
-                    }
-                  }
-
-                  return .list([.integer(cell.location.id),
-                                .integer(cell.offset.x),
-                                .integer(cell.offset.y),
-                                .string(cell.location.name),
-                                .string(nil),  // FIXME: icon
-                                .integer(state),
-                                .string(cell.location.surface),
-                                .string(nil),  // FIXME: surrounding
-                                .string(cell.location.domain)])
-                }))
-    self.map = map
+  func redrawMap() {
+    updateClient(mapUpdate())
   }
 }

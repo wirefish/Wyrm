@@ -66,12 +66,12 @@
       </div>
 
       <div class="selector buttonbox">
-        <div class="button toggle_on" id="inventory" onclick="handler.showPane('inventory');"></div>
-        <div class="button toggle_off" id="equipment" onclick="handler.showPane('equipment');"></div>
-        <div class="button toggle_off" id="combat" onclick="handler.showPane('combat');"></div>
-        <div class="button toggle_off" id="skills" onclick="handler.showPane('skills');"></div>
-        <div class="button toggle_off" id="quests" onclick="handler.showPane('quests');"></div>
-        <div class="button toggle_off" id="chat" onclick="handler.showPane('chat');"></div>
+        <div class="button toggle_on" id="inventory" onclick="client.showPane('inventory');"></div>
+        <div class="button toggle_off" id="equipment" onclick="client.showPane('equipment');"></div>
+        <div class="button toggle_off" id="combat" onclick="client.showPane('combat');"></div>
+        <div class="button toggle_off" id="skills" onclick="client.showPane('skills');"></div>
+        <div class="button toggle_off" id="quests" onclick="client.showPane('quests');"></div>
+        <div class="button toggle_off" id="chat" onclick="client.showPane('chat');"></div>
         <div class="spacer"></div>
         <div class="button toggle_on" id="local_map"></div>
         <div class="button toggle_off" id="world_map"></div>
@@ -166,7 +166,7 @@
       </div>
 
       <div class="leftbuttons buttonbox">
-        <div class="button" id="quit" onclick="handler.quit();"></div>
+        <div class="button" id="quit" onclick="client.quit();"></div>
         <div class="button" id="settings"></div>
         <div class="button" id="help"></div>
       </div>

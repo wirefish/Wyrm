@@ -1,70 +1,460 @@
 'use strict';
 
-var max_blocks = 500;
+// A history of commands entered by the player.
+let command_history = new Array(100);
+let command_pos = 0;
 
-var command_history = new Array(100);
-var command_pos = 0;
-
-var ws = null;
-var map = null;
-var handler = null;
-var client = null;
-
-function resize() {
-  map.resize();
-}
-window.onresize = resize;
-
-function link(text, type, command) {
-  return '`{0}:{1}:{2}`'.format(type ? type : "", text, command ? command : "");
+function link(text, type = "", command = "") {
+  return `\`${type}:${text}:${command}\``;
 }
 
 function look(s) {
-  return link(s, 'look', 'look at $');
+  return link(s, "look", "look at $");
 }
 
+// Sets the class name of an element to match that defined in the CSS for the specified icon.
 function setIcon(element, type, icon) {
   if (icon)
-    element.className = '{0}_icons {0}_{1}'.format(type, icon);
+    element.className = `${type}_icons ${type}_${icon}`;
 }
 
-//
 // Updates a stat bar to reflect a current and maximum value.
-//
 function updateBar(id, current, max) {
-  var p = max ? Math.min(100, 100.0 * current / max) : 0;
-  var bar = document.getElementById(id);
+  let p = max ? Math.min(100, 100.0 * current / max) : 0;
+  let bar = document.getElementById(id);
   bar.children[0].style.width = p + "%";
   bar.children[1].innerHTML = current + " / " + max;
-}
-
-function updatePlayerBio(name, icon, level, race) {
-  var summary = name ?
-  '{0}, level {1} {2}'.format(name, level, race) :
-  'level {0} {1}'.format(level, race);
-  document.getElementById("player_name").innerHTML = summary;
-  setIcon(document.getElementById("player_icon"), "avatar", icon);
-}
-
-// Appends a block element to a scrollable text pane, removing the oldest block
-// first if the maximum number of blocks would be exceeded.
-function appendBlock(block, containerId = 'main_text') {
-  var container = document.getElementById(containerId);
-  if (container.childNodes.length >= max_blocks)
-    container.removeChild(container.firstChild);
-  container.appendChild(block);
-  container.scrollTop = container.scrollHeight;
 }
 
 // Panes in left-to-right order.
 const panes = ["inventory", "equipment", "combat", "skills", "quests", "chat"];
 
 class GameClient {
-  currentPane = "inventory"
-  
-  setNeighbors({_0: neighbors}) {
+  currentPane = "inventory";
+
+  commandHistory = new Array(100);
+  commandPos = 0;
+
+  // Cached properties of the player's avatar.
+  avatarKey = null;
+  avatar = {};
+
+  debug = true;
+
+  constructor() {
+    this.map = new Map(document.getElementById("map_canvas"));
+    this.map.resize();
+
+    let self = this;
+    this.ws = new WebSocket('ws://' + location.host + '/game/session')
+    this.ws.onopen = (event) => { self.openSession(event); }
+    this.ws.onclose = () => { self.closeSession(); }
+    this.ws.onmessage = (event) => { self.receiveMessage(event); }
   }
+
+  openSession(event) {
+    // Nothing to do.
+  }
+
+  closeSession() {
+    this.appendTextBlock(
+      "The server closed the connection. Please [return to the home page](index.html).",
+      "error");
+  }
+
+  receiveMessage(event) {
+    console.log(event.data);
+    const message = JSON.parse(event.data);
+    for (const update of message.updates) {
+      // Each update is a map with one entry. The key is the name of the method to call
+      // and the value is its single argument.
+      const [key, value] = Object.entries(update)[0];
+      const fn = this[key];
+      if (fn)
+        fn.call(this, value);
+      else
+        console.log(`ignoring update with unknown type: ${key}`);
+    }
+  }
+
+  sendMessage(msg) {
+    this.ws.send(msg);
+  }
+
+  sendInput(s) {
+    s = s.trim();
+    if (s.length) {
+      this.echoCommand(s);
+      this.sendMessage(s);
+    }
+  }
+
+  resize() {
+    this.map.resize();
+  }
+
+  showPane(button_id) {
+    document.getElementById(this.currentPane).className = "button toggle_off";
+    document.getElementById(this.currentPane + "_pane").style.display = "none";
+
+    this.currentPane = button_id;
+
+    document.getElementById(this.currentPane).className = "button toggle_on";
+    document.getElementById(this.currentPane + "_pane").style.display = "block";
+  }
+
+  cyclePane(dir) {
+    let curr = this.currentPane;
+    let i = panes.findIndex((x) => (x == curr));
+    if (dir == 1)
+      i = (i + 1) % panes.length;
+    else
+      i = (i + panes.length - 1) % panes.length;
+    this.showPane(panes[i]);
+  }
+
+  quit() {
+    this.sendInput("quit");
+  }
+
+  // MARK: Messages
+
+  // Appends a block element to a scrollable text pane, removing the oldest block
+  // first if the maximum number of blocks would be exceeded.
+  appendBlock(block, containerId = "main_text") {
+    const MAX_BLOCKS = 500;
+    let container = document.getElementById(containerId);
+    if (container.childNodes.length >= MAX_BLOCKS)
+      container.removeChild(container.firstChild);
+    container.appendChild(block);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  appendTextBlock(text, className) {
+    this.appendBlock(wrapElements("div", formatText(text), className));
+  }
+
+  echoCommand(msg) {
+    console.log(msg);
+    this.appendTextBlock(`&raquo; ${msg}`, "cmd");
+  }
+
+  showRaw({_0: text}) {
+    let element = document.createElement("pre");
+    element.innerHTML = text;
+    this.appendBlock(element);
+  }
+
+  showText({_0: text}) {
+    this.appendTextBlock(text);
+  }
+
+  showNotice({_0: text}) {
+    this.appendTextBlock(text, "notice");
+  }
+
+  showTutorial({_0: text}) {
+    this.appendTextBlock(text, "tutorial");
+  }
+
+  showError({_0: text}) {
+    this.appendTextBlock(text, "error");
+  }
+
+  showHelp({_0: text}) {
+    // TODO: look for links to "see also" topics and format them appropriately.
+    this.appendTextBlock(text, "help");
+  }
+
+  showList({heading, items}) {
+    this.appendBlock(wrapElements("div", [makeTextElement("p", heading), makeList(items)]));
+  }
+
+  showSay({speaker, verb, text, isChat}) {
+    let elements = [];
+    if (text.indexOf("\n\n") == -1) {
+      let msg = `${speaker} ${verb}, &ldquo;${text}&rdquo;`;
+      elements.push(makeTextElement("p", msg));
+    } else {
+      elements.push(makeTextElement("p", `${speaker} ${verb}:`));
+      elements = elements.concat(formatText(text, "blockquote"));
+    }
+    this.appendBlock(wrapElements("div", elements), isChat ? 'chat_text' : 'main_text');
+  }
+
+  showLinks({heading, prefix, topics}) {
+    let elements = [];
+
+    elements.push(makeTextElement("p", heading));
+    elements.push(wrapElements("p", topics.map((topic) => {
+      var link = makeTextElement("span", topic,
+                                 "link list" + (prefix.startsWith("help") ? " help" : ""));
+      link.onclick = () => { client.sendInput(prefix + " " + topic); };
+      return link;
+    })));
+
+    this.appendBlock(wrapElements("div", elements, "help"));
+  }
+
+  // MARK: Location
+
+  formatEmote(key, brief, pose) {
+    let s = "{0} {1}".format(look(brief.capitalize()), pose);
+    if (this.debug)
+      s+= ` (#${key})`;
+    return makeTextElement("p", s);
+  }
+
+  showLocation({name, description, exits, contents}) {
+    let elements = [];
+
+    if (name != null)
+      elements.push(makeTextElement("h1", name));
+
+    if (description != null)
+      elements.push(...formatText(description));
+
+    if (exits != null) {
+      let exit_links = [makeTextElement("span", "Exits:")]
+        .concat(exits.map((dir) => {
+          let link = makeTextElement("span", dir, "link list");
+          link.onclick = () => { client.sendInput(dir); };
+          return link;
+        }));
+      elements.push(wrapElements("p", exit_links));
+    }
+
+    if (contents != null) {
+      for (let {key, brief, pose} of contents)
+        elements.push(this.formatEmote(key, brief, pose));
+    }
+
+    this.appendBlock(wrapElements("div", elements));
+  }
+
+  // MARK: Map
+
+  setMap({region, subregion, location, radius, cells}) {
+    const sep = "\u2002\u00b7\u2002";
+
+    document.getElementById("location_name").innerHTML = location;
+    if (subregion)
+      document.getElementById("zone_name").innerHTML = region + sep + subregion;
+    else
+      document.getElementById("zone_name").innerHTML = region;
+
+    this.map.update(radius, cells);
+    this.map.render();
+  }
+
+  updateMap({cells}) {
+    // TODO: implement partial map update
+  }
+
+  // MARK: Avatar
+
+  updateAvatar() {
+    const {name, level, race, icon} = this.avatar;
+    let summary = name ? `${name}, level ${level} ${race}` : `level ${level} ${race}`;
+    document.getElementById("player_name").innerHTML = summary;
+    setIcon(document.getElementById("player_icon"), "avatar", icon);
+  }
+
+  setAvatarKey({_0: key}) {
+    this.avatarKey = key;
+  }
+
+  setAvatarLevel({_0: level}) {
+    this.avatar.level = level;
+    this.updateAvatar();
+  }
+
+  setAvatarXP({current, max}) {
+    updateBar("player_xp", current, max);
+  }
+
+  setAvatarHealth({current, max}) {
+    updateBar("player_health", current, max);
+  }
+
+  setAvatarEnergy({current, max}) {
+    updateBar("player_energy", current, max);
+  }
+
+  setAvatarMana({current, max}) {
+    // updateBar("player_mana", current, max);
+  }
+
+  // MARK: Neighbors
+
+  setNeighborProperties(div, {key, brief, icon, currentHealth, maxHealth}) {
+    if (icon)
+      setIcon(div.children[0], "neighbor", icon);
+
+    if (brief)
+      div.children[1].children[0].innerHTML = brief;
+
+    if (currentHealth && maxHealth)
+      div.children[1].children[1].children[0].style.width = (100.0 * currentHealth / maxHealth) + "%";
+    else
+      item.children[1].children[1].style.visibility = "hidden";
+
+    // Set a command to perform when clicking the item.
+    // TODO: make it appropriate, or add a popup with a few options.
+    div._command = `look ${brief} #${key}`;
+    div.onmousedown = function() { this.sendInput(this._command); };
+  }
+
+  createNeighbor(neighbor) {
+    let key = neighbor["key"];
+    let neighbors = document.getElementById("neighbors");
+    let div = neighbors.children[0].cloneNode(true);
+    div.id = `neighbor_${key}`;
+    div.className = "neighbor do_enter";
+    div.style.display = "flex";
+    neighbors.appendChild(div);
+    this.setNeighborProperties(div, neighbor);
+    return div;
+  }
+
+  clearNeighbors() {
+    // Remove all but the first child, which is the invisible prototype used to
+    // instantiate other items.
+    let neighbors = document.getElementById("neighbors");
+    while (neighbors.children[0].nextSibling)
+      neighbors.removeChild(neighbors.children[0].nextSibling);
+  }
+
+  setNeighbors({_0: neighbors}) {
+    this.clearNeighbors();
+    for (let neighbor of neighbors)
+      this.createNeighbor(neighbor);
+  }
+
+  updateNeighbor({_0: neighbor}) {
+    let id = `neighbor_${neighbor.key}`;
+    let div = document.getElementById(id);
+    if (div)
+      this.setNeighborProperties(div, neighbor);
+    else
+      this.createNeighbor(neighbor);
+  }
+
+  removeNeighbor({key}) {
+    let id = `neighbor_${key}`;
+    let div = document.getElementById(id);
+    if (div) {
+      div.addEventListener('animationend', function (event) { this.parentNode.removeChild(this); });
+      div.className = "neighbor";
+      window.requestAnimationFrame(function (t) {
+        window.requestAnimationFrame(function (t) {
+          div.className = "neighbor do_exit";
+        });
+      });
+    }
+  }
+
+  // MARK: Inventory
+
+  updateItemElement(div, icon, brief) {
+    setIcon(div.children[0], "inventory", icon);
+    div.children[1].innerHTML = brief;
+  }
+
+  setItems({_0: items}) {
+    let contents = document.getElementById("inventory_contents");
+
+    while (contents.firstChild)
+      contents.removeChild(contents.firstChild);
+
+    for (const item of items) {
+      const {key, icon, brief} = item;
+
+      div = document.createElement('div');
+      div.id = `inv_${key}`;
+      // FIXME: div.setAttribute("jade_sort_key", sort_key);
+      div.appendChild(document.createElement("div"));  // for icon
+      div.appendChild(document.createElement("div"));  // for brief
+
+      self.updateItemElement(div, icon, brief);
+
+      // FIXME: contents_div.insertBefore(div, findInventoryDivAfter(sort_key, contents_div.children));
+      contents.appendChild(div);
+    }
+  }
+
+  updateItem({_0: item}) {
+    const {key, icon, brief} = item;
+    let div = document.getElementById(`inv_${key}`);
+    if (div)
+      self.updateItemElement(div, icon, brief);
+  }
+
+  removeItem({_0: key}) {
+    let div = document.getElementById(`inv_${key}`);
+    if (div)
+      div.parentNode.removeChild(div);
+  }
+
+  // MARK: Cast bar
+
+  // TODO: Support neighbor/combatant cast bars.
+  
+  startCast({key, duration}) {
+    if (key == this.avatarKey) {
+      let castbar = document.getElementById("castbar");
+      let progress = castbar.children[0];
+
+      castbar.style.display = "block";
+      progress.style.transitionDuration = duration + "s";
+      progress.style.width = "0%";
+
+      window.setTimeout(function() { progress.style.width = "100%"; }, 0);
+    }
+  }
+
+  stopCast({key}) {
+    if (key == this.avatarKey) {
+      let castbar = document.getElementById("castbar");
+      castbar.style.display = "none";
+    }
+  }
+
+}  // class GameClient
+
+let client = null;
+
+// MARK: Old
+
+/*
+var ws = null;
+var map = null;
+var handler = null;
+
+function resize() {
+  map.resize();
 }
+window.onresize = resize;
+
+// Appends a block element to a scrollable text pane, removing the oldest block
+// first if the maximum number of blocks would be exceeded.
+function appendBlock(block, containerId = 'main_text') {
+  const MAX_BLOCKS = 500;
+  let container = document.getElementById(containerId);
+  if (container.childNodes.length >= MAX_BLOCKS)
+    container.removeChild(container.firstChild);
+  container.appendChild(block);
+  container.scrollTop = container.scrollHeight;
+}
+
+function updatePlayerBio(name, icon, level, race) {
+  let summary = name ?
+    '{0}, level {1} {2}'.format(name, level, race) :
+    'level {0} {1}'.format(level, race);
+  document.getElementById("player_name").innerHTML = summary;
+  setIcon(document.getElementById("player_icon"), "avatar", icon);
+}
+
 
 // An object that encapsulates functions callable based on messages from the
 // server.
@@ -88,66 +478,6 @@ function MessageHandler() {
   this.currentPane = 'inventory';
 }
 
-MessageHandler.prototype.showPane = function(button_id) {
-  document.getElementById(this.currentPane).className = 'button toggle_off';
-  document.getElementById(this.currentPane + '_pane').style.display = 'none';
-
-  this.currentPane = button_id;
-
-  document.getElementById(this.currentPane).className = 'button toggle_on';
-  document.getElementById(this.currentPane + '_pane').style.display = 'block';
-}
-
-MessageHandler.prototype.cyclePane = function(dir) {
-  var curr = this.currentPane;
-  var i = panes.findIndex((x) => (x == curr));
-  if (dir == 1)
-    i = (i + 1) % panes.length;
-  else
-    i = (i + panes.length - 1) % panes.length;
-  this.showPane(panes[i]);
-}
-
-MessageHandler.prototype.showRaw = function(text) {
-  var element = document.createElement("pre");
-  element.innerHTML = text;
-  appendBlock(element);
-}
-
-// Display game text in the style defined by the given class.
-MessageHandler.prototype.showText = function(text, className) {
-  appendBlock(wrapElements('div', formatText(text), className));
-}
-
-MessageHandler.prototype.showNotice = function(text) {
-  this.showText(text, 'notice');
-}
-
-MessageHandler.prototype.showTutorial = function(text) {
-  this.showText(text, 'tutorial');
-}
-
-MessageHandler.prototype.showError = function(text) {
-  this.showText(text, 'error');
-}
-
-MessageHandler.prototype.showHelp = function(text) {
-  // TODO: look for links to "see also" topics and format them appropriately.
-  this.showText(text, 'help');
-}
-
-MessageHandler.prototype.showMap = function(location_name, region, subregion, radius, rooms) {
-  var sep = "\u2002\u00b7\u2002";
-
-  document.getElementById("location_name").innerHTML = location_name;
-  if (subregion)
-    document.getElementById("zone_name").innerHTML = region + sep + subregion;
-  else
-    document.getElementById("zone_name").innerHTML = region;
-  map.update(radius, rooms);
-  map.render();
-}
-
 MessageHandler.prototype.updateAvatar = function(properties) {
   // Update the cached properties.
   this.avatar = Object.assign({}, this.avatar, properties);
@@ -163,6 +493,8 @@ MessageHandler.prototype.updateAvatar = function(properties) {
   if (properties.xp || properties.max_xp)
     updateBar('player_xp', this.avatar.xp, this.avatar.max_xp);
 }
+
+// MARK: TODO
 
 MessageHandler.prototype.showAura = function(key, icon) {
   var id = 'aura_' + key;
@@ -188,7 +520,7 @@ MessageHandler.prototype.hideAura = function(key) {
 
 function findInventoryDivAfter(sort_key, item_divs) {
   for (const div of item_divs) {
-    if (Number(div.getAttribute("jade_sort_key")) > sort_key)
+    if (Number(div.getAttribute("wyrm_sort_key")) > sort_key)
       return div;
   }
   return null;
@@ -542,33 +874,12 @@ MessageHandler.prototype.didGive = function(actor_path, count, brief) {
   this.showText(msg);
 }
 
-MessageHandler.prototype.formatEmote = function(key, brief, pose) {
-  var s = '{0} {1}'.format(look(brief.capitalize()), pose);
-  if (this.debug)
-    s += ' (#{0})'.format(key);
-  return makeTextElement('p', s);
-}
-
 MessageHandler.prototype.showEmote = function(path, count, brief, pose) {
   appendBlock(wrapElements('div', [this.formatEmote(path, count, brief, pose)]));
 }
 
 MessageHandler.prototype.showHelp = function(text) {
   this.showText(text, 'help');
-}
-
-MessageHandler.prototype.showLinks = function(heading, prefix, topics) {
-  var elements = [];
-
-  elements.push(makeTextElement('p', heading));
-  elements.push(wrapElements('p', topics.map(function (topic) {
-    var link = makeTextElement('span', topic,
-                               'link list' + (prefix.startsWith('help') ? ' help' : ''));
-    link.onclick = function() { sendInput(prefix + ' ' + topic); };
-    return link;
-  })));
-
-  appendBlock(wrapElements('div', elements, 'help'));
 }
 
 MessageHandler.prototype.showVendorItems = function(heading, vendor, verb, items) {
@@ -620,38 +931,6 @@ MessageHandler.prototype.showTrainerSkills = function(heading, trainer, skills) 
   appendBlock(wrapElements('div', [header, ul]));
 }
 
-MessageHandler.prototype.showLocation = function(name, description, exits, contents) {
-  var elements = [];
-
-  if (name != null)
-    elements.push(makeTextElement('h1', name));
-
-  if (description != null)
-    elements.push(...formatText(description));
-
-  if (exits != null) {
-    var exit_links = [makeTextElement('span', 'Exits:')]
-      .concat(exits.map(function (dir) {
-        var link = makeTextElement('span', dir, 'link list');
-        link.onclick = function() { sendInput(dir); };
-        return link;
-      }));
-    elements.push(wrapElements('p', exit_links));
-  }
-
-  if (contents != null) {
-    for (var i = 0; i < contents.length; ++i) {
-      var [key, brief, pose] = contents[i];
-      elements.push(this.formatEmote(key, brief, pose));
-    }
-  }
-
-  appendBlock(wrapElements('div', elements));
-}
-
-MessageHandler.prototype.showList = function(header, items) {
-  appendBlock(wrapElements('div', [makeTextElement('p', header), makeList(items)]));
-}
 
 // Sets the current default target for attacks.
 MessageHandler.prototype.setEnemyTarget = function(path) {
@@ -758,44 +1037,7 @@ MessageHandler.prototype.quit = function() {
   sendInput("quit");
 }
 
-MessageHandler.prototype.echoCommand = function(msg) {
-  console.log(msg);
-  this.showText('&raquo; ' + msg, 'cmd');
-}
-
-//// New message handling.
-
-MessageHandler.prototype.set_neighbors = ({_0: neighbors}) => {
-  console.log("in set_neighbors")
-  console.log(neighbors)
-  for (let {max_health} of neighbors) {
-    console.log(`max_health is ${max_health}!`)
-  }
-}
-
-MessageHandler.prototype.update = function(...updates) {
-  for (const update of updates) {
-    // The update is a dict with one key, which is the name of the method to call
-    // with the value as the single argument.
-    const key = Object.keys(update)[0]
-    const arg = update[key]
-    const fn = handler[key]
-    if (fn)
-      fn.call(handler, arg)
-    else
-      console.log(`ignoring update with unknown type: ${key}`)
-  }
-}
-
-////
-
-function sendInput(s) {
-  s = s.trim();
-  if (s.length) {
-    handler.echoCommand(s);
-    sendMessage(s);
-  }
-}
+*/
 
 function onUserInput(event) {
   var obj = document.getElementById("command");
@@ -804,7 +1046,7 @@ function onUserInput(event) {
     document.activeElement.blur();
   } else if (event.key == "Enter") {
     if (obj.value.length > 0)
-      sendInput(obj.value);
+      client.sendInput(obj.value);
     obj.value = "";
     command_pos = (command_pos + 1) % command_history.length;
   } else if (event.key == "ArrowUp" || event.key == "ArrowDown") {
@@ -839,50 +1081,19 @@ window.onkeydown = function (e) {
     } else {
       const command = keyCommands[e.key];
       if (command) {
-        sendInput(command);
+        client.sendInput(command);
         return false;
       }
     }
   }
 }
 
-function openSession(event) {
-  // Nothing to do.
-}
-
-function closeSession() {
-  handler.showText('The server closed the connection. Please [return to the home page](index.html).',
-                   'error');
-}
-
-function sendMessage(msg) {
-  ws.send(msg);
-}
-
-function receiveMessage(event) {
-  console.log(event.data);
-  var message = JSON.parse(event.data);
-  handler[message["fn"]].apply(handler, message["args"]);
-}
-
 function start() {
-  map = new Map(document.getElementById("map_canvas"));
-  map.resize();
-
-  handler = new MessageHandler();
-  
   client = new GameClient();
 
-  ws = new WebSocket('ws://' + location.host + '/game/session')
-  ws.onopen = openSession;
-  ws.onclose = closeSession;
-  ws.onmessage = receiveMessage;
-
-  var input = document.getElementById("command");
+  let input = document.getElementById("command");
   input.focus();
-  input.addEventListener("keydown", (event) => {
-    onUserInput(event);
-  });
+  input.addEventListener("keydown", (event) => { onUserInput(event); });
 }
 
-document.addEventListener("DOMContentLoaded", function() { setTimeout(start, 0); });
+document.addEventListener("DOMContentLoaded", () => { setTimeout(start, 0); });

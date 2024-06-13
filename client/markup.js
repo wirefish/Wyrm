@@ -48,7 +48,7 @@ function escapeForLink(s) {
 }
 
 function formatLink(full, content) {
-  const template = '<span class="link {0}" onclick="sendInput(\'{1}\')">{2}</span>';
+  const template = '<span class="link {0}" onclick="client.sendInput(\'{1}\')">{2}</span>';
 
   let [cls, text, command] = content.split(':');
 

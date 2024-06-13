@@ -192,7 +192,7 @@ struct QuestOffer: Offer {
     }
 
     // FIXME:
-    avatar.showMap()
+    avatar.redrawMap()
   }
 
   func decline(_ avatar: Avatar) {
@@ -250,7 +250,7 @@ extension Avatar {
 
     // FIXME:
     if container != nil {
-      showMap()
+      redrawMap()
     }
 
     return advance
@@ -265,7 +265,7 @@ extension Avatar {
     discardItems { $0.quest === quest }
 
     // FIXME:
-    showMap()
+    redrawMap()
   }
 
   func completeQuest(_ quest: Quest) {
@@ -281,7 +281,7 @@ extension Avatar {
     gainXP(quest.xpValue)
 
     // FIXME:
-    showMap()
+    redrawMap()
   }
 
   func didCompleteQuest(_ quest: Quest) -> Bool {

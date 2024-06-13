@@ -175,7 +175,7 @@ class Map {
     let room_size = cell_size - inset * 2;
 
     for (let j = 0; j < this.rooms.length; ++j) {
-      const [id, x, y, name, icon, state, surface, surround, domain] = this.rooms[j];
+      const {key, x, y, name, state, icon, domain, surface, surround} = this.rooms[j];
       const left = center_left + x * cell_size, top = center_top + y * cell_size;
 
       // Fill the cell background.

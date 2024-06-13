@@ -78,29 +78,36 @@ enum ClientUpdate: Encodable {
   }
   
   struct MapCell: Encodable {
-    // The `flags` property encodes exit directions in addition to the following.
+    // The `state` property encodes exit directions in addition to the following.
     // For an exit direction `dir`, its bit mask is `1 << dir.rawValue`.
-    static let questAvailable = 1 << 16
-    static let questAdvanceable = 1 << 17
-    static let questCompletable = 1 << 18
-    static let vendor = 1 << 19
-    static let trainer = 1 << 20
+    static let questAvailable = 1 << 12
+    static let questAdvanceable = 1 << 13
+    static let questCompletable = 1 << 14
+    static let vendor = 1 << 15
+    static let trainer = 1 << 16
 
     let key: Int
     let x, y: Int
+    let name: String
+    let state: Int
     let icon: String?
-    let flags: Int
+    let domain: String?
+    let surface: String?
+    let surround: String?
+
   }
   
   // Avatar
-  case key(Int)
-  case name(String?), icon(String?), race(String?)
-  case level(Int)
-  case xp(current: Int, max: Int)
-  case health(current: Int, max: Int)
-  case energy(current: Int, max: Int)
-  case mana(current: Int, max: Int)
-  
+  case setAvatarKey(Int)
+  case setAvatarName(String?)
+  case setAvatarIcon(String?)
+  case setAvatarRace(String?)
+  case setAvatarLevel(Int)
+  case setAvatarXP(current: Int, max: Int)
+  case setAvatarHealth(current: Int, max: Int)
+  case setAvatarEnergy(current: Int, max: Int)
+  case setAvatarMana(current: Int, max: Int)
+
   // Neighbors
   case setNeighbors([Neighbor])
   case updateNeighbor(Neighbor)
@@ -122,7 +129,7 @@ enum ClientUpdate: Encodable {
   case removeItem(Int)
   
   // Skills
-  case karma(Int)
+  case setKarma(Int)
   case setSkills([Skill])
   case updateSkill(Skill)
   case removeSkill(name: String)
@@ -132,15 +139,16 @@ enum ClientUpdate: Encodable {
   case updateAttribute(Attribute)
 
   // Messages
-  case message(String)
-  case notice(String)
-  case tutorial(String)
-  case help(String)
-  case error(String)
-  case say(speaker: String, verb: String, text: String, isChat: Bool)
-  case list(heading: String, items: [String])
-  case links(heading: String, prefix: String, links: [String])
-  case location(name: String, description: String, exits: [String], contents: [LocationContent])
+  case showRaw(String)
+  case showText(String)
+  case showNotice(String)
+  case showTutorial(String)
+  case showHelp(String)
+  case showError(String)
+  case showSay(speaker: String, verb: String, text: String, isChat: Bool)
+  case showList(heading: String, items: [String])
+  case showLinks(heading: String, prefix: String, topics: [String])
+  case showLocation(name: String, description: String, exits: [String], contents: [LocationContent])
   
   // Cast bar
   case startCast(key: Int, duration: Int)
@@ -149,6 +157,10 @@ enum ClientUpdate: Encodable {
   // Map
   case setMap(region: String, subregion: String?, location: String, radius: Int, cells: [MapCell])
   case updateMap(cells: [MapCell])
+}
+
+struct ClientMessage: Encodable {
+  let updates: [ClientUpdate]
 }
 
 extension Avatar {
@@ -162,9 +174,19 @@ extension Avatar {
     clientUpdates += updates
   }
   
+  // Sends all pending updates to the client and clears the list of pending updates.
+  private func sendUpdates() {
+    if let handler = handler {
+      let encoder = JSONEncoder()
+      // let data = try! encoder.encode(Message(fn: "update", args: clientUpdates))
+      let data = try! encoder.encode(ClientMessage(updates: clientUpdates))
+      handler.sendTextMessage(String(data: data, encoding: .utf8)!)
+      clientUpdates.removeAll()
+    }
+  }
+
   // Updates UI elements that change upon entering a new location.
   func updateForLocation() {
-    // TODO: map, neighbor attributes
     updateClient(
       // Neighbors
       .setNeighbors(location.contents.compactMap { entity -> ClientUpdate.Neighbor? in
@@ -176,6 +198,10 @@ extension Avatar {
       }),
       mapUpdate(),
       locationUpdate())
+
+    if let tutorial = location.tutorial, let key = location.ref?.description {
+      showTutorial(key, tutorial)
+    }
   }
   
   // Updates all UI elements.
@@ -183,9 +209,10 @@ extension Avatar {
     // TODO: auras, attributes, cast bar?
     updateClient(
       // Avatar
-      .name(name), .icon(icon), .level(level),
-      .race(race?.describeBriefly([]) ?? "unknown race"),
-      .xp(current: xp, max: xpRequiredForNextLevel()),
+      .setAvatarKey(id),
+      .setAvatarName(name), .setAvatarIcon(icon), .setAvatarLevel(level),
+      .setAvatarRace(race?.describeBriefly([]) ?? "unknown race"),
+      .setAvatarXP(current: xp, max: xpRequiredForNextLevel()),
       // Equipment
       .setEquipment(equipped.map { ClientUpdate.Equipment(slot: $0, item: $1) }),
       // Inventory
@@ -201,11 +228,46 @@ extension Avatar {
     updateForLocation()
   }
 
-  // Sends all pending updates to the client and clears the list of pending updates.
-  private func sendUpdates() {
-    if let _ = handler {
-      sendMessage("update", clientUpdates)
-      clientUpdates.removeAll()
+  func locationUpdate() -> ClientUpdate {
+    let exits = location.exits.compactMap {
+      (!$0.implicit && $0.isVisible(to: self)) ? String(describing: $0.direction) : nil
     }
+    let contents = location.contents.compactMap {
+      ($0 != self && !$0.implicit && $0.isVisible(to: self)) ? ClientUpdate.LocationContent($0) : nil
+    }
+    return .showLocation(name: location.name, description: location.description,
+                         exits: exits, contents: contents)
+  }
+
+  func describeLocation() {
+    updateClient(locationUpdate())
+  }
+
+  func show(_ message: String) {
+    updateClient(.showText(message))
+  }
+
+  func showNotice(_ message: String) {
+    updateClient(.showNotice(message))
+  }
+
+  func showTutorial(_ key: String, _ message: String) {
+    if tutorialsOn && tutorialsSeen.insert(key).inserted {
+      dirtyTutorials.append(key)
+      updateClient(.showTutorial(message))
+    }
+  }
+
+  func showSay(_ speaker: Thing, _ verb: String, _ message: String, _ isChat: Bool = false) {
+    updateClient(.showSay(speaker: speaker.describeBriefly([.capitalized, .definite]),
+                          verb: verb, text: message, isChat: isChat))
+  }
+
+  func showList(_ heading: String, _ items: [String]) {
+    updateClient(.showList(heading: heading, items: items))
+  }
+
+  func showLinks(_ heading: String, _ prefix: String, _ topics: [String]) {
+    updateClient(.showLinks(heading: heading, prefix: prefix, topics: topics))
   }
 }

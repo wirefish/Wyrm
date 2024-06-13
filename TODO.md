@@ -36,6 +36,9 @@
 
 - Collect client updates and send them at the end of a "frame". Maybe add an Update
   object to Avatar that collects them.
+  
+- Factor script execution state (locals, value stack, return stack, marker stack, iterator stack)
+  into a struct to more correctly be able to resume.
 
 - Use a Container representing a "pile of items" in a Location instead of
   dumping items all over the place. This keeps things cleaner and also helps
