@@ -94,7 +94,6 @@ enum ClientUpdate: Encodable {
     let domain: String?
     let surface: String?
     let surround: String?
-
   }
   
   // Avatar
@@ -113,7 +112,7 @@ enum ClientUpdate: Encodable {
   case updateNeighbor(Neighbor)
   case removeNeighbor(key: Int)
   
-  // Auras (for avatar, neighbors, combatants based on key)
+  // Auras attached to avatar, neighbor, or combatant (based on key)
   case setAuras(key: Int, [Aura])
   case addAura(key: Int, Aura)
   case removeAura(key: Int, String)
@@ -150,7 +149,7 @@ enum ClientUpdate: Encodable {
   case showLinks(heading: String, prefix: String, topics: [String])
   case showLocation(name: String, description: String, exits: [String], contents: [LocationContent])
   
-  // Cast bar
+  // Cast bar attached to avatar, neighbor, or combatant (based on key)
   case startCast(key: Int, duration: Int)
   case stopCast(key: Int)
   

@@ -299,7 +299,6 @@ extension Avatar: WebSocketDelegate {
 
     if reconnecting {
       showNotice("Welcome back!")
-      locationChanged()
     } else {
       showNotice("Welcome to Atalea!")
 
@@ -307,23 +306,12 @@ extension Avatar: WebSocketDelegate {
       triggerEvent("enterLocation", in: location, participants: [self],
                    args: [self, location]) {
         location.insert(self)
-        locationChanged()
       }
 
       savePeriodically()
     }
 
-    // FIXME: updateInventory(inventory.stacks)
-    updateEquipment(equipped.keys)
-
-    var update = AvatarProperties()
-    update.xp = xp
-    update.maxXP = xpRequiredForNextLevel()
-    updateSelf(update)
-    
-    // TEST:
-    updateClient(.setAvatarLevel(level),
-                 .setAvatarXP(current: xp, max: xpRequiredForNextLevel()))
+    updateAll()
   }
 
   func onClose(_ handler: WebSocketHandler) {
