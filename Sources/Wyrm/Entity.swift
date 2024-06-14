@@ -11,7 +11,7 @@ class Entity: Scope, Responder {
   let prototype: Entity?
   var members = [String:Value]()
   var handlers = EventHandlers()
-  
+
   var delegate: Responder? { prototype }
 
   required init(prototype: Entity? = nil) {
@@ -88,12 +88,3 @@ extension Entity: CustomDebugStringConvertible {
     }
   }
 }
-
-// Macros used to decorate computed properties to specify that they are stored as
-// Values in the members property of an Entity (or an Entity in its prototype chain).
-
-@attached(accessor)
-macro scriptValue() = #externalMacro(module: "WyrmMacros", type: "ScriptValueMacro")
-
-@attached(accessor)
-macro scriptValue<T>(default value: T) = #externalMacro(module: "WyrmMacros", type: "ScriptValueMacro")

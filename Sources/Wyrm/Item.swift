@@ -14,30 +14,25 @@ class Item: Thing, Codable {
   // the ItemCollection can contain more than one stack with the same prototype
   // (unless `unique` is true). If positive, the item can stack with other items with
   // the same prototype and an ItemCollection can contain at most one such stack.
-  @scriptValue(default: 0)
-  var stackLimit: Int
+  var stackLimit = 0
 
   var stackable: Bool { stackLimit >= 1 }
 
   // Limits an ItemCollection to contain at most one of this (unstackable) item.
-  @scriptValue(default: false)
-  var unique: Bool
+  var unique = false
 
-  // The item level determines the overall power of the item and the level required to use it.
-  @scriptValue(default: 0)
-  var level: Int
+  // If present, the item level determines the overall power of the item and/or the level
+  // required to use it.
+  var level: Int?
 
   // Verbs that identify commands that can be used with this item as the "direct object".
-  @scriptValue
   var verbs: [String]?
 
   // An item may be associated with a quest, in which case it is only available when
   // that quest is active and is discarded once the quest ends.
-  @scriptValue
   var quest: Quest?
 
   // The price for which vendors sell this item.
-  @scriptValue
   var price: ItemStack?
 
   override func isVisible(to observer: Avatar) -> Bool {
@@ -56,7 +51,7 @@ class Item: Thing, Codable {
     if self.quest != nil, case let .quest(quest) = world.lookup(self.quest!.ref) {
       notes.append("Quest: \(quest.name).")
     }
-    if level > 0 {
+    if let level = level, level > 0 {
       notes.append("Level: \(level).")
     }
     return notes

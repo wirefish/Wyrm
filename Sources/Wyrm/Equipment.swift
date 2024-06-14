@@ -119,7 +119,11 @@ class Equipment: Item {
   }
 
   var traitValue: Double {
-    Double(level) * 10.0 * quality.coeff * slot!.coeff
+    if let level = level {
+      Double(level) * 10.0 * quality.coeff * slot!.coeff
+    } else {
+      0.0
+    }
   }
 
   override func descriptionNotes() -> [String] {
@@ -168,7 +172,11 @@ class Weapon: Equipment {
   }
 
   var attackValue: Double {
-    Double(level + (slot == .bothHands ? 1 : 0)) * 20.0
+    if let level = level {
+      Double(level + (slot == .bothHands ? 1 : 0)) * 20.0
+    } else {
+      0.0
+    }
   }
 
   override func descriptionNotes() -> [String] {

@@ -11,7 +11,6 @@ let package = Package(
     // Dependencies declare other packages that this package depends on.
     // .package(url: /* package url */, from: "1.0.0"),
     .package(url: "https://github.com/dduan/TOMLDecoder", from: "0.2.2"),
-    .package(url: "https://github.com/apple/swift-syntax", from: "509.0.0")
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can
@@ -19,15 +18,9 @@ let package = Package(
     // in this package, and on products in packages this package depends on.
     .executableTarget(
       name: "Wyrm",
-      dependencies: ["TOMLDecoder", "WyrmMacros"]),
+      dependencies: ["TOMLDecoder"]),
     .testTarget(
       name: "WyrmTests",
       dependencies: ["Wyrm"]),
-    .macro(
-      name: "WyrmMacros",
-      dependencies: [
-        .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-        .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
-      ]),
   ]
 )
