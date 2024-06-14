@@ -253,20 +253,27 @@ class GameClient {
 
   // MARK: Avatar
 
-  updateAvatar() {
-    const {name, level, race, icon} = this.avatar;
-    let summary = name ? `${name}, level ${level} ${race}` : `level ${level} ${race}`;
-    document.getElementById("player_name").innerHTML = summary;
-    setIcon(document.getElementById("player_icon"), "avatar", icon);
-  }
-
   setAvatarKey({_0: key}) {
     this.avatarKey = key;
   }
 
+  setAvatarIcon({_0: icon}) {
+    setIcon(document.getElementById("player_icon"), "avatar", icon);
+  }
+  
+  setAvatarName({_0: name}) {
+    let div = document.getElementById("player_name");
+    div.childNodes[0].innerHTML = `${name} `;
+  }
+
   setAvatarLevel({_0: level}) {
-    this.avatar.level = level;
-    this.updateAvatar();
+    let div = document.getElementById("player_name");
+    div.childNodes[1].innerHTML = `level ${level}`;
+  }
+
+  setAvatarRace({_0: race}) {
+    let div = document.getElementById("player_name");
+    div.childNodes[2].innerHTML = ` ${race}`;
   }
 
   setAvatarXP({current, max}) {
