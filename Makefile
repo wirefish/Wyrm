@@ -5,7 +5,9 @@ CLIENTDIR = $(BUILDDIR)/client
 MDFILES = $(wildcard client/*.md)
 CPFILES = $(wildcard client/*.css) $(wildcard client/*.js) client/game.html
 
-.PHONY: server client html images fonts icons
+.PHONY: all server client html images fonts icons
+
+all: server client
 
 server:
 	swift build

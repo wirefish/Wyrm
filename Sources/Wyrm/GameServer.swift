@@ -163,11 +163,11 @@ class GameHandler: HTTPHandler {
     "woff": "font/woff",
   ]
 
-  // FIXME:
-  static let base = "/Users/craig/Projects/Wyrm/.build/client"
+  // FIXME: Get from config
+  static let base = URL(filePath: ".build/client", directoryHint: .isDirectory).absoluteURL
 
   func handleStaticFileRequest(_ conn: TCPConnection, _ uri: String) {
-    let url = URL(fileURLWithPath: Self.base + uri, isDirectory: false)
+    let url = Self.base.appending(path: uri.dropFirst(), directoryHint: .notDirectory)
     guard !url.pathComponents.contains("..") else {
       respondWithStatus(.badRequest, conn)
       return
