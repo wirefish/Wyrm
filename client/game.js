@@ -1,8 +1,17 @@
 'use strict';
 
-// A history of commands entered by the player.
-let command_history = new Array(100);
-let command_pos = 0;
+function removeAllChildren(node) {
+  while (node.firstChild)
+    node.removeChild(node.lastChild);
+}
+
+function createDiv(id, num_children) {
+  let div = document.createElement("div");
+  div.id = id;
+  for (let i = 0; i < num_children; ++i)
+    div.appendChild(document.createElement("div"));
+  return div;
+}
 
 function link(text, type = "", command = "") {
   return `\`${type}:${text}:${command}\``;
@@ -31,14 +40,9 @@ const panes = ["inventory", "equipment", "combat", "skills", "quests", "chat"];
 
 class GameClient {
   currentPane = "inventory";
-
   commandHistory = new Array(100);
   commandPos = 0;
-
-  // Cached properties of the player's avatar.
   avatarKey = null;
-  avatar = {};
-
   debug = true;
 
   constructor() {
@@ -58,8 +62,8 @@ class GameClient {
 
   closeSession() {
     this.appendTextBlock(
-      "The server closed the connection. Please [return to the home page](index.html).",
-      "error");
+                         "The server closed the connection. Please [return to the home page](index.html).",
+                         "error");
   }
 
   receiveMessage(event) {
@@ -216,11 +220,11 @@ class GameClient {
 
     if (exits != null) {
       let exit_links = [makeTextElement("span", "Exits:")]
-        .concat(exits.map((dir) => {
-          let link = makeTextElement("span", dir, "link list");
-          link.onclick = () => { client.sendInput(dir); };
-          return link;
-        }));
+      .concat(exits.map((dir) => {
+        let link = makeTextElement("span", dir, "link list");
+        link.onclick = () => { client.sendInput(dir); };
+        return link;
+      }));
       elements.push(wrapElements("p", exit_links));
     }
 
@@ -258,12 +262,15 @@ class GameClient {
   }
 
   setAvatarIcon({_0: icon}) {
-    setIcon(document.getElementById("player_icon"), "avatar", icon);
+    if (icon)
+      setIcon(document.getElementById("player_icon"), "avatar", icon);
   }
-  
+
   setAvatarName({_0: name}) {
-    let div = document.getElementById("player_name");
-    div.childNodes[0].innerHTML = `${name} `;
+    if (name) {
+      let div = document.getElementById("player_name");
+      div.childNodes[0].innerHTML = `${name}, `;
+    }
   }
 
   setAvatarLevel({_0: level}) {
@@ -304,12 +311,12 @@ class GameClient {
     if (currentHealth && maxHealth)
       div.children[1].children[1].children[0].style.width = (100.0 * currentHealth / maxHealth) + "%";
     else
-      item.children[1].children[1].style.visibility = "hidden";
+      div.children[1].children[1].style.visibility = "hidden";
 
     // Set a command to perform when clicking the item.
     // TODO: make it appropriate, or add a popup with a few options.
     div._command = `look ${brief} #${key}`;
-    div.onmousedown = function() { this.sendInput(this._command); };
+    div.onmousedown = function() { client.sendInput(this._command); };
   }
 
   createNeighbor(neighbor) {
@@ -406,7 +413,7 @@ class GameClient {
   // MARK: Cast bar
 
   // TODO: Support neighbor/combatant cast bars.
-  
+
   startCast({key, duration}) {
     if (key == this.avatarKey) {
       let castbar = document.getElementById("castbar");
@@ -427,6 +434,116 @@ class GameClient {
     }
   }
 
+  // MARK: Auras
+
+  // TODO: Support neighbor/combatant auras. Handle name and expiry.
+
+  setAuras({key, auras}) {
+    for (let aura of auras)
+      this.addAura(key, aura);
+  }
+
+  addAura({key, aura}) {
+    let {type, icon, name, expiry} = aura;
+    let id = `aura_${type}`
+    let div = document.getElementById(id);
+    if (!div) {
+      div = document.createElement("div");
+      div.id = id;
+      div.className = "show_aura";
+      document.getElementById("player_auras").insertBefore(div, null);
+    }
+    setIcon(div, icon);
+  }
+
+  removeAura({key, type}) {
+    let div = document.getElementById(`aura_${type}`);
+    if (div) {
+      div.addEventListener("animationend", (event) => {
+        this.parentNode.removeChild(this);
+      });
+      div.className = "hide_aura";
+    }
+  }
+
+  // MARK: Equipment
+
+  setEquipment({_0: items}) {
+    for (let item of items)
+      this.equip(item);
+  }
+
+  equip({_0: item}) {
+    let {slot, icon, brief} = item;
+    let div = document.getElementById(`equip_${slot}`);
+    if (div) {
+      removeAllChildren(div);
+
+      let icon_div = document.createElement("div");
+      setIcon(icon_div, "inventory", icon);
+      div.appendChild(icon_div);
+
+      let brief_div = document.createElement("div");
+      brief_div.innerHTML = brief;
+      div.appendChild(brief_div);
+    }
+  }
+
+  unequip({slot}) {
+    let div = document.getElementById(`equip_${slot}`);
+    if (div)
+      removeAllChildren(div);
+  }
+
+  // MARK: Skills
+
+  setKarma({_0: karma}) {
+    document.getElementById("unspent_karma").innerHTML = `Unspent karma: ${karma}`;
+  }
+
+  setSkills({_0: skills}) {
+    for (let skill of skills)
+      updateSkill(skill);
+  }
+
+  updateSkill({_0: skill}) {
+    const {label, name, rank, maxRank} = skill;
+    const id = `skill_${label}`;
+    let div = document.getElementById(id);
+    if (div) {
+      div.children[1].innerHTML = `${rank} / ${maxRank}`;
+    } else {
+      let pane = document.getElementById("skills_pane");
+
+      // Find the existing skill entry before which to insert the new one,
+      // based on ordering by skill name. Ignore the first child, which is
+      // the unspent karma and not a skill.
+      let next_div = null;
+      for (let i = 1; i < pane.children.length; ++i) {
+        let child = pane.children[i];
+        if (name < child.children[0].innerHTML) {
+          next_div = child;
+          break;
+        }
+      }
+
+      // Create a new entry.
+      div = createDiv(id, 3);
+      div.children[0].innerHTML = name;
+      div.children[0].onclick = () => { client.sendInput(`skill ${name}`); };
+      if (maxRank > 0)
+        div.children[1].innerHTML = `${rank} / ${maxRank}`;
+      pane.insertBefore(div, next_div);
+    }
+  }
+
+  removeSkill({_0: label}) {
+    const id = `skill_${label}`;
+    let div = document.getElementById(id);
+    if (div)
+      div.parentNode.removeChild(div);
+  }
+
 }  // class GameClient
 
 let client = null;
@@ -434,96 +551,6 @@ let client = null;
 // MARK: Old
 
 /*
-var ws = null;
-var map = null;
-var handler = null;
-
-function resize() {
-  map.resize();
-}
-window.onresize = resize;
-
-// Appends a block element to a scrollable text pane, removing the oldest block
-// first if the maximum number of blocks would be exceeded.
-function appendBlock(block, containerId = 'main_text') {
-  const MAX_BLOCKS = 500;
-  let container = document.getElementById(containerId);
-  if (container.childNodes.length >= MAX_BLOCKS)
-    container.removeChild(container.firstChild);
-  container.appendChild(block);
-  container.scrollTop = container.scrollHeight;
-}
-
-function updatePlayerBio(name, icon, level, race) {
-  let summary = name ?
-    '{0}, level {1} {2}'.format(name, level, race) :
-    'level {0} {1}'.format(level, race);
-  document.getElementById("player_name").innerHTML = summary;
-  setIcon(document.getElementById("player_icon"), "avatar", icon);
-}
-
-
-// An object that encapsulates functions callable based on messages from the
-// server.
-function MessageHandler() {
-  // The cached properties for the player's avatar.
-  this.avatar = {};
-
-  // The cached properties of neighbors.
-  this.neighbors = {};
-
-  // Enemies that are currently in combat with the player.
-  this.enemies = new Set();
-
-  // The enemy that is targeted by player attacks.
-  this.enemy_target = undefined;
-
-  // True to show paths, etc. for debugging.
-  this.debug = true;
-
-  // Select the inventory pane by default.
-  this.currentPane = 'inventory';
-}
-
-MessageHandler.prototype.updateAvatar = function(properties) {
-  // Update the cached properties.
-  this.avatar = Object.assign({}, this.avatar, properties);
-
-  // Update UI elements that have changed.
-  if (properties.name || properties.icon || properties.level || properties.race)
-    updatePlayerBio(this.avatar.name, this.avatar.icon,
-                    this.avatar.level, this.avatar.race);
-  if (properties.health || properties.max_health)
-    updateBar('player_health', this.avatar.health, this.avatar.max_health);
-  if (properties.energy || properties.max_energy)
-    updateBar('player_energy', this.avatar.energy, this.avatar.max_energy);
-  if (properties.xp || properties.max_xp)
-    updateBar('player_xp', this.avatar.xp, this.avatar.max_xp);
-}
-
-// MARK: TODO
-
-MessageHandler.prototype.showAura = function(key, icon) {
-  var id = 'aura_' + key;
-  var item = document.getElementById(id);
-  if (!item) {
-    item = document.createElement('div');
-    item.id = id;
-    item.className = 'show_aura';
-    setIcon(item, icon);
-    document.getElementById('player_auras').insertBefore(item, null);
-  }
-}
-
-MessageHandler.prototype.hideAura = function(key) {
-  var item = document.getElementById('aura_' + key);
-  if (item) {
-    item.addEventListener('animationend', function (event) {
-      this.parentNode.removeChild(this);
-    });
-    item.className = 'hide_aura';
-  }
-}
 
 function findInventoryDivAfter(sort_key, item_divs) {
   for (const div of item_divs) {
@@ -567,34 +594,6 @@ MessageHandler.prototype.updateInventory = function(items) {
   }
 }
 
-MessageHandler.prototype.updateEquipment = function(equipment) {
-  for (const slot in equipment) {
-    var div = document.getElementById('equip_' + slot);
-    if (equipment[slot]) {
-      const [icon, brief] = equipment[slot];
-
-      var icon_div = document.createElement('div');
-      div.appendChild(icon_div);
-      setIcon(icon_div, "inventory", icon);
-
-      var brief_div = document.createElement('div');
-      div.appendChild(brief_div);
-      brief_div.innerHTML = brief;
-    } else {
-      div.innerHTML = null;
-    }
-  }
-}
-
-function createDiv(id, num_children) {
-  var div = document.createElement('div');
-  div.id = id;
-  for (var i = 0; i < num_children; ++i) {
-    var child = document.createElement('div');
-    div.appendChild(child);
-  }
-  return div;
-}
 
 MessageHandler.prototype.updateCombat = function(attack, defense, speed, damage,
                                                  traits, damage_types) {
@@ -621,50 +620,6 @@ MessageHandler.prototype.updateCombat = function(attack, defense, speed, damage,
 
   if (damage_types) {
     for (const [key, name, affinity, resistance] of damage_types) {
-    }
-  }
-}
-
-MessageHandler.prototype.updateSkills = function(karma, ...skills) {
-  document.getElementById('unspent_karma').innerHTML = `Unspent karma: ${karma}`;
-
-  if (!skills)
-    return;
-
-  var skills_pane = document.getElementById('skills_pane');
-  for (const [key, name, rank, max_rank] of skills) {
-    var div_id = 'skill_' + key;
-    var div = document.getElementById(div_id);
-
-    if (name === undefined) {
-      // Remove the entry.
-      if (div)
-        div.parentNode.removeChild(div);
-    } else if (div) {
-      // Update an existing entry.
-      if (max_rank > 0)
-        div.children[1].innerHTML = `${rank} / ${max_rank}`;
-    } else {
-      // Find the existing skill entry before which to insert the new one,
-      // based on ordering by skill name. Ignore the first child, which is
-      // the unspent karma and not a skill.
-      var next_div = null;
-      for (var j = 1; j < skills_pane.children.length; ++j) {
-        var child = skills_pane.children[j];
-        if (name < child.children[0].innerHTML) {
-          next_div = child;
-          break;
-        }
-      }
-
-      // Create a new entry.
-      div = createDiv(div_id, 3);
-      div.children[0].innerHTML = name;
-      div.children[0].onclick = function () { sendInput(`skill ${name}`); };
-      if (max_rank > 0)
-        div.children[1].innerHTML = `${rank} / ${max_rank}`;
-
-      document.getElementById('skills_pane').insertBefore(div, next_div);
     }
   }
 }
@@ -712,26 +667,6 @@ MessageHandler.prototype.updateAttributes = function(values) {
   }
 }
 
-MessageHandler.prototype.startPlayerCast = function(duration) {
-  var castbar = document.getElementById("castbar");
-  var progress = castbar.children[0];
-
-  castbar.style.display = 'block';
-  progress.style.transitionDuration = duration + 's';
-  progress.style.width = '0%';
-
-  window.setTimeout(function() { progress.style.width = '100%'; }, 0);
-}
-
-MessageHandler.prototype.stopPlayerCast = function() {
-  var castbar = document.getElementById("castbar");
-  castbar.style.display = 'none';
-}
-
-function getNeighborId(key) {
-  return 'neighbor_' + key;
-}
-
 function removeNeighborHighlight(key) {
   var element = document.getElementById(getNeighborId(key));
   if (element) {
@@ -750,143 +685,6 @@ function setNeighborHighlight(key, type) {
     classes.push('highlight_' + type);
     portrait.className = classes.join(' ');
   }
-}
-
-MessageHandler.prototype.setNeighborProperties = function(item, new_properties) {
-  var key = new_properties.key;
-
-  var old_properties = this.neighbors[new_properties.key];
-  var properties = old_properties ?
-  Object.assign({}, old_properties, new_properties) :
-  new_properties;
-  this.neighbors[key] = properties;
-
-  if (properties.icon)
-    setIcon(item.children[0], "neighbor", properties.icon);
-
-  if (properties.brief)
-    item.children[1].children[0].innerHTML = properties.brief;
-
-  if (properties.health && properties.max_health) {
-    item.children[1].children[1].children[0].style.width =
-    (100.0 * properties.health / properties.max_health) + "%";
-  } else {
-    item.children[1].children[1].style.visibility = 'hidden';
-  }
-
-  // Set a command to perform when clicking the item. TODO: make it
-  // appropriate, or add a popup with a few options.
-  item._command = 'look {0} #{1}'.format(properties.brief, properties.key);
-  item.onmousedown = function() { sendInput(this._command); }
-}
-
-MessageHandler.prototype.createNeighbor = function(properties) {
-  var neighbors = document.getElementById("neighbors");
-  var item = neighbors.children[0].cloneNode(true);
-  item.id = getNeighborId(properties.key);
-  item.className = "neighbor do_enter";
-  item.style.display = "flex";
-  this.setNeighborProperties(item, properties);
-  neighbors.appendChild(item);
-  return item;
-}
-
-MessageHandler.prototype.setNeighbors = function(...new_neighbors) {
-  var neighbors = document.getElementById("neighbors");
-
-  // Remove all but the first child, which is the invisible prototype used to
-  // instantiate other items.
-  while (neighbors.children[0].nextSibling)
-    neighbors.removeChild(neighbors.children[0].nextSibling);
-
-  // Add each neighbor.
-  if (new_neighbors) {
-    for (var i = 0; i < new_neighbors.length; ++i)
-      this.createNeighbor(new_neighbors[i]);
-  }
-}
-
-MessageHandler.prototype.updateNeighbor = function(properties) {
-  var item = document.getElementById(getNeighborId(properties.key));
-  if (item)
-    this.setNeighborProperties(item, properties);
-  else
-    this.createNeighbor(properties);
-}
-
-MessageHandler.prototype.removeNeighbor = function(key) {
-  var item = document.getElementById(getNeighborId(key));
-
-  item.addEventListener('animationend', function (event) {
-    this.parentNode.removeChild(this);
-  });
-  item.className = "neighbor";
-  window.requestAnimationFrame(function (t) {
-    window.requestAnimationFrame(function (t) {
-      item.className = "neighbor do_exit";
-    });
-  });
-
-  delete this.neighbors[key];
-}
-
-// Called when an entity `actor` takes another entity `target`, removing it from
-// the current location and possibly replacing it with a new entity
-// `replacement` (as when taking fewer than an entire stack of items).
-MessageHandler.prototype.didTake = function(actor_path, target_path, count, replacement) {
-  var target_name = this.neighbors[target_path].brief;
-
-  if (actor_path == this.player_path) {
-    var msg = 'You take {0}.'.format(target_name);
-  } else {
-    var msg = '{0} takes {1}.'.format(this.neighbors[actor_path].brief.capitalize(), target_name);
-  }
-  this.showText(msg);
-
-  if (replacement != undefined)
-    this.replaceNeighbor(target_path, replacement);
-  else
-    this.removeNeighbor(target_path);
-}
-
-// Called when an entity `actor` drops another entity `target`, adding it to the
-// current location and possibly replacing a previous entity `replace_path` (as
-// adding to a stack of items).
-MessageHandler.prototype.didDrop = function(actor_path, target, count, replace_path) {
-  if (actor_path == this.player_path) {
-    var msg = 'You drop {0}.'.format(target.brief);
-  } else {
-    var msg = '{0} takes {1}.'.format(this.neighbors[actor_path].brief.capitalize(), target.brief);
-  }
-  this.showText(msg);
-
-  if (replace_path != undefined)
-    this.replaceNeighbor(replace_path, target.id);
-  else
-    this.addNeighbor(target);
-}
-
-// Called when an entity `actor` gives the player an entity representing `count`
-// items described by `brief`.
-MessageHandler.prototype.didGive = function(actor_path, count, brief) {
-  var actor_brief = this.neighbors[actor_path].brief.capitalize();
-
-  var item;
-  if (count == 1)
-    item = brief;
-  else
-    item = makePlural(brief, count);
-
-  var msg = '{0} gives you {1}.'.format(actor_brief, look(item));
-  this.showText(msg);
-}
-
-MessageHandler.prototype.showEmote = function(path, count, brief, pose) {
-  appendBlock(wrapElements('div', [this.formatEmote(path, count, brief, pose)]));
-}
-
-MessageHandler.prototype.showHelp = function(text) {
-  this.showText(text, 'help');
 }
 
 MessageHandler.prototype.showVendorItems = function(heading, vendor, verb, items) {
@@ -936,56 +734,6 @@ MessageHandler.prototype.showTrainerSkills = function(heading, trainer, skills) 
   var ul = wrapElements('ul', entries);
 
   appendBlock(wrapElements('div', [header, ul]));
-}
-
-
-// Sets the current default target for attacks.
-MessageHandler.prototype.setEnemyTarget = function(path) {
-  var properties = this.neighbors[path];
-
-  // If there is a current target, change its highlight to be an enemy but not
-  // the current target.
-  if (this.enemy_target)
-    setNeighborHighlight(this.enemy_target, 'enemy');
-
-  this.enemy_target = path;
-  setNeighborHighlight(this.enemy_target, 'enemy_target');
-  this.showText('You begin attacking {0}.'.format(look(properties.brief)));
-  this.enemies.add(path);
-}
-
-MessageHandler.prototype.clearEnemyTarget = function() {
-  if (this.enemy_target)
-    setNeighborHighlight(this.enemy_target, 'hostile');
-  this.enemy_target = undefined;
-}
-
-// Removes the entity from all target sets.
-MessageHandler.prototype.removeTarget = function(id) {
-  this.enemies.delete(id);
-  removeNeighborHighlight(id);
-}
-
-MessageHandler.prototype.showSay = function(speaker, verb, text, is_chat) {
-  var elements = [];
-  if (text.indexOf("\n\n") == -1) {
-    var msg = speaker + " " + verb + ", &ldquo;" + text + "&rdquo;";
-    elements.push(makeTextElement('p', msg));
-  } else {
-    elements.push(makeTextElement('p', speaker + " " + verb + ':'));
-    elements = elements.concat(formatText(text, 'blockquote'));
-  }
-  appendBlock(wrapElements('div', elements), is_chat ? 'chat_text' : 'main_text');
-}
-
-MessageHandler.prototype.showChat = function(channel, speaker, text) {
-  var message;
-  if (speaker)
-    message = '[{0}] {1} says, &ldquo;{2}&rdquo;'.format(channel, speaker, text);
-  else
-    message = '[{0}] {1}'.format(channel, text);
-
-  appendBlock(wrapElements('div', [makeTextElement('p', message)]), 'chat_pane');
 }
 
 MessageHandler.prototype.listMacros = function(macros) {
@@ -1040,11 +788,11 @@ MessageHandler.prototype.didKill = function(actor, target, corpse_properties) {
   this.replaceNeighbor(target, corpse_properties);
 }
 
-MessageHandler.prototype.quit = function() {
-  sendInput("quit");
-}
-
 */
+
+// A history of commands entered by the player.
+let command_history = new Array(100);
+let command_pos = 0;
 
 function onUserInput(event) {
   var obj = document.getElementById("command");

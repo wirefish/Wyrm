@@ -7,6 +7,7 @@ import Foundation
 
 enum ClientUpdate: Encodable {
   struct Aura: Encodable {
+    let type: String
     let icon: String
     let name: String
     let expiry: Int
@@ -57,6 +58,7 @@ enum ClientUpdate: Encodable {
   }
   
   struct Skill: Encodable {
+    let label: String
     let name: String
     let rank, maxRank: Int
   }
@@ -122,10 +124,10 @@ enum ClientUpdate: Encodable {
   case removeNeighbor(key: Int)
   
   // Auras attached to avatar, neighbor, or combatant (based on key)
-  case setAuras(key: Int, [Aura])
-  case addAura(key: Int, Aura)
-  case removeAura(key: Int, String)
-  
+  case setAuras(key: Int, auras: [Aura])
+  case addAura(key: Int, aura: Aura)
+  case removeAura(key: Int, type: String)
+
   // Equipment
   case setEquipment([Equipment])
   case equip(Equipment)
@@ -140,8 +142,8 @@ enum ClientUpdate: Encodable {
   case setKarma(Int)
   case setSkills([Skill])
   case updateSkill(Skill)
-  case removeSkill(name: String)
-  
+  case removeSkill(label: String)
+
   // Attributes
   case setAttributes([Attribute])
   case updateAttribute(Attribute)
@@ -235,7 +237,8 @@ extension Avatar {
         guard let skill = Skill.fromValue(World.instance.lookup(ref)) else {
           return nil
         }
-        return ClientUpdate.Skill(name: skill.name ?? "unnamed skill",
+        return ClientUpdate.Skill(label: skill.ref.name,
+                                  name: skill.name ?? "unnamed skill",
                                   rank: rank, maxRank: skill.maxRank)
       }))
     updateForLocation()

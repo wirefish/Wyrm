@@ -55,6 +55,13 @@ extension Ref: Codable, CustomStringConvertible {
     }
   }
 
+  var name: String {
+    switch self {
+    case let .absolute(_, name): name
+    case let .relative(name): name
+    }
+  }
+
   func deref() -> Value? {
     World.instance.lookup(self, context: nil)
   }
