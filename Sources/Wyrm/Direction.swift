@@ -49,11 +49,11 @@ enum Direction: Int, ValueRepresentableEnum {
 extension Direction: Matchable {
   // FIXME: allow abbreviations like 'sw' for 'southwest'.
   func match(_ tokens: ArraySlice<String>) -> MatchQuality {
-    if tokens.count == 1 {
+    if tokens.count == 1, let token = tokens.first {
       let name = String(describing: self)
-      if tokens[0] == name {
+      if token == name {
         return .exact
-      } else if name.hasPrefix(tokens[0]) {
+      } else if name.hasPrefix(token) {
         return .partial
       }
     }

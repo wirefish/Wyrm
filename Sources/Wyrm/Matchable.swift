@@ -59,6 +59,9 @@ private func consumeQuantity(_ tokens: inout ArraySlice<String>) -> MatchQuantit
   } else if tokens.first == "a" || tokens.first == "an" {
     tokens.removeFirst()
     return .number(1)
+  } else if tokens.first == "the" {
+    tokens.removeFirst()
+    return .unspecified
   } else if let n = Int(tokens.first!) {
     tokens.removeFirst()
     return .number(n)
