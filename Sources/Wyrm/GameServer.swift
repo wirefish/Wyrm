@@ -167,7 +167,7 @@ class GameHandler: HTTPHandler {
   static let base = URL(filePath: ".build/client", directoryHint: .isDirectory).absoluteURL
 
   func handleStaticFileRequest(_ conn: TCPConnection, _ uri: String) {
-    let url = Self.base.appending(path: uri.dropFirst(), directoryHint: .notDirectory)
+    let url = Self.base.appending(path: uri, directoryHint: .notDirectory)
     guard !url.pathComponents.contains("..") else {
       respondWithStatus(.badRequest, conn)
       return
