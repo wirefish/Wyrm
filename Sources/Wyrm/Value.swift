@@ -93,6 +93,24 @@ extension Array: ValueConstructible where Element: ValueConstructible {
   }
 }
 
+extension Dictionary: ValueConstructible where Key: ValueRepresentable, Value: ValueRepresentable {
+  static func fromValue(_ value: Wyrm.Value) -> Self? {
+    guard case let .list(list) = value, list.count % 2 == 0 else {
+      logger.warning("invalid dictionary initializer: \(value)")
+      return nil
+    }
+    var result = Self()
+    for i in stride(from: 0, to: list.endIndex, by: 2) {
+      guard let key = Key.fromValue(list[i]), let value = Value.fromValue(list[i + 1]) else {
+        logger.warning("invalid dictionary element in \(value)")
+        return nil
+      }
+      result[key] = value
+    }
+    return result
+  }
+}
+
 // MARK: ValueRepresentable
 
 // ValueRepresentable is a protocol adopted by those types that can be represented

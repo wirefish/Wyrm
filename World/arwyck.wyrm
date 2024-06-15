@@ -1920,7 +1920,7 @@ def entity mirabelsRing: lib.ring {
     copper band etched with a delicate pattern of twisting vines.
     """
   level = 2
-  trait = 'vitality
+  traits = ['vitality, 1]
 }
 
 extend distraughtShopkeep {

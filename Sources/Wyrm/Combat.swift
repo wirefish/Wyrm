@@ -7,6 +7,44 @@
 
  NOTES:
 
+ The goal is to keep things simple.
+
+ An attack is an opposed roll between an attacker and defender. Each has an effective
+ level which is used to modifier their roll.
+
+ For an attacker, effective level is actualLevel + attackLevel + power + affinity.
+ AttackLevel is the level of the weapon or spell. For natural weapons it is equal to
+ actualLevel. Power and affinity are a combat traits.
+
+ For a defender, effective level is actualLevel + armorLevel + protection + resistance.
+ ArmorLevel is the weighted average level of any equipped armor pieces. For most creatures
+ it is equal to actualLevel. Protection and resistance are combat traits. Note that
+ resistance can be negative (becoming a vulnerability).
+
+ Combat traits are values derived from armor, race, or auras. They may also be inherent.
+
+ Each rolls 1...20 and adds their effective level. If the attacker rolls A and the defender
+ rolls D, then A - D determines the success of the attack:
+
+ A = D: "normal" success (1.0x normal damage)
+
+ A > D: more success, scaling up to 1.5x damage at A - D = 20.
+
+ A < D: less success, scaling down to 0.5x damage at D - A = 20.
+
+ A + 20 < D: miss
+
+ critical chance and multiplier apply to damage only if A >= D.
+
+ Normal damage is calculated using a base damage associated with the attack, scaled based
+ on attackLevel.
+
+ Creature
+  +- Combatant (can equip, have auras, have race, inherent traits, attitude)
+  |   +- Avatar
+  +- Questgiver
+  +- Vendor
+
  Combat overall is pretty simple.
 
  Every combatant has base attack and defense values that increase with
@@ -191,17 +229,11 @@ extension Combatant {
 extension Avatar {
   // Returns a dictionary containing all of the avatar's combat trait values,
   // taking into account all modifiers from race, auras, and equipment.
-  func computeTraits() -> [CombatTrait:Double] {
-    // Base values derived from level.
-    var traits: [CombatTrait:Double] = [
-      .power: Double(level + 1) * 10.0,
-      .protection: Double(level + 1) * 10.0,
-    ]
+  func computeTraits() -> [CombatTrait:Int] {
     // Add values from equipment.
+    var traits = [CombatTrait:Int]()
     for item in equipped.values {
-      if let trait = item.trait {
-        traits[trait, default: 0.0] += item.traitValue
-      }
+      traits.merge(item.traits) { $0 + $1 }
     }
     // TODO: take race and auras into account
     return traits
@@ -209,6 +241,14 @@ extension Avatar {
 }
 
 // MARK: - core calculations
+
+// Returns the effective armor level for a defender.
+func armorLevel(_ avatar: Avatar) -> Double {
+  avatar.equipped.reduce(0.0) { (partial, entry) in
+    let (slot, item) = entry
+    return partial + Double(item.effectiveLevel) * slot.armorMultiplier * item.armorMultiplier
+  }
+}
 
 // The effective attack rating considering the attacker's attack rating and the
 // defender's defense rating.
@@ -233,8 +273,8 @@ extension Double {
 }
 
 func damage(effectiveAttack: Double, weapon: Weapon) -> Int {
-  let c = effectiveAttack * weapon.quality.coeff * (weapon.speed / 3.0)
-  let v = c * weapon.variance
+  let c = effectiveAttack * weapon.quality.coeff * (weapon.attack.speed / 3.0)
+  let v = c  // FIXME: * weapon.variance
   return Int((0.1 * Double.random(in: (c - v)...(c + v))).roundedRandomly())
 }
 

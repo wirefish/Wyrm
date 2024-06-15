@@ -9,6 +9,12 @@ enum CodingError: Error {
 
 // MARK: Item
 
+// An Item represents an immutable, non-customizable object that can be picked up, carried,
+// dropped, etc. Because it cannot be changed, there is no need to create a dynamic instance
+// of an Item. In other words, all instances of the item in the world are just the same
+// Item instance, which always has a non-nil ref. The intent is to minimize copying and
+// memory use. Note that subclasses of Item (e.g. Equipment) may behave differently if they
+// represent mutable, customizable items.
 class Item: Thing, Codable {
   // If zero, this item cannot stack with other items inside an ItemCollection, and
   // the ItemCollection can contain more than one stack with the same prototype
@@ -34,6 +40,58 @@ class Item: Thing, Codable {
 
   // The price for which vendors sell this item.
   var price: ItemStack?
+
+  override func copyProperties(from other: Entity) {
+    let other = other as! Item
+    stackLimit = other.stackLimit
+    unique = other.unique
+    level = other.level
+    verbs = other.verbs
+    quest = other.quest
+    price = other.price
+    super.copyProperties(from: other)
+  }
+
+  // Scope.
+
+  private static let accessors = [
+    "stackLimit": Accessor(\Item.stackLimit),
+    "unique": Accessor(\Item.unique),
+    "level": Accessor(\Item.level),
+    "verbs": Accessor(\Item.verbs),
+    "quest": Accessor(\Item.quest),
+    "price": Accessor(\Item.price),
+  ]
+
+  override func get(_ member: String) -> Value? {
+    getMember(member, Self.accessors) ?? super.get(member)
+  }
+
+  override func set(_ member: String, to value: Value) throws {
+    try setMember(member, to: value, Self.accessors) { try super.set(member, to: value) }
+  }
+
+  // Conform to Codable. Only the ref is encoded/decoded.
+
+  enum CodingKeys: CodingKey { case prototype }
+
+  required convenience init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+
+    let protoRef = try c.decode(Ref.self, forKey: .prototype)
+    guard let proto = World.instance.lookup(protoRef)?.asEntity(Item.self) else {
+      throw CodingError.badPrototype
+    }
+    self.init(prototype: proto)
+    copyProperties(from: proto)
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var c = encoder.container(keyedBy: CodingKeys.self)
+    try c.encode(prototype!.ref!, forKey: .prototype)
+  }
+
+  // Viewable.
 
   override func isVisible(to observer: Avatar) -> Bool {
     if let quest = quest, observer.activeQuests[quest.ref] == nil {
@@ -65,24 +123,6 @@ class Item: Thing, Codable {
     } else {
       return "\(base) (\(notes.joined(separator: " ")))"
     }
-  }
-
-  enum CodingKeys: CodingKey { case prototype }
-
-  required convenience init(from decoder: Decoder) throws {
-    let c = try decoder.container(keyedBy: CodingKeys.self)
-
-    let protoRef = try c.decode(Ref.self, forKey: .prototype)
-    guard let proto = World.instance.lookup(protoRef)?.asEntity(Item.self) else {
-      throw CodingError.badPrototype
-    }
-    self.init(prototype: proto)
-    copyProperties(from: proto)
-  }
-
-  func encode(to encoder: Encoder) throws {
-    var c = encoder.container(keyedBy: CodingKeys.self)
-    try c.encode(prototype!.ref!, forKey: .prototype)
   }
 }
 

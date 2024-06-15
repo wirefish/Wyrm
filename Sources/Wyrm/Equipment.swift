@@ -55,6 +55,22 @@ enum EquipmentSlot: String, CodingKeyRepresentable, Hashable, Codable, ValueRepr
     }
   }
 
+  // A multiplier that applies to the armor level provided by an item equipped
+  // in a clothing slot (excluding back and waist). The values sum to one, with the
+  // exception of .offHand -- this is meant to model the extra defense bonus of
+  // using a shield.
+  var armorMultiplier: Double {
+    switch self {
+    case .offHand: 0.3
+    case .head:  0.2
+    case .torso:  0.3
+    case .hands:  0.1
+    case .legs:  0.3
+    case .feet:  0.1
+    default: 0.0
+    }
+  }
+
   var defenseCoeff: Double {
     switch self {
     case .head, .torso, .back, .hands, .waist, .legs, .feet: return coeff
@@ -64,27 +80,54 @@ enum EquipmentSlot: String, CodingKeyRepresentable, Hashable, Codable, ValueRepr
 }
 
 enum EquipmentQuality: Encodable, Comparable, ValueRepresentableEnum {
-  case poor, normal, good, excellent, legendary
+  case poor, normal, fine, masterwork, legendary
 
   static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
     (String(describing: $0), $0)
   })
 
+  var levelModifier: Int {
+    switch self {
+    case .poor: -1
+    case .normal: 0
+    case .fine: 1
+    case .masterwork: 2
+    case .legendary: 3
+    }
+  }
+
   var coeff: Double {
     switch self {
     case .poor: return 0.75
     case .normal: return 1.0
-    case .good: return 1.25
-    case .excellent: return 1.5
+    case .fine: return 1.25
+    case .masterwork: return 1.5
     case .legendary: return 1.75
     }
   }
 }
 
+// MARK: Equipment
+
 class Equipment: Item {
+  // Ensure equipment is never considered stackable.
+  override var stackLimit: Int {
+    get { 0 }
+    set { }
+  }
+  override var stackable: Bool { false }
+
+  // The slot in which this item can be equipped.
   var slot: EquipmentSlot?
+
+  // The item quality modifies the effective level of the item without raising
+  // the level requirement to use it.
   var quality: EquipmentQuality = .normal
-  var trait: CombatTrait?
+
+  var effectiveLevel: Int { (level ?? 0) + quality.levelModifier }
+
+  // Combat bonuses gained when the item is equipped.
+  var traits = [CombatTrait:Int]()
 
   // Inventory capacity gained by equipping this item.
   var capacity = 0
@@ -92,22 +135,27 @@ class Equipment: Item {
   // Skill required in order to equip the item without penalty, if any.
   var proficiency: Skill?
 
+  // A multiplier that modifies the armor bonus of this item when equipped.
+  var armorMultiplier = 0.0
+
   override func copyProperties(from other: Entity) {
     let other = other as! Equipment
     slot = other.slot
     quality = other.quality
-    trait = other.trait
+    traits = other.traits
     capacity = other.capacity
     proficiency = other.proficiency
+    armorMultiplier = other.armorMultiplier
     super.copyProperties(from: other)
   }
 
   private static let accessors = [
     "slot": Accessor(\Equipment.slot),
     "quality": Accessor(\Equipment.quality),
-    "trait": Accessor(\Equipment.trait),
+    "traits": Accessor(writeOnly: \Equipment.traits),
     "capacity": Accessor(\Equipment.capacity),
     "proficiency": Accessor(\Equipment.proficiency),
+    "armorMultiplier": Accessor(\Equipment.armorMultiplier),
   ]
 
   override func get(_ member: String) -> Value? {
@@ -131,36 +179,52 @@ class Equipment: Item {
     if quality != .normal {
       notes.append("Quality: \(String(describing: quality)).")
     }
-    if let trait = trait {
-      notes.append(String(format: "Trait: %@ +%1.1f.", trait.description, traitValue))
+    for (trait, level) in traits {
+      notes.append(String(format: "Trait: %@ +%d.", trait.description, level))
     }
     return notes
   }
 
 }
 
-class Weapon: Equipment {
+// MARK: Weapon
+
+struct Attack_ {
+  // The type of damage done.
   var damageType = DamageType.crushing
+
+  // The base amount of damage done.
+  var damage: ClosedRange<Int> = 1...2
+
+  // The base amount of time required to perform the attack, in seconds.
   var speed = 3.0
-  var variance = 0.2
-  var attackVerb = "hits"
+
+  // If non-zero, the number of times the damage is applied. Each application occurs
+  // after a set delay.
+  var ticks = 0
+
+  // The verb used to describe the attack.
+  var verb = "hits"
+
+  // The verb used to describe a critical hit with the attack.
   var criticalVerb = "critically hits"
+}
+
+class Weapon: Equipment {
+  var attack = Attack_()
 
   override func copyProperties(from other: Entity) {
     let other = other as! Weapon
-    damageType = other.damageType
-    speed = other.speed
-    attackVerb = other.attackVerb
-    criticalVerb = other.criticalVerb
+    attack = other.attack
     super.copyProperties(from: other)
   }
 
   private static let accessors = [
-    "damageType": Accessor(\Weapon.damageType),
-    "speed": Accessor(\Weapon.speed),
-    "variance": Accessor(\Weapon.variance),
-    "attackVerb": Accessor(\Weapon.attackVerb),
-    "criticalVerb": Accessor(\Weapon.criticalVerb),
+    "damageType": Accessor(\Weapon.attack.damageType),
+    "damage": Accessor(\Weapon.attack.damage),
+    "speed": Accessor(\Weapon.attack.speed),
+    "attackVerb": Accessor(\Weapon.attack.verb),
+    "criticalVerb": Accessor(\Weapon.attack.criticalVerb),
   ]
 
   override func get(_ member: String) -> Value? {
