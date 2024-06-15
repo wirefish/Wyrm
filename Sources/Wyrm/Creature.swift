@@ -109,6 +109,7 @@ class Creature: Thing, Combatant, Questgiver {
   var level = 1
   var health = 1
   var minHealth = 0
+  var attitude = Attitude.neutral
   var weapons = [Weapon]()
   var loot: LootTable?
   var equipped: [EquipmentSlot:Equipment] { [:] }
@@ -134,14 +135,17 @@ class Creature: Thing, Combatant, Questgiver {
   override func copyProperties(from other: Entity) {
     let other = other as! Creature
     level = other.level
+    minHealth = other.minHealth
+    attitude = other.attitude
     weapons = other.weapons
     loot = other.loot
     // don't copy enemies
     offersQuests = other.offersQuests
     sells = other.sells
     teaches = other.teaches
-    health = maxHealth()
     super.copyProperties(from: other)
+
+    health = maxHealth()
   }
 
   private static let accessors = [

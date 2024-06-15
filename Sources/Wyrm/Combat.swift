@@ -205,6 +205,21 @@ struct Attack {
 
 // MARK: Combatant
 
+enum Attitude: ValueRepresentableEnum {
+  // Cannot be attacked by player and will not attack player.
+  case friendly
+
+  // Can be attacked but will not attack until provoked.
+  case neutral
+
+  // Can be attacked and will attack without provocation.
+  case hostile
+
+  static let names = Dictionary(uniqueKeysWithValues: Self.allCases.map {
+    (String(describing: $0), $0)
+  })
+}
+
 protocol Combatant: AnyObject {
   // The combatant's level controls its overall strength in combat.
   var level: Int { get }
@@ -216,6 +231,9 @@ protocol Combatant: AnyObject {
   // means that defeat subdues the combatant rather than killing it.
   var minHealth: Int { get }
 
+  // The attitude of the combatant toward players.
+  var attitude: Attitude { get }
+
   // A description of next attack the combatant will use against a target.
   func nextAttack(against target: Combatant) -> Attack?
 
@@ -225,6 +243,8 @@ protocol Combatant: AnyObject {
 
   // Items equipped by the combatant.
   var equipped: [EquipmentSlot:Equipment] { get }
+
+  // TODO: add auras
 }
 
 extension Combatant {
