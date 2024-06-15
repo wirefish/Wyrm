@@ -189,29 +189,8 @@ class Equipment: Item {
 
 // MARK: Weapon
 
-struct Attack_ {
-  // The type of damage done.
-  var damageType = DamageType.crushing
-
-  // The base amount of damage done.
-  var damage: ClosedRange<Int> = 1...2
-
-  // The base amount of time required to perform the attack, in seconds.
-  var speed = 3.0
-
-  // If non-zero, the number of times the damage is applied. Each application occurs
-  // after a set delay.
-  var ticks = 0
-
-  // The verb used to describe the attack.
-  var verb = "hits"
-
-  // The verb used to describe a critical hit with the attack.
-  var criticalVerb = "critically hits"
-}
-
 class Weapon: Equipment {
-  var attack = Attack_()
+  var attack = Attack()
 
   override func copyProperties(from other: Entity) {
     let other = other as! Weapon

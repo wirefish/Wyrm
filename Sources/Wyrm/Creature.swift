@@ -105,15 +105,13 @@ extension EnemyList {
 // MARK: - Creature
 
 class Creature: Thing, Combatant, Questgiver {
-  // Attackable
+  // Combatant
   var level = 1
-  var health = ClampedInt(1, maxValue: 1)
+  var health = 1
   var minHealth = 0
-  var attack_coeff = 1.0
-  var defense_coeff = 1.0
-  var health_coeff = 1.0
   var weapons = [Weapon]()
   var loot: LootTable?
+  var equipped: [EquipmentSlot:Equipment] { [:] }
 
   var enemies = [Enemy]()
 
@@ -123,30 +121,33 @@ class Creature: Thing, Combatant, Questgiver {
   var sells: [Item]?
   var teaches: [Skill]?
 
+  // Traits specified in the script file.
+  var inherentCombatTraits = [CombatTrait:Int]()
+
+  // Cached traits combined from all sources.
+  var combatTraits = [CombatTrait:Int]()
+
+  func recomputeCombatTraits() {
+    combatTraits = inherentCombatTraits
+  }
+
   override func copyProperties(from other: Entity) {
     let other = other as! Creature
     level = other.level
-    attack_coeff = other.attack_coeff
-    defense_coeff = other.defense_coeff
-    health_coeff = other.health_coeff
     weapons = other.weapons
     loot = other.loot
     // don't copy enemies
     offersQuests = other.offersQuests
     sells = other.sells
     teaches = other.teaches
+    health = maxHealth()
     super.copyProperties(from: other)
-
-    health.maxValue = Int(health_coeff * Double(baseHealth(level: level)))
-    health.value = health.maxValue
   }
 
   private static let accessors = [
     "level": Accessor(\Creature.level),
     "minHealth": Accessor(\Creature.minHealth),
-    "attackCoeff": Accessor(\Creature.attack_coeff),
-    "defenseCoeff": Accessor(\Creature.defense_coeff),
-    "healthCoeff": Accessor(\Creature.health_coeff),
+    "traits": Accessor(writeOnly: \Creature.inherentCombatTraits),
     "weapons": Accessor(\Creature.weapons),
     "loot": Accessor(\Creature.loot),
     "offersQuests": Accessor(\Creature.offersQuests),

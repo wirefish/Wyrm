@@ -5,6 +5,8 @@
 
 import Foundation
 
+// MARK: ClientUpdate
+
 enum ClientUpdate: Encodable {
   struct Aura: Encodable {
     let type: String
@@ -23,9 +25,9 @@ enum ClientUpdate: Encodable {
       key = entity.id
       brief = entity.describeBriefly([])
       icon = entity.icon
-      if let health = (entity as? Combatant)?.health {
-        currentHealth = health.value
-        maxHealth = health.maxValue
+      if let combatant = entity as? Combatant {
+        currentHealth = combatant.health
+        maxHealth = combatant.maxHealth()
       } else {
         currentHealth = nil
         maxHealth = nil
@@ -178,6 +180,8 @@ struct ClientMessage: Encodable {
   let updates: [ClientUpdate]
 }
 
+// MARK: Avatar extension
+
 extension Avatar {
   // Adds updates to the set of updates that need to sent to the client. If there are
   // no updates already pending, schedules the updates to be sent on the next pass through
@@ -285,5 +289,13 @@ extension Avatar {
 
   func showLinks(_ heading: String, _ prefix: String, _ topics: [String]) {
     updateClient(.showLinks(heading: heading, prefix: prefix, topics: topics))
+  }
+
+  func removeNeighbor(_ entity: Thing) {
+    updateClient(.removeNeighbor(key: entity.id))
+  }
+
+  func updateNeighbor(_ entity: Thing) {
+    updateClient(.updateNeighbor(ClientUpdate.Neighbor(entity)))
   }
 }

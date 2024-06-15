@@ -73,6 +73,13 @@ extension RandomAccessCollection where Element: Comparable {
   }
 }
 
+extension Double {
+  func roundedRandomly() -> Double {
+    let k = self.truncatingRemainder(dividingBy: 1.0)
+    return self.rounded(Double.random(in: 0..<1) < k ? .up : .down)
+  }
+}
+
 // The ??= assignment operator performs assignment only if the rhs is non-nil.
 
 precedencegroup OptionalAssignment { associativity: right }

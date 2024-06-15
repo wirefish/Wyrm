@@ -72,46 +72,6 @@ enum ClientValue: Encodable {
   }
 }
 
-// MARK: - Neighbors
-
-struct NeighborProperties: Encodable {
-  let key: Int
-  let brief: String
-  let icon: String?
-  let health: Int?
-  let maxHealth: Int?
-
-  init(_ entity: Thing) {
-    key = entity.id
-    brief = entity.describeBriefly([])
-    icon = entity.icon
-    if let health = (entity as? Combatant)?.health {
-      self.health = health.value
-      maxHealth = health.maxValue
-    } else {
-      health = nil
-      maxHealth = nil
-    }
-  }
-}
-
-extension Avatar {
-  func setNeighbors() {
-    let args = location.contents.compactMap { entity -> NeighborProperties? in
-      entity != self && !entity.implicit && entity.isVisible(to: self) ? NeighborProperties(entity) : nil
-    }
-    sendMessage("setNeighbors", args)
-  }
-
-  func updateNeighbor(_ entity: Thing) {
-    sendMessage("updateNeighbor", [NeighborProperties(entity)])
-  }
-
-  func removeNeighbor(_ entity: Thing) {
-    sendMessage("removeNeighbor", [entity.id])
-  }
-}
-
 // MARK: Equipment and inventory
 
 struct ItemProperties: Encodable {

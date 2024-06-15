@@ -3,6 +3,8 @@
 //  Wyrm
 //
 
+import Darwin
+
 /*
 
  NOTES:
@@ -112,17 +114,30 @@ enum DamageType: ValueRepresentableEnum {
 }
 
 enum CombatTrait: Hashable, ValueRepresentableEnum {
-  case power  // increases attack
-  case protection  // increases defense
+  // Each point of power increases attack rating by 0.1.
+  case power
+
+  // Each point of protection increases defense rating by 0.1.
+  case protection
+
+  // Each point of precision increases critical hit chance by 0.2%.
   case precision  // increases chance of critical hit
+
+  // Each point of ferocity increases critical hit damage by 1%.
   case ferocity  // increases damage of critical hit
-  case vitality  // increases maximum health
-  case affinity(DamageType)  // increases attack for one damage type
-  case resistance(DamageType)  // increases defense for one damage type
+
+  // Each point of vitality increases maximum health by 1%.
+  case vitality
+
+  // Each point of affinity increases attack rating by 0.1 for relevant attacks.
+  case affinity(DamageType)
+
+  // Each point of resistance increases defense rating by 0.1 for relevant attacks.
+  // Note that resistance can be negative (to model a vulnerability).
+  case resistance(DamageType)
 
   // NOTE: Because affinity and resistance have an associated value, they are
   // handled differently and not included in allCases by design.
-
   static var allCases: [CombatTrait] = [
     .power, .protection, .precision, .ferocity, .vitality
   ]
@@ -162,68 +177,126 @@ enum CombatTrait: Hashable, ValueRepresentableEnum {
   }
 }
 
-struct ScaledTrait: ValueRepresentable {
-  let trait: CombatTrait
-  let coeff: Double
-
-  static func fromValue(_ value: Value) -> ScaledTrait? {
-    guard case let .list(spec) = value,
-          spec.count == 2,
-          let trait = CombatTrait.fromValue(spec[0]),
-          let coeff = Double.fromValue(spec[1]) else {
-      return nil
-    }
-    return ScaledTrait(trait: trait, coeff: coeff)
-  }
-
-  func toValue() -> Value {
-    .list([trait.toValue(), coeff.toValue()])
-  }
-}
-
-struct ClampedInt {
-  private var value_: Int
-
-  init(_ value: Int, maxValue: Int) {
-    self.maxValue = maxValue
-    value_ = Self.clamped(value, maxValue)
-  }
-
-  var maxValue: Int {
-    didSet { value_ = Self.clamped(value_, maxValue) }
-  }
-
-  var value: Int {
-    get { return value_ }
-    set { value_ = Self.clamped(newValue, maxValue) }
-  }
-
-  private static func clamped(_ value: Int, _ maxValue: Int) -> Int {
-    max(0, min(value, maxValue))
-  }
-}
+// MARK: Attack
 
 struct Attack {
-  let delay: Double
-  let power: Double
-  let weapon: Weapon
+  // The level of the attack.
+  var level = 1
+
+  // The type of damage done.
+  var damageType = DamageType.crushing
+
+  // The base amount of damage done.
+  var damage: ClosedRange<Int> = 1...2
+
+  // The base amount of time required to perform the attack, in seconds.
+  var speed = 3.0
+
+  // If non-zero, the number of times the damage is applied. Each application occurs
+  // after a set delay.
+  var ticks = 0
+
+  // The verb used to describe the attack.
+  var verb = "hits"
+
+  // The verb used to describe a critical hit with the attack.
+  var criticalVerb = "critically hits"
 }
 
+// MARK: Combatant
+
 protocol Combatant: AnyObject {
+  // The combatant's level controls its overall strength in combat.
   var level: Int { get }
-  var health: ClampedInt { get set }
 
-  func defense(against damageType: DamageType) -> Int
+  // The current health of the combatant. Death occurs when health reaches zero.
+  var health: Int { get }
 
+  // The health at which the combatant is considered defeated. A value above zero
+  // means that defeat subdues the combatant rather than killing it.
+  var minHealth: Int { get }
+
+  // A description of next attack the combatant will use against a target.
   func nextAttack(against target: Combatant) -> Attack?
+
+  // The values of all combat traits for the combatant, merged from all possible sources:
+  // equipment, auras, race, skills, inherent traits, etc.
+  var combatTraits: [CombatTrait:Int] { get }
+
+  // Items equipped by the combatant.
+  var equipped: [EquipmentSlot:Equipment] { get }
 }
 
 extension Combatant {
+  func attackRating(_ attack: Attack) -> Double {
+    Double(level + attack.level) +
+    Double(combatTraits[.power, default: 0]) * 0.1 +
+    Double(combatTraits[.affinity(attack.damageType), default: 0]) * 0.1
+  }
+
+  func armorLevel() -> Double {
+    equipped.reduce(0.0) { (partial, entry) in
+      let (slot, item) = entry
+      return partial + Double(item.effectiveLevel) * slot.armorMultiplier * item.armorMultiplier
+    }
+  }
+
+  func defenseRating(_ attack: Attack) -> Double {
+    Double(level) + armorLevel() +
+    Double(combatTraits[.protection, default: 0]) * 0.1 +
+    Double(combatTraits[.resistance(attack.damageType), default: 0]) * 0.1
+  }
+
+  func maxHealth() -> Int {
+    let base = Double(10 * (level + 1))
+    let modifier = 1.0 + Double(combatTraits[.vitality, default: 0]) * 0.01
+    return max(1, Int((base * modifier).rounded()))
+  }
+
+  func criticalChance() -> Double {
+    0.05 + Double(combatTraits[.precision, default: 0]) * 0.002
+  }
+
+  func criticalDamageMultiplier() -> Double {
+    1.5 + Double(combatTraits[.ferocity, default: 0]) * 0.01
+  }
+
   // Base XP awarded for killing a combatant based on its level. This can be
   // reduced if the killer's level is higher.
   func xpValue() -> Int {
     30 + 5 * level
   }
+}
+
+func scaleRange(_ range: ClosedRange<Int>, by x: Double) -> ClosedRange<Double> {
+  Double(range.lowerBound) * x ... Double(range.upperBound) * x
+}
+
+// Returns the total damage done (if any) and a flag that is true if the attack was a
+// critical hit.
+func resolveAttack(attacker: Combatant, defender: Combatant, attack: Attack) -> (Int, Bool) {
+  let att = attacker.attackRating(attack)
+  let def = defender.defenseRating(attack)
+
+  // The attack effectivness is a value in 0...2 determined by the relative attack
+  // and defense ratings.
+  let x = att - def + Double.random(in: -3...3)
+  let eff = tanh(x * 0.1) + 1.0
+
+  // The damage scales based on effectiveness and the attacker and attack level.
+  let scale = eff * (1.0 + 0.25 * Double(attacker.level + attack.level - 2))
+  var damage = Double.random(in: scaleRange(attack.damage, by: scale))
+
+  // Check for a critical hit.
+  var critical = false
+  if damage > 0 {
+    critical = Double.random(in: 0..<1) < attacker.criticalChance()
+    if critical {
+      damage *= attacker.criticalDamageMultiplier()
+    }
+  }
+
+  return (Int(damage.roundedRandomly()), critical)
 }
 
 extension Avatar {
@@ -238,44 +311,6 @@ extension Avatar {
     // TODO: take race and auras into account
     return traits
   }
-}
-
-// MARK: - core calculations
-
-// Returns the effective armor level for a defender.
-func armorLevel(_ avatar: Avatar) -> Double {
-  avatar.equipped.reduce(0.0) { (partial, entry) in
-    let (slot, item) = entry
-    return partial + Double(item.effectiveLevel) * slot.armorMultiplier * item.armorMultiplier
-  }
-}
-
-// The effective attack rating considering the attacker's attack rating and the
-// defender's defense rating.
-func effectiveAttack(attack: Double, defense: Double) -> Double {
-  attack * (1.0 + (attack - defense) / (attack + defense))
-}
-
-// The base attack and/or defense rating of an entity based on its level.
-func baseRating(level: Int) -> Double {
-  Double(100 + (level - 1) * level)
-}
-
-func baseHealth(level: Int) -> Int {
-  return Int((baseRating(level: level) * 1.5).rounded())
-}
-
-extension Double {
-  func roundedRandomly() -> Double {
-    let k = self.truncatingRemainder(dividingBy: 1.0)
-    return self.rounded(Double.random(in: 0..<1) < k ? .up : .down)
-  }
-}
-
-func damage(effectiveAttack: Double, weapon: Weapon) -> Int {
-  let c = effectiveAttack * weapon.quality.coeff * (weapon.attack.speed / 3.0)
-  let v = c  // FIXME: * weapon.variance
-  return Int((0.1 * Double.random(in: (c - v)...(c + v))).roundedRandomly())
 }
 
 // MARK: - attack command
